@@ -1,4 +1,3 @@
-// domain/port/out/TournamentRepositoryPort.java
 package co.edu.escuelaing.techcup.tournament.domain.port.out;
 
 import co.edu.escuelaing.techcup.tournament.domain.model.Tournament;

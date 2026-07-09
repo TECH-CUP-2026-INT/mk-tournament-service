@@ -1,11 +1,11 @@
-// src/main/java/co/edu/escuelaing/techcup/tournament/infrastructure/persistence/TournamentRepositoryAdapter.java
 package co.edu.escuelaing.techcup.tournament.infrastructure.persistence;
 
-import co.edu.escuelaing.techcup.tournament.domain.model.Tournament;
-import co.edu.escuelaing.techcup.tournament.domain.model.TournamentStatus;
+import co.edu.escuelaing.techcup.tournament.domain.model.*;
 import co.edu.escuelaing.techcup.tournament.domain.port.out.TournamentRepositoryPort;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -50,7 +50,9 @@ public class TournamentRepositoryAdapter implements TournamentRepositoryPort {
                 document.getStartDate(),
                 document.getEndDate(),
                 document.getRegistrationDeadline(),
-                TournamentStatus.valueOf(document.getStatus())
+                TournamentStatus.valueOf(document.getStatus()),
+                new ArrayList<>(),
+                new ArrayList<>()
         );
     }
 }
