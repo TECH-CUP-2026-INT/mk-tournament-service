@@ -50,6 +50,20 @@ public class Tournament extends AggregateRoot {
                 registrationDeadline, TournamentStatus.DRAFT);
     }
 
+    /**
+     * Reconstruye un torneo que ya existía en la base de datos
+     * (ya pasó las validaciones cuando se creó). No vuelve a
+     * aplicar las reglas de creación ni fuerza el estado a DRAFT,
+     * porque no está creando nada nuevo, solo rehidratando lo guardado.
+     * Lo usa el adaptador de persistencia, nadie más.
+     */
+    public static Tournament reconstruct(String id, String name, int numberOfTeams, BigDecimal cost,
+                                         LocalDate startDate, LocalDate endDate,
+                                         LocalDate registrationDeadline, TournamentStatus status) {
+        return new Tournament(id, name, numberOfTeams, cost, startDate, endDate,
+                registrationDeadline, status);
+    }
+
     private static void validateName(String name) {
         if (name == null || name.isBlank()) {
             throw new InvalidTournamentDataException("El nombre del torneo es obligatorio");
