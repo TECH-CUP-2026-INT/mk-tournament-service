@@ -1,7 +1,7 @@
 package co.edu.escuelaing.techcup.tournament.domain.model;
 
 public enum TournamentStatus {
-    PREPARATION,
+    DRAFT,
     ACTIVE,
     IN_PROGRESS,
     FINISHED

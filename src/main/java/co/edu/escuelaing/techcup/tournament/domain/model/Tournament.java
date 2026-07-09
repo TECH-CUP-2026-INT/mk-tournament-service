@@ -1,38 +1,63 @@
 package co.edu.escuelaing.techcup.tournament.domain.model;
 
+import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidTournamentDataException;
+import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidTournamentDateRangeException;
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Tournament {
+public class Tournament extends AggregateRoot {
 
-    private static final int MIN_TEAMS_REQUIRED = 3;
+    private static final int MAX_NAME_LENGTH = 100;
+    private static final int MIN_TEAMS = 3;
 
-    private String id;
-    private String name;
-    private LocalDate startDate;
-    private LocalDate endDate;
-    private int durationDays;
+    private final String name;
+    private final int numberOfTeams;
+    private final BigDecimal cost;
+    private final LocalDate startDate;
+    private final LocalDate endDate;
+    private final LocalDate registrationDeadline;
     private TournamentStatus status;
-    private EliminationType eliminationType;
     private List<TeamRegistration> teams;
     private List<Match> matches;
 
-    public Tournament() {
-        this.teams = new ArrayList<>();
-        this.matches = new ArrayList<>();
-        this.status = TournamentStatus.PREPARATION;
-    }
-
-    public Tournament(String id, String name, LocalDate startDate, LocalDate endDate, EliminationType eliminationType) {
-        this();
-        this.id = id;
+    private Tournament(String id, String name, int numberOfTeams, BigDecimal cost,
+                       LocalDate startDate, LocalDate endDate, LocalDate registrationDeadline,
+                       TournamentStatus status) {
+        super(id);
         this.name = name;
+        this.numberOfTeams = numberOfTeams;
+        this.cost = cost;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.eliminationType = eliminationType;
-        if (startDate != null && endDate != null)
-            this.durationDays = (int) startDate.until(endDate).getDays();
+        this.registrationDeadline = registrationDeadline;
+        this.status = status;
+        this.teams = new ArrayList<>();
+        this.matches = new ArrayList<>();
+    }
+
+    public static Tournament create(String name, int numberOfTeams, BigDecimal cost,
+                                    LocalDate startDate, LocalDate endDate,
+                                    LocalDate registrationDeadline) {
+        validateName(name);
+        validateNumberOfTeams(numberOfTeams);
+        validateCost(cost);
+        validateDateRange(startDate, endDate, registrationDeadline);
+        return new Tournament(null, name, numberOfTeams, cost, startDate, endDate,
+                registrationDeadline, TournamentStatus.DRAFT);
+    }
+
+    public static Tournament reconstruct(String id, String name, int numberOfTeams, BigDecimal cost,
+                                         LocalDate startDate, LocalDate endDate,
+                                         LocalDate registrationDeadline, TournamentStatus status,
+                                         List<TeamRegistration> teams, List<Match> matches) {
+        Tournament t = new Tournament(id, name, numberOfTeams, cost, startDate, endDate,
+                registrationDeadline, status);
+        t.teams = teams != null ? new ArrayList<>(teams) : new ArrayList<>();
+        t.matches = matches != null ? new ArrayList<>(matches) : new ArrayList<>();
+        return t;
     }
 
     // --- Preparación del torneo (TC-25) ---
@@ -46,14 +71,10 @@ public class Tournament {
             missing.add("La fecha de fin debe ser posterior a la de inicio");
 
         long approvedCount = countApprovedTeams();
-        if (approvedCount < MIN_TEAMS_REQUIRED)
-            missing.add("Se requieren al menos " + MIN_TEAMS_REQUIRED + " equipos aprobados, faltan " + (MIN_TEAMS_REQUIRED - approvedCount));
+        if (approvedCount < MIN_TEAMS)
+            missing.add("Se requieren al menos " + MIN_TEAMS + " equipos aprobados, faltan " + (MIN_TEAMS - approvedCount));
 
-        boolean allApprovedIncluded = teams.stream()
-                .filter(t -> t.getRegistrationStatus() == RegistrationStatus.APPROVED)
-                .allMatch(t -> teams.contains(t));
-
-        boolean ready = missing.isEmpty() && allApprovedIncluded;
+        boolean ready = missing.isEmpty();
         return new PreparationResult(ready, missing, approvedCount);
     }
 
@@ -76,43 +97,56 @@ public class Tournament {
 
         teams.remove(team);
 
-        List<Match> affectedMatches = new ArrayList<>();
+        List<Match> affected = new ArrayList<>();
         for (Match match : matches) {
             if (match.isPending() && match.involvesteam(teamId)) {
                 match.markAsNoShow();
-                affectedMatches.add(match);
+                affected.add(match);
             }
         }
-
-        return affectedMatches;
+        return affected;
     }
 
-    // --- Getters y Setters ---
+    // --- Validaciones privadas ---
 
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    private static void validateName(String name) {
+        if (name == null || name.isBlank())
+            throw new InvalidTournamentDataException("El nombre del torneo es obligatorio");
+        if (name.length() > MAX_NAME_LENGTH)
+            throw new InvalidTournamentDataException("El nombre no puede superar los " + MAX_NAME_LENGTH + " caracteres");
+    }
+
+    private static void validateNumberOfTeams(int numberOfTeams) {
+        if (numberOfTeams < MIN_TEAMS)
+            throw new InvalidTournamentDataException("La cantidad de equipos debe ser mayor o igual a " + MIN_TEAMS);
+    }
+
+    private static void validateCost(BigDecimal cost) {
+        if (cost == null || cost.compareTo(BigDecimal.ZERO) < 0)
+            throw new InvalidTournamentDataException("El costo de inscripción no puede ser negativo");
+    }
+
+    private static void validateDateRange(LocalDate startDate, LocalDate endDate, LocalDate registrationDeadline) {
+        if (startDate == null || endDate == null || registrationDeadline == null)
+            throw new InvalidTournamentDataException("Las fechas del torneo son obligatorias");
+        if (!startDate.isAfter(registrationDeadline))
+            throw new InvalidTournamentDateRangeException("La fecha de inicio debe ser posterior a la fecha de cierre de inscripciones");
+        if (endDate.isBefore(startDate))
+            throw new InvalidTournamentDateRangeException("La fecha de fin debe ser posterior o igual a la fecha de inicio");
+    }
+
+    // --- Getters ---
 
     public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-
+    public int getNumberOfTeams() { return numberOfTeams; }
+    public BigDecimal getCost() { return cost; }
     public LocalDate getStartDate() { return startDate; }
-    public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
-
     public LocalDate getEndDate() { return endDate; }
-    public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
-
-    public int getDurationDays() { return durationDays; }
-    public void setDurationDays(int durationDays) { this.durationDays = durationDays; }
-
+    public LocalDate getRegistrationDeadline() { return registrationDeadline; }
     public TournamentStatus getStatus() { return status; }
     public void setStatus(TournamentStatus status) { this.status = status; }
-
-    public EliminationType getEliminationType() { return eliminationType; }
-    public void setEliminationType(EliminationType eliminationType) { this.eliminationType = eliminationType; }
-
     public List<TeamRegistration> getTeams() { return teams; }
     public void setTeams(List<TeamRegistration> teams) { this.teams = teams; }
-
     public List<Match> getMatches() { return matches; }
     public void setMatches(List<Match> matches) { this.matches = matches; }
 }

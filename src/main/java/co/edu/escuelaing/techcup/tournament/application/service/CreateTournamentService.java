@@ -15,7 +15,7 @@ public class CreateTournamentService implements CreateTournamentUseCase {
     }
 
     @Override
-    public Tournament create(Tournament tournament) {
-        return repository.save(tournament);
+    public Tournament create(Tournament newTournament) {
+        return repository.save(newTournament);
     }
 }
