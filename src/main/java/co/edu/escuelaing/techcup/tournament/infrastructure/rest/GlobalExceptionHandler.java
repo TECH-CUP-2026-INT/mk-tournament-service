@@ -3,7 +3,10 @@ package co.edu.escuelaing.techcup.tournament.infrastructure.rest;
 
 import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidTournamentDataException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidTournamentDateRangeException;
+import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentCannotBeFinalizedException;
+import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentNotFoundException;
 import co.edu.escuelaing.techcup.tournament.infrastructure.rest.dto.ErrorResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -14,5 +17,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({InvalidTournamentDataException.class, InvalidTournamentDateRangeException.class})
     public ResponseEntity<ErrorResponse> handleInvalidTournamentData(RuntimeException exception) {
         return ResponseEntity.badRequest().body(new ErrorResponse(exception.getMessage()));
+    }
+
+    @ExceptionHandler(TournamentCannotBeFinalizedException.class)
+    public ResponseEntity<ErrorResponse> handleTournamentCannotBeFinalized(TournamentCannotBeFinalizedException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(exception.getMessage()));
+    }
+
+    @ExceptionHandler(TournamentNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleTournamentNotFound(TournamentNotFoundException exception) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(exception.getMessage()));
     }
 }

@@ -3,6 +3,7 @@ package co.edu.escuelaing.techcup.tournament.domain.model;
 
 import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidTournamentDataException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidTournamentDateRangeException;
+import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentCannotBeFinalizedException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -100,6 +101,24 @@ public class Tournament extends AggregateRoot {
             throw new InvalidTournamentDateRangeException(
                     "La fecha de fin debe ser posterior o igual a la fecha de inicio");
         }
+    }
+
+    /**
+     * TC-30: finaliza el torneo. Solo procede si estaba En Progreso
+     * y la fecha de fin ya se alcanzó. Recibe la fecha "actual" como
+     * parámetro (no llama a LocalDate.now() aquí) para que la regla
+     * sea probable de forma determinista en las pruebas unitarias.
+     */
+    public void finish(LocalDate currentDate) {
+        if (status != TournamentStatus.IN_PROGRESS) {
+            throw new TournamentCannotBeFinalizedException(
+                    "El torneo debe estar En Progreso para poder finalizarse");
+        }
+        if (endDate.isAfter(currentDate)) {
+            throw new TournamentCannotBeFinalizedException(
+                    "La fecha de fin no ha sido alcanzada");
+        }
+        this.status = TournamentStatus.FINISHED;
     }
 
     public String getName() { return name; }
