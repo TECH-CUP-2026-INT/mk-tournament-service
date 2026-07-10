@@ -3,7 +3,9 @@ package co.edu.escuelaing.techcup.tournament.domain;
 import co.edu.escuelaing.techcup.tournament.domain.model.*;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -11,9 +13,15 @@ import static org.junit.jupiter.api.Assertions.*;
 class TournamentDomainTest {
 
     private Tournament buildTournament(TournamentStatus status, List<TeamRegistration> teams) {
-        Tournament t = new Tournament("t1", "TechCup", LocalDate.now(), LocalDate.now().plusDays(10), EliminationType.DIRECT);
-        t.setStatus(status);
-        t.setTeams(new java.util.ArrayList<>(teams));
+        Tournament t = Tournament.reconstruct(
+                "t1", "TechCup", 4, BigDecimal.ZERO,
+                LocalDate.now().plusDays(2),
+                LocalDate.now().plusDays(10),
+                LocalDate.now(),
+                status,
+                new ArrayList<>(teams),
+                new ArrayList<>()
+        );
         return t;
     }
 
@@ -21,7 +29,7 @@ class TournamentDomainTest {
 
     @Test
     void preparation_menosDeTreeEquiposAprobados_retornaIncompleto() {
-        Tournament t = buildTournament(TournamentStatus.PREPARATION, List.of(
+        Tournament t = buildTournament(TournamentStatus.DRAFT, List.of(
                 new TeamRegistration("e1", "Equipo 1", RegistrationStatus.APPROVED),
                 new TeamRegistration("e2", "Equipo 2", RegistrationStatus.APPROVED)
         ));
@@ -32,7 +40,7 @@ class TournamentDomainTest {
 
     @Test
     void preparation_tresEquiposAprobadosYFechasValidas_retornaCompleto() {
-        Tournament t = buildTournament(TournamentStatus.PREPARATION, List.of(
+        Tournament t = buildTournament(TournamentStatus.DRAFT, List.of(
                 new TeamRegistration("e1", "Equipo 1", RegistrationStatus.APPROVED),
                 new TeamRegistration("e2", "Equipo 2", RegistrationStatus.APPROVED),
                 new TeamRegistration("e3", "Equipo 3", RegistrationStatus.APPROVED)
@@ -44,13 +52,17 @@ class TournamentDomainTest {
 
     @Test
     void preparation_sinFechas_retornaIncompleto() {
-        Tournament t = new Tournament();
-        t.setStatus(TournamentStatus.PREPARATION);
-        t.setTeams(new java.util.ArrayList<>(List.of(
-                new TeamRegistration("e1", "E1", RegistrationStatus.APPROVED),
-                new TeamRegistration("e2", "E2", RegistrationStatus.APPROVED),
-                new TeamRegistration("e3", "E3", RegistrationStatus.APPROVED)
-        )));
+        Tournament t = Tournament.reconstruct(
+                "t1", "TechCup", 4, BigDecimal.ZERO,
+                null, null, null,
+                TournamentStatus.DRAFT,
+                new ArrayList<>(List.of(
+                        new TeamRegistration("e1", "E1", RegistrationStatus.APPROVED),
+                        new TeamRegistration("e2", "E2", RegistrationStatus.APPROVED),
+                        new TeamRegistration("e3", "E3", RegistrationStatus.APPROVED)
+                )),
+                new ArrayList<>()
+        );
         PreparationResult result = t.checkPreparation();
         assertFalse(result.isReadyToActivate());
         assertTrue(result.getMissingRequirements().stream().anyMatch(m -> m.contains("Fechas")));
@@ -65,7 +77,7 @@ class TournamentDomainTest {
                 new TeamRegistration("e2", "Equipo 2", RegistrationStatus.APPROVED)
         ));
         Match pendingMatch = new Match("m1", "e1", "e2", MatchStatus.PENDING);
-        t.setMatches(new java.util.ArrayList<>(List.of(pendingMatch)));
+        t.setMatches(new ArrayList<>(List.of(pendingMatch)));
 
         List<Match> affected = t.removeTeam("e1", RemovalReason.DIRECT_DISQUALIFICATION);
 
@@ -75,8 +87,8 @@ class TournamentDomainTest {
     }
 
     @Test
-    void removeTeam_torneoEnPreparacion_lanza409() {
-        Tournament t = buildTournament(TournamentStatus.PREPARATION, List.of(
+    void removeTeam_torneoEnDraft_lanza409() {
+        Tournament t = buildTournament(TournamentStatus.DRAFT, List.of(
                 new TeamRegistration("e1", "Equipo 1", RegistrationStatus.APPROVED)
         ));
         assertThrows(TeamRemovalNotAllowedException.class,
