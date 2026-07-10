@@ -2,6 +2,7 @@ package co.edu.escuelaing.techcup.tournament.infrastructure.rest;
 
 import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidTournamentDataException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidTournamentDateRangeException;
+import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentCannotBeFinalizedException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentNotDraftException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentNotFoundException;
 import co.edu.escuelaing.techcup.tournament.domain.model.TeamRemovalNotAllowedException;
@@ -18,7 +19,7 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(TournamentNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleNotFound(TournamentNotFoundException ex) {
+    public ResponseEntity<ErrorResponse> handleTournamentNotFound(TournamentNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ErrorResponse(ex.getMessage()));
     }
@@ -50,5 +51,10 @@ public class GlobalExceptionHandler {
                 .map(e -> e.getField() + ": " + e.getDefaultMessage())
                 .findFirst().orElse("Datos inválidos");
         return ResponseEntity.badRequest().body(Map.of("error", message));
+    }
+
+    @ExceptionHandler(TournamentCannotBeFinalizedException.class)
+    public ResponseEntity<ErrorResponse> handleTournamentCannotBeFinalized(TournamentCannotBeFinalizedException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(exception.getMessage()));
     }
 }

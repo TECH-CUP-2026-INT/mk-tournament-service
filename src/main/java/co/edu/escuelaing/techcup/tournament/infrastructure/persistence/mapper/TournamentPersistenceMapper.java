@@ -34,7 +34,8 @@ public class TournamentPersistenceMapper {
                 domain.getStartDate(),
                 domain.getEndDate(),
                 domain.getRegistrationDeadline(),
-                domain.getStatus().name()
+                domain.getStatus().name(),
+                domain.getRulebookFileId()
         );
     }
 }

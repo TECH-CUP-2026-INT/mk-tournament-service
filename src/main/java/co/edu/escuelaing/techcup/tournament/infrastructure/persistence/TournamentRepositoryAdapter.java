@@ -30,34 +30,5 @@ public class TournamentRepositoryAdapter implements TournamentRepositoryPort {
     @Override
     public void deleteById(String id) {
         mongoRepository.deleteById(id);
-    private TournamentDocument toDocument(Tournament tournament) {
-        return new TournamentDocument(
-                tournament.getId(),
-                tournament.getName(),
-                tournament.getNumberOfTeams(),
-                tournament.getCost(),
-                tournament.getStartDate(),
-                tournament.getEndDate(),
-                tournament.getRegistrationDeadline(),
-                tournament.getStatus().name(),
-                tournament.getRulebookFileId()
-        );
-    }
-
-    private Tournament toDomain(TournamentDocument document) {
-        Tournament tournament = Tournament.reconstruct(
-                document.getId(),
-                document.getName(),
-                document.getNumberOfTeams(),
-                document.getCost(),
-                document.getStartDate(),
-                document.getEndDate(),
-                document.getRegistrationDeadline(),
-                TournamentStatus.valueOf(document.getStatus()),
-                new ArrayList<>(),
-                new ArrayList<>()
-        );
-        tournament.setRulebookFileId(document.getRulebookFileId());
-        return tournament;
     }
 }

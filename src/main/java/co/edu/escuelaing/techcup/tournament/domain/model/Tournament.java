@@ -2,6 +2,7 @@ package co.edu.escuelaing.techcup.tournament.domain.model;
 
 import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidTournamentDataException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidTournamentDateRangeException;
+import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentCannotBeFinalizedException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -11,7 +12,10 @@ import java.util.List;
 public class Tournament extends AggregateRoot {
 
     private static final int MAX_NAME_LENGTH = 100;
-    private static final int MIN_TEAMS = 3;
+    // TC-25 / TCF-50 (ya aprobado): la cantidad mínima de equipos para CREAR un torneo es 2.
+    private static final int MIN_TEAMS_TO_CREATE = 2;
+    // TC-28: para que un torneo esté "listo para activarse" se requieren al menos 3 equipos aprobados.
+    private static final int MIN_APPROVED_TEAMS_TO_ACTIVATE = 3;
 
     private final String name;
     private final int numberOfTeams;
@@ -77,6 +81,17 @@ public class Tournament extends AggregateRoot {
         return t;
     }
 
+    /**
+     * Sobrecarga de compatibilidad: reconstruye sin equipos ni partidos
+     * (torneos que aún no tienen inscripciones/llaves generadas).
+     */
+    public static Tournament reconstruct(String id, String name, int numberOfTeams, BigDecimal cost,
+                                         LocalDate startDate, LocalDate endDate,
+                                         LocalDate registrationDeadline, TournamentStatus status) {
+        return reconstruct(id, name, numberOfTeams, cost, startDate, endDate,
+                registrationDeadline, status, null, null);
+    }
+
     // --- Preparación del torneo ---
 
     public PreparationResult checkPreparation() {
@@ -88,8 +103,8 @@ public class Tournament extends AggregateRoot {
             missing.add("La fecha de fin debe ser posterior a la de inicio");
 
         long approvedCount = countApprovedTeams();
-        if (approvedCount < MIN_TEAMS)
-            missing.add("Se requieren al menos " + MIN_TEAMS + " equipos aprobados, faltan " + (MIN_TEAMS - approvedCount));
+        if (approvedCount < MIN_APPROVED_TEAMS_TO_ACTIVATE)
+            missing.add("Se requieren al menos " + MIN_APPROVED_TEAMS_TO_ACTIVATE + " equipos aprobados, faltan " + (MIN_APPROVED_TEAMS_TO_ACTIVATE - approvedCount));
 
         boolean ready = missing.isEmpty();
         return new PreparationResult(ready, missing, approvedCount);
@@ -130,6 +145,24 @@ public class Tournament extends AggregateRoot {
         this.rulebookFileId = rulebookFileId;
     }
 
+    /**
+     * TC-30: finaliza el torneo. Solo procede si estaba En Progreso
+     * y la fecha de fin ya se alcanzó. Recibe la fecha "actual" como
+     * parámetro (no llama a LocalDate.now() aquí) para que la regla
+     * sea probable de forma determinista en las pruebas unitarias.
+     */
+    public void finish(LocalDate currentDate) {
+        if (status != TournamentStatus.IN_PROGRESS) {
+            throw new TournamentCannotBeFinalizedException(
+                    "El torneo debe estar En Progreso para poder finalizarse");
+        }
+        if (endDate.isAfter(currentDate)) {
+            throw new TournamentCannotBeFinalizedException(
+                    "La fecha de fin no ha sido alcanzada");
+        }
+        this.status = TournamentStatus.FINISHED;
+    }
+
     // --- Validaciones privadas ---
 
     private static void validateName(String name) {
@@ -140,8 +173,8 @@ public class Tournament extends AggregateRoot {
     }
 
     private static void validateNumberOfTeams(int numberOfTeams) {
-        if (numberOfTeams < MIN_TEAMS)
-            throw new InvalidTournamentDataException("La cantidad de equipos debe ser mayor o igual a " + MIN_TEAMS);
+        if (numberOfTeams < MIN_TEAMS_TO_CREATE)
+            throw new InvalidTournamentDataException("La cantidad de equipos debe ser mayor o igual a " + MIN_TEAMS_TO_CREATE);
     }
 
     private static void validateCost(BigDecimal cost) {
