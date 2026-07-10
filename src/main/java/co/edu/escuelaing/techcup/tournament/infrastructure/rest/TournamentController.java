@@ -12,6 +12,9 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import co.edu.escuelaing.techcup.tournament.domain.port.in.AttachRulebookUseCase;
+import co.edu.escuelaing.techcup.tournament.domain.port.in.AttachRulebookUseCase.AttachRulebookCommand;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/tournaments")
@@ -22,16 +25,19 @@ public class TournamentController {
     private final RemoveTeamUseCase removeTeam;
     private final DeleteTournamentUseCase deleteTournamentUseCase;
     private final TournamentRestMapper mapper;
+    private final AttachRulebookUseCase attachRulebook;
 
     public TournamentController(CreateTournamentUseCase createTournamentUseCase,
                                 CheckTournamentPreparationUseCase checkPreparation,
                                 RemoveTeamUseCase removeTeam,
                                 DeleteTournamentUseCase deleteTournamentUseCase,
+                                AttachRulebookUseCase attachRulebook,
                                 TournamentRestMapper mapper) {
         this.createTournamentUseCase = createTournamentUseCase;
         this.checkPreparation = checkPreparation;
         this.removeTeam = removeTeam;
         this.deleteTournamentUseCase = deleteTournamentUseCase;
+        this.attachRulebook = attachRulebook;
         this.mapper = mapper;
     }
 
@@ -69,6 +75,22 @@ public class TournamentController {
         deleteTournamentUseCase.delete(id);
         return ResponseEntity.ok(new DeleteTournamentResponse(
                 "El torneo '" + id + "' ha sido eliminado permanentemente."
+    @PostMapping("/{tournamentId}/rulebook")
+    public ResponseEntity<RulebookResponse> attachRulebook(
+            @PathVariable String tournamentId,
+            @RequestParam("file") MultipartFile file) throws java.io.IOException {
+
+        Tournament updated = attachRulebook.attach(new AttachRulebookCommand(
+                tournamentId,
+                file.getOriginalFilename(),
+                file.getContentType(),
+                file.getSize(),
+                file.getInputStream()
+        ));
+
+        return ResponseEntity.ok(new RulebookResponse(
+                updated.getId(), updated.getRulebookFileId(), "Reglamento adjuntado correctamente"
         ));
     }
 }
+
