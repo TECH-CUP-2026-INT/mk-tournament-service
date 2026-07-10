@@ -37,12 +37,13 @@ public class TournamentRepositoryAdapter implements TournamentRepositoryPort {
                 tournament.getStartDate(),
                 tournament.getEndDate(),
                 tournament.getRegistrationDeadline(),
-                tournament.getStatus().name()
+                tournament.getStatus().name(),
+                tournament.getRulebookFileId()
         );
     }
 
     private Tournament toDomain(TournamentDocument document) {
-        return Tournament.reconstruct(
+        Tournament tournament = Tournament.reconstruct(
                 document.getId(),
                 document.getName(),
                 document.getNumberOfTeams(),
@@ -54,5 +55,7 @@ public class TournamentRepositoryAdapter implements TournamentRepositoryPort {
                 new ArrayList<>(),
                 new ArrayList<>()
         );
+        tournament.setRulebookFileId(document.getRulebookFileId());
+        return tournament;
     }
 }
