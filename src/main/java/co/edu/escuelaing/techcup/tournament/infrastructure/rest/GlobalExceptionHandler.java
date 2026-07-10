@@ -1,7 +1,9 @@
 package co.edu.escuelaing.techcup.tournament.infrastructure.rest;
 
-import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentNotFoundException;
+import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidTournamentDataException;
+import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidTournamentDateRangeException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentNotDraftException;
+import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentNotFoundException;
 import co.edu.escuelaing.techcup.tournament.infrastructure.rest.dto.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,5 +23,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleNotDraft(TournamentNotDraftException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler({InvalidTournamentDataException.class, InvalidTournamentDateRangeException.class})
+    public ResponseEntity<ErrorResponse> handleInvalidTournamentData(RuntimeException ex) {
+        return ResponseEntity.badRequest().body(new ErrorResponse(ex.getMessage()));
     }
 }
