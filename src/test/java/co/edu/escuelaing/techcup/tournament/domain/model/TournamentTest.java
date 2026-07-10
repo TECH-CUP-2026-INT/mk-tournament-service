@@ -3,6 +3,7 @@ package co.edu.escuelaing.techcup.tournament.domain.model;
 
 import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidTournamentDataException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidTournamentDateRangeException;
+import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentCannotBeFinalizedException;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -85,5 +86,62 @@ class TournamentTest {
                         "Copa Enero", 8, BigDecimal.valueOf(-1),
                         LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 20), LocalDate.of(2026, 2, 20)
                 ));
+    }
+
+    @Test
+    void finish_whenInProgressAndEndDateReached_setsStatusFinished() {
+        Tournament tournament = Tournament.reconstruct(
+                "1", "Copa Enero", 8, BigDecimal.valueOf(50000),
+                LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 10), LocalDate.of(2026, 2, 20),
+                TournamentStatus.IN_PROGRESS
+        );
+
+        tournament.finish(LocalDate.of(2026, 3, 10));
+
+        assertEquals(TournamentStatus.FINISHED, tournament.getStatus());
+    }
+
+    @Test
+    void finish_whenNotInProgress_throwsException() {
+        Tournament tournament = Tournament.reconstruct(
+                "1", "Copa Enero", 8, BigDecimal.valueOf(50000),
+                LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 10), LocalDate.of(2026, 2, 20),
+                TournamentStatus.DRAFT
+        );
+
+        TournamentCannotBeFinalizedException exception = assertThrows(
+                TournamentCannotBeFinalizedException.class,
+                () -> tournament.finish(LocalDate.of(2026, 3, 10))
+        );
+
+        assertEquals("El torneo debe estar En Progreso para poder finalizarse", exception.getMessage());
+    }
+
+    @Test
+    void finish_whenEndDateNotReached_throwsException() {
+        Tournament tournament = Tournament.reconstruct(
+                "1", "Copa Enero", 8, BigDecimal.valueOf(50000),
+                LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 20), LocalDate.of(2026, 2, 20),
+                TournamentStatus.IN_PROGRESS
+        );
+
+        TournamentCannotBeFinalizedException exception = assertThrows(
+                TournamentCannotBeFinalizedException.class,
+                () -> tournament.finish(LocalDate.of(2026, 3, 10)) // "hoy" es antes de endDate
+        );
+
+        assertEquals("La fecha de fin no ha sido alcanzada", exception.getMessage());
+    }
+
+    @Test
+    void finish_whenAlreadyFinished_throwsException() {
+        Tournament tournament = Tournament.reconstruct(
+                "1", "Copa Enero", 8, BigDecimal.valueOf(50000),
+                LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 10), LocalDate.of(2026, 2, 20),
+                TournamentStatus.FINISHED
+        );
+
+        assertThrows(TournamentCannotBeFinalizedException.class,
+                () -> tournament.finish(LocalDate.of(2026, 3, 10)));
     }
 }
