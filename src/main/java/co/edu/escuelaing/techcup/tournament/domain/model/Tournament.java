@@ -22,6 +22,7 @@ public class Tournament extends AggregateRoot {
     private TournamentStatus status;
     private List<TeamRegistration> teams;
     private List<Match> matches;
+    private String rulebookFileId;
 
     private Tournament(String id, String name, int numberOfTeams, BigDecimal cost,
                        LocalDate startDate, LocalDate endDate, LocalDate registrationDeadline,
@@ -107,6 +108,12 @@ public class Tournament extends AggregateRoot {
         return affected;
     }
 
+    public void attachRulebook(String rulebookFileId) {
+        if (rulebookFileId == null || rulebookFileId.isBlank())
+            throw new IllegalArgumentException("El id del archivo de reglamento no puede estar vacío");
+        this.rulebookFileId = rulebookFileId;
+    }
+
     // --- Validaciones privadas ---
 
     private static void validateName(String name) {
@@ -149,4 +156,6 @@ public class Tournament extends AggregateRoot {
     public void setTeams(List<TeamRegistration> teams) { this.teams = teams; }
     public List<Match> getMatches() { return matches; }
     public void setMatches(List<Match> matches) { this.matches = matches; }
+    public String getRulebookFileId() { return rulebookFileId; }
+    public void setRulebookFileId(String rulebookFileId) { this.rulebookFileId = rulebookFileId; }
 }
