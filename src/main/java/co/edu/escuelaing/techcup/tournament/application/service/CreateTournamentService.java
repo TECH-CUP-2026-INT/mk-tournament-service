@@ -1,4 +1,3 @@
-// application/service/CreateTournamentService.java
 package co.edu.escuelaing.techcup.tournament.application.service;
 
 import co.edu.escuelaing.techcup.tournament.domain.model.Tournament;

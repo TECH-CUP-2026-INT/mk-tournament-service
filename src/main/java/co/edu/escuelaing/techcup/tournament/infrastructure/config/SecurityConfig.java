@@ -1,4 +1,3 @@
-// infrastructure/config/SecurityConfig.java
 package co.edu.escuelaing.techcup.tournament.infrastructure.config;
 
 import org.springframework.context.annotation.Bean;
