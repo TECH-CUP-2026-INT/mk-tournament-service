@@ -7,4 +7,5 @@ import java.util.Optional;
 public interface TournamentRepositoryPort {
     Tournament save(Tournament tournament);
     Optional<Tournament> findById(String id);
+    void deleteById(String id);
 }

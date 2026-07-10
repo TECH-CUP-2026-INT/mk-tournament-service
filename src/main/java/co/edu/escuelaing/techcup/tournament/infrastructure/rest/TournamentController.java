@@ -4,6 +4,7 @@ import co.edu.escuelaing.techcup.tournament.domain.model.PreparationResult;
 import co.edu.escuelaing.techcup.tournament.domain.model.Tournament;
 import co.edu.escuelaing.techcup.tournament.domain.port.in.CheckTournamentPreparationUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.port.in.CreateTournamentUseCase;
+import co.edu.escuelaing.techcup.tournament.domain.port.in.DeleteTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.port.in.RemoveTeamUseCase;
 import co.edu.escuelaing.techcup.tournament.infrastructure.rest.dto.*;
 import co.edu.escuelaing.techcup.tournament.infrastructure.rest.mapper.TournamentRestMapper;
@@ -22,17 +23,20 @@ public class TournamentController {
     private final CreateTournamentUseCase createTournamentUseCase;
     private final CheckTournamentPreparationUseCase checkPreparation;
     private final RemoveTeamUseCase removeTeam;
+    private final DeleteTournamentUseCase deleteTournamentUseCase;
     private final TournamentRestMapper mapper;
     private final AttachRulebookUseCase attachRulebook;
 
     public TournamentController(CreateTournamentUseCase createTournamentUseCase,
                                 CheckTournamentPreparationUseCase checkPreparation,
                                 RemoveTeamUseCase removeTeam,
+                                DeleteTournamentUseCase deleteTournamentUseCase,
                                 AttachRulebookUseCase attachRulebook,
                                 TournamentRestMapper mapper) {
         this.createTournamentUseCase = createTournamentUseCase;
         this.checkPreparation = checkPreparation;
         this.removeTeam = removeTeam;
+        this.deleteTournamentUseCase = deleteTournamentUseCase;
         this.attachRulebook = attachRulebook;
         this.mapper = mapper;
     }
@@ -65,6 +69,12 @@ public class TournamentController {
             @Valid @RequestBody RemoveTeamRequest request) {
         return ResponseEntity.ok(mapper.toResponse(removeTeam.remove(tournamentId, teamId, request.reason())));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<DeleteTournamentResponse> delete(@PathVariable String id) {
+        deleteTournamentUseCase.delete(id);
+        return ResponseEntity.ok(new DeleteTournamentResponse(
+                "El torneo '" + id + "' ha sido eliminado permanentemente."
     @PostMapping("/{tournamentId}/rulebook")
     public ResponseEntity<RulebookResponse> attachRulebook(
             @PathVariable String tournamentId,

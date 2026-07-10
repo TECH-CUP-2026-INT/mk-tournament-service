@@ -39,6 +39,18 @@ public class Tournament extends AggregateRoot {
         this.matches = new ArrayList<>();
     }
 
+    public Tournament(String id, String name, TournamentStatus status) {
+        this(id, name, 0, BigDecimal.ZERO, null, null, null, status);
+    }
+
+    public boolean isDraft() {
+        return TournamentStatus.DRAFT == this.status;
+    }
+
+    /**
+     * TC-25: crea un torneo nuevo. Siempre nace en DRAFT,
+     * sin importar lo que envíe el cliente.
+     */
     public static Tournament create(String name, int numberOfTeams, BigDecimal cost,
                                     LocalDate startDate, LocalDate endDate,
                                     LocalDate registrationDeadline) {
@@ -50,6 +62,10 @@ public class Tournament extends AggregateRoot {
                 registrationDeadline, TournamentStatus.DRAFT);
     }
 
+    /**
+     * Reconstruye un torneo desde la base de datos sin aplicar
+     * reglas de creación ni forzar el estado a DRAFT.
+     */
     public static Tournament reconstruct(String id, String name, int numberOfTeams, BigDecimal cost,
                                          LocalDate startDate, LocalDate endDate,
                                          LocalDate registrationDeadline, TournamentStatus status,
@@ -61,7 +77,7 @@ public class Tournament extends AggregateRoot {
         return t;
     }
 
-    // --- Preparación del torneo (TC-25) ---
+    // --- Preparación del torneo ---
 
     public PreparationResult checkPreparation() {
         List<String> missing = new ArrayList<>();
