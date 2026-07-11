@@ -1,6 +1,8 @@
 package co.edu.escuelaing.techcup.tournament.exception;
 
-import co.edu.escuelaing.techcup.tournament.exception.InvalidTournamentDataException;
+import co.edu.escuelaing.techcup.tournament.exception.ChampionAssignmentNotAllowedException;
+import co.edu.escuelaing.techcup.tournament.exception.ChampionPendingPenaltiesException;
+import co.edu.escuelaing.techcup.tournament.exception.MatchNotFoundException;
 import co.edu.escuelaing.techcup.tournament.exception.InvalidTournamentDateRangeException;
 import co.edu.escuelaing.techcup.tournament.exception.TeamRemovalNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentCannotBeFinalizedException;
@@ -56,5 +58,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(TournamentCannotBeFinalizedException.class)
     public ResponseEntity<ErrorResponse> handleTournamentCannotBeFinalized(TournamentCannotBeFinalizedException exception) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(exception.getMessage()));
+    }
+
+    @ExceptionHandler(ChampionPendingPenaltiesException.class)
+    public ResponseEntity<ErrorResponse> handleChampionPendingPenalties(ChampionPendingPenaltiesException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler({ChampionAssignmentNotAllowedException.class, MatchNotFoundException.class})
+    public ResponseEntity<ErrorResponse> handleChampionAssignmentErrors(RuntimeException ex) {
+        HttpStatus status = ex instanceof MatchNotFoundException ? HttpStatus.NOT_FOUND : HttpStatus.CONFLICT;
+        return ResponseEntity.status(status).body(new ErrorResponse(ex.getMessage()));
     }
 }
