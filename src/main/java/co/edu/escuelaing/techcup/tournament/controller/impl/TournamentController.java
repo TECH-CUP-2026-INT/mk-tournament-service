@@ -1,7 +1,10 @@
 package co.edu.escuelaing.techcup.tournament.controller.impl;
 
+import co.edu.escuelaing.techcup.tournament.service.ChampionAssignment;
 import co.edu.escuelaing.techcup.tournament.service.PreparationResult;
 import co.edu.escuelaing.techcup.tournament.service.Tournament;
+import co.edu.escuelaing.techcup.tournament.service.ports.GetChampionUseCase;
+import co.edu.escuelaing.techcup.tournament.service.ports.AssignChampionUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.AttachRulebookUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.AttachRulebookUseCase.AttachRulebookCommand;
 import co.edu.escuelaing.techcup.tournament.service.ports.CheckTournamentPreparationUseCase;
@@ -9,6 +12,7 @@ import co.edu.escuelaing.techcup.tournament.service.ports.CreateTournamentUseCas
 import co.edu.escuelaing.techcup.tournament.service.ports.DeleteTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.FinalizeTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.dto.request.CreateTournamentRequest;
+import co.edu.escuelaing.techcup.tournament.dto.response.ChampionResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.DeleteTournamentResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.PreparationResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.RulebookResponse;
@@ -30,6 +34,8 @@ public class TournamentController {
     private final FinalizeTournamentUseCase finalizeTournamentUseCase;
     private final CheckTournamentPreparationUseCase checkPreparation;
     private final DeleteTournamentUseCase deleteTournamentUseCase;
+    private final AssignChampionUseCase assignChampionUseCase;
+    private final GetChampionUseCase getChampionUseCase;
     private final AttachRulebookUseCase attachRulebook;
     private final TournamentRestMapper mapper;
 
@@ -37,12 +43,16 @@ public class TournamentController {
                                  FinalizeTournamentUseCase finalizeTournamentUseCase,
                                  CheckTournamentPreparationUseCase checkPreparation,
                                  DeleteTournamentUseCase deleteTournamentUseCase,
+                                 AssignChampionUseCase assignChampionUseCase,
+                                 GetChampionUseCase getChampionUseCase,
                                  AttachRulebookUseCase attachRulebook,
                                  TournamentRestMapper mapper) {
         this.createTournamentUseCase = createTournamentUseCase;
         this.finalizeTournamentUseCase = finalizeTournamentUseCase;
         this.checkPreparation = checkPreparation;
         this.deleteTournamentUseCase = deleteTournamentUseCase;
+        this.assignChampionUseCase = assignChampionUseCase;
+        this.getChampionUseCase = getChampionUseCase;
         this.attachRulebook = attachRulebook;
         this.mapper = mapper;
     }
@@ -73,6 +83,22 @@ public class TournamentController {
         String status = result.isReadyToActivate() ? "completo" : "incompleto";
         return ResponseEntity.ok(new PreparationResponse(status, result.isReadyToActivate(),
                 result.getApprovedTeamsCount(), result.getMissingRequirements()));
+    }
+
+    @PostMapping("/{tournamentId}/matches/{matchId}/champion")
+    public ResponseEntity<ChampionResponse> assignChampion(
+            @PathVariable String tournamentId,
+            @PathVariable String matchId) {
+        ChampionAssignment assignment = assignChampionUseCase.assignChampion(tournamentId, matchId);
+        return ResponseEntity.ok(new ChampionResponse(
+                tournamentId, assignment.championTeamId(), assignment.resolution()));
+    }
+
+    @GetMapping("/{tournamentId}/champion")
+    public ResponseEntity<ChampionResponse> getChampion(@PathVariable String tournamentId) {
+        ChampionAssignment assignment = getChampionUseCase.getChampion(tournamentId);
+        return ResponseEntity.ok(new ChampionResponse(
+                tournamentId, assignment.championTeamId(), assignment.resolution()));
     }
 
     @DeleteMapping("/{id}")

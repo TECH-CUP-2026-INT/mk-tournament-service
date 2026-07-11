@@ -1,7 +1,10 @@
 package co.edu.escuelaing.techcup.tournament.service;
 
+import co.edu.escuelaing.techcup.tournament.exception.ChampionAssignmentNotAllowedException;
+import co.edu.escuelaing.techcup.tournament.exception.ChampionPendingPenaltiesException;
 import co.edu.escuelaing.techcup.tournament.exception.InvalidTournamentDataException;
 import co.edu.escuelaing.techcup.tournament.exception.InvalidTournamentDateRangeException;
+import co.edu.escuelaing.techcup.tournament.exception.MatchNotFoundException;
 import co.edu.escuelaing.techcup.tournament.exception.TeamRemovalNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentCannotBeFinalizedException;
 
@@ -28,6 +31,8 @@ public class Tournament extends AggregateRoot {
     private List<TeamRegistration> teams;
     private List<Match> matches;
     private String rulebookFileId;
+    private String championTeamId;
+    private ChampionResolution championResolution;
 
     private Tournament(String id, String name, int numberOfTeams, BigDecimal cost,
                        LocalDate startDate, LocalDate endDate, LocalDate registrationDeadline,
@@ -74,12 +79,23 @@ public class Tournament extends AggregateRoot {
     public static Tournament reconstruct(String id, String name, int numberOfTeams, BigDecimal cost,
                                          LocalDate startDate, LocalDate endDate,
                                          LocalDate registrationDeadline, TournamentStatus status,
-                                         List<TeamRegistration> teams, List<Match> matches) {
+                                         List<TeamRegistration> teams, List<Match> matches,
+                                         String championTeamId, ChampionResolution championResolution) {
         Tournament t = new Tournament(id, name, numberOfTeams, cost, startDate, endDate,
                 registrationDeadline, status);
         t.teams = teams != null ? new ArrayList<>(teams) : new ArrayList<>();
         t.matches = matches != null ? new ArrayList<>(matches) : new ArrayList<>();
+        t.championTeamId = championTeamId;
+        t.championResolution = championResolution;
         return t;
+    }
+
+    public static Tournament reconstruct(String id, String name, int numberOfTeams, BigDecimal cost,
+                                         LocalDate startDate, LocalDate endDate,
+                                         LocalDate registrationDeadline, TournamentStatus status,
+                                         List<TeamRegistration> teams, List<Match> matches) {
+        return reconstruct(id, name, numberOfTeams, cost, startDate, endDate,
+                registrationDeadline, status, teams, matches, null, null);
     }
 
     /**
@@ -162,6 +178,45 @@ public class Tournament extends AggregateRoot {
         this.status = TournamentStatus.FINISHED;
     }
 
+    /**
+     * Asigna automáticamente al campeón cuando el partido marcado como Final
+     * pasa a estado Finalizado. Si hay empate en tiempo reglamentario, espera
+     * el resultado de penales registrado en el partido.
+     */
+    public ChampionAssignment assignChampionWhenFinalMatchFinished(String matchId) {
+        Match match = findMatch(matchId);
+
+        if (!match.isFinalMatch()) {
+            throw new ChampionAssignmentNotAllowedException(
+                    "Solo se asigna campeón cuando el partido está marcado como Final");
+        }
+        if (!match.isFinished()) {
+            throw new ChampionAssignmentNotAllowedException(
+                    "Solo se asigna campeón cuando el partido final está Finalizado");
+        }
+
+        String winnerTeamId = match.resolveChampionTeamId();
+        if (winnerTeamId == null) {
+            throw new ChampionPendingPenaltiesException(matchId);
+        }
+
+        ChampionResolution resolution = match.isTiedInRegulation()
+                ? ChampionResolution.PENALTIES
+                : ChampionResolution.REGULATION_TIME;
+
+        this.championTeamId = winnerTeamId;
+        this.championResolution = resolution;
+
+        return new ChampionAssignment(championTeamId, championResolution);
+    }
+
+    private Match findMatch(String matchId) {
+        return matches.stream()
+                .filter(m -> m.getMatchId().equals(matchId))
+                .findFirst()
+                .orElseThrow(() -> new MatchNotFoundException(getId(), matchId));
+    }
+
     // --- Validaciones privadas ---
 
     private static void validateName(String name) {
@@ -206,4 +261,6 @@ public class Tournament extends AggregateRoot {
     public void setMatches(List<Match> matches) { this.matches = matches; }
     public String getRulebookFileId() { return rulebookFileId; }
     public void setRulebookFileId(String rulebookFileId) { this.rulebookFileId = rulebookFileId; }
+    public String getChampionTeamId() { return championTeamId; }
+    public ChampionResolution getChampionResolution() { return championResolution; }
 }

@@ -27,4 +27,6 @@ public class TournamentDocument {
     private LocalDate registrationDeadline;
     private String status;
     private String rulebookFileId;
+    private String championTeamId;
+    private String championResolution;
 }
