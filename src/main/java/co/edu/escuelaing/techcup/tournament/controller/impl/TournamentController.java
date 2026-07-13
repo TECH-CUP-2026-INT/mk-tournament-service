@@ -3,6 +3,7 @@ package co.edu.escuelaing.techcup.tournament.controller.impl;
 import co.edu.escuelaing.techcup.tournament.service.ChampionAssignment;
 import co.edu.escuelaing.techcup.tournament.service.PreparationResult;
 import co.edu.escuelaing.techcup.tournament.service.Tournament;
+import co.edu.escuelaing.techcup.tournament.service.ports.ConsultRulebookUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.GetChampionUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.AssignChampionUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.AttachRulebookUseCase;
@@ -37,6 +38,7 @@ public class TournamentController {
     private final AssignChampionUseCase assignChampionUseCase;
     private final GetChampionUseCase getChampionUseCase;
     private final AttachRulebookUseCase attachRulebook;
+    private final ConsultRulebookUseCase consultRulebook;
     private final TournamentRestMapper mapper;
 
     public TournamentController(CreateTournamentUseCase createTournamentUseCase,
@@ -46,6 +48,7 @@ public class TournamentController {
                                  AssignChampionUseCase assignChampionUseCase,
                                  GetChampionUseCase getChampionUseCase,
                                  AttachRulebookUseCase attachRulebook,
+                                 ConsultRulebookUseCase consultRulebook,
                                  TournamentRestMapper mapper) {
         this.createTournamentUseCase = createTournamentUseCase;
         this.finalizeTournamentUseCase = finalizeTournamentUseCase;
@@ -54,6 +57,7 @@ public class TournamentController {
         this.assignChampionUseCase = assignChampionUseCase;
         this.getChampionUseCase = getChampionUseCase;
         this.attachRulebook = attachRulebook;
+        this.consultRulebook = consultRulebook;
         this.mapper = mapper;
     }
 
@@ -107,6 +111,16 @@ public class TournamentController {
         return ResponseEntity.ok(new DeleteTournamentResponse(
                 "El torneo '" + id + "' ha sido eliminado permanentemente."
         ));
+    }
+
+    @GetMapping("/{tournamentId}/rulebook")
+    public ResponseEntity<org.springframework.core.io.InputStreamResource> consultRulebook(
+            @PathVariable String tournamentId) {
+        ConsultRulebookUseCase.RulebookResource resource = consultRulebook.consult(tournamentId);
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "inline; filename=\"" + resource.fileName() + "\"")
+                .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
+                .body(new org.springframework.core.io.InputStreamResource(resource.content()));
     }
 
     @PostMapping("/{tournamentId}/rulebook")

@@ -74,4 +74,15 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleInvalidRulebookFile(InvalidRulebookFileException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(ex.getMessage()));
     }
+
+    @ExceptionHandler(RulebookNotAttachedException.class)
+    public ResponseEntity<co.edu.escuelaing.techcup.tournament.dto.response.RulebookErrorResponse> handleRulebookNotAttached(RulebookNotAttachedException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                new co.edu.escuelaing.techcup.tournament.dto.response.RulebookErrorResponse(
+                        "RULEBOOK_NOT_FOUND",
+                        ex.getMessage(),
+                        "El organizador debe subir el reglamento del torneo antes de que pueda ser consultado"
+                )
+        );
+    }
 }
