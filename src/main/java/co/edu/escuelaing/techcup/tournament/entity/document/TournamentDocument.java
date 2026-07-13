@@ -10,6 +10,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 
 @Document(collection = "tournaments")
 @Getter
@@ -34,6 +35,8 @@ public class TournamentDocument {
     private String rulebookFileId;
     private String championTeamId;
     private String championResolution;
+    private List<TeamRegistrationDocument> teams;
+    private List<MatchDocument> matches;
     private boolean paused;
     // Boolean (no boolean primitivo): así los torneos guardados antes de TCF-154,
     // que no tienen este campo en Mongo, se leen como null y se tratan como activos

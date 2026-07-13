@@ -48,4 +48,10 @@ public class TournamentRepositoryAdapter implements TournamentRepositoryPort {
         return mongoRepository.findByIdAndStatus(id, status.name())
                 .map(TournamentPersistenceMapper::toDomain);
     }
+
+    @Override
+    public Optional<Tournament> findByMatchId(String matchId) {
+        return mongoRepository.findByMatchesMatchId(matchId)
+                .map(TournamentPersistenceMapper::toDomain);
+    }
 }
