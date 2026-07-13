@@ -42,6 +42,12 @@ public class Court extends AggregateRoot {
         this.imageId = imageId;
     }
 
+    public void assignMatch(String matchId) {
+        if (matchId == null || matchId.isBlank())
+            throw new IllegalArgumentException("El id del partido no puede estar vacío");
+        this.matchId = matchId;
+    }
+
     private static void validateTournamentId(String tournamentId) {
         if (tournamentId == null || tournamentId.isBlank())
             throw new InvalidCourtDataException("El torneo es obligatorio para registrar una cancha");

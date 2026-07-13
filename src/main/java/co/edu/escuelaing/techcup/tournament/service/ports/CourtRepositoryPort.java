@@ -5,5 +5,6 @@ import java.util.Optional;
 
 public interface CourtRepositoryPort {
     Court save(Court court);
+    Optional<Court> findById(String id);
     Optional<Court> findByMatchId(String matchId);
 }

@@ -10,6 +10,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 
 @Document(collection = "tournaments")
 @Getter
@@ -34,5 +35,7 @@ public class TournamentDocument {
     private String rulebookFileId;
     private String championTeamId;
     private String championResolution;
+    private List<TeamRegistrationDocument> teams;
+    private List<MatchDocument> matches;
     private boolean paused;
 }
