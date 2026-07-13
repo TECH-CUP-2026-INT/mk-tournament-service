@@ -6,6 +6,7 @@ import co.edu.escuelaing.techcup.tournament.repository.mongo.CourtMongoRepositor
 import co.edu.escuelaing.techcup.tournament.service.Court;
 import co.edu.escuelaing.techcup.tournament.service.ports.CourtRepositoryPort;
 import org.springframework.stereotype.Component;
+import java.util.Optional;
 
 @Component
 public class CourtRepositoryAdapter implements CourtRepositoryPort {
@@ -20,5 +21,10 @@ public class CourtRepositoryAdapter implements CourtRepositoryPort {
     public Court save(Court court) {
         CourtDocument saved = mongoRepository.save(CourtPersistenceMapper.toDocument(court));
         return CourtPersistenceMapper.toDomain(saved);
+    }
+
+    @Override
+    public Optional<Court> findByMatchId(String matchId) {
+        return mongoRepository.findByMatchId(matchId).map(CourtPersistenceMapper::toDomain);
     }
 }
