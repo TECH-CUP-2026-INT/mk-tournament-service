@@ -4,9 +4,11 @@ import co.edu.escuelaing.techcup.tournament.exception.ChampionAssignmentNotAllow
 import co.edu.escuelaing.techcup.tournament.exception.ChampionPendingPenaltiesException;
 import co.edu.escuelaing.techcup.tournament.exception.InvalidTournamentDataException;
 import co.edu.escuelaing.techcup.tournament.exception.InvalidTournamentDateRangeException;
+import co.edu.escuelaing.techcup.tournament.exception.InsufficientApprovedTeamsException;
 import co.edu.escuelaing.techcup.tournament.exception.MatchNotFoundException;
 import co.edu.escuelaing.techcup.tournament.exception.TeamRemovalNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentCannotBeFinalizedException;
+import co.edu.escuelaing.techcup.tournament.exception.TournamentPreparationNotAllowedException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -182,6 +184,34 @@ public class Tournament extends AggregateRoot {
             }
         }
         return affected;
+    }
+
+    /**
+     * Valida que el torneo pueda pasar a Preparación: debe estar Activo
+     * y tener al menos {@value #MIN_APPROVED_TEAMS_TO_ACTIVATE} equipos aprobados.
+     * Se expone por separado de startPreparation() para poder validar
+     * antes de invocar la API externa de generación de fixture.
+     */
+    public void validateReadyForPreparation() {
+        if (status != TournamentStatus.ACTIVE)
+            throw new TournamentPreparationNotAllowedException(
+                    "Solo se puede iniciar la preparación de torneos en estado Activo");
+        long approved = countApprovedTeams();
+        if (approved < MIN_APPROVED_TEAMS_TO_ACTIVATE)
+            throw new InsufficientApprovedTeamsException(
+                    "Se requieren al menos " + MIN_APPROVED_TEAMS_TO_ACTIVATE
+                            + " equipos aprobados para iniciar la preparación, hay " + approved);
+    }
+
+    /**
+     * Pasa el torneo a Preparación adjuntando el fixture ya generado
+     * (ver StartTournamentPreparationService, que llama a la API externa
+     * de generación de fixtures antes de invocar este método).
+     */
+    public void startPreparation(List<Match> generatedMatches) {
+        validateReadyForPreparation();
+        this.matches = new ArrayList<>(generatedMatches);
+        this.status = TournamentStatus.IN_PREPARATION;
     }
 
     public void attachRulebook(String rulebookFileId) {

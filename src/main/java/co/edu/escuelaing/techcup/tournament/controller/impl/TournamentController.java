@@ -30,6 +30,7 @@ import co.edu.escuelaing.techcup.tournament.dto.response.PreparationResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.RulebookResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.TournamentResponse;
 import co.edu.escuelaing.techcup.tournament.mapper.TournamentRestMapper;
+import co.edu.escuelaing.techcup.tournament.service.ports.StartTournamentPreparationUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -53,6 +54,7 @@ public class TournamentController {
     private final RegisterCourtUseCase registerCourtUseCase;
     private final ConsultHistoricalTournamentsUseCase consultHistorical;
     private final ViewRegisteredTeamsUseCase viewRegisteredTeams;
+    private final StartTournamentPreparationUseCase startTournamentPreparation;
     private final ViewMatchupsUseCase viewMatchups;
     private final TournamentRestMapper mapper;
 
@@ -67,6 +69,7 @@ public class TournamentController {
                                  RegisterCourtUseCase registerCourtUseCase,
                                  ConsultHistoricalTournamentsUseCase consultHistorical,
                                  ViewRegisteredTeamsUseCase viewRegisteredTeams,
+                                 StartTournamentPreparationUseCase startTournamentPreparation,
                                  ViewMatchupsUseCase viewMatchups,
                                  TournamentRestMapper mapper) {
         this.createTournamentUseCase = createTournamentUseCase;
@@ -80,6 +83,7 @@ public class TournamentController {
         this.registerCourtUseCase = registerCourtUseCase;
         this.consultHistorical = consultHistorical;
         this.viewRegisteredTeams = viewRegisteredTeams;
+        this.startTournamentPreparation = startTournamentPreparation;
         this.viewMatchups = viewMatchups;
         this.mapper = mapper;
     }
@@ -106,6 +110,12 @@ public class TournamentController {
         Tournament finalized = finalizeTournamentUseCase.finalizeTournament(id);
 
         return ResponseEntity.ok(mapper.toResponse(finalized));
+    }
+
+    @PatchMapping("/{id}/prepare")
+    public ResponseEntity<TournamentResponse> prepare(@PathVariable String id) {
+        Tournament tournament = startTournamentPreparation.startPreparation(id);
+        return ResponseEntity.ok(mapper.toResponse(tournament));
     }
 
     @GetMapping("/{tournamentId}/preparation")
