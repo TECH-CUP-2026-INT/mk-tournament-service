@@ -130,4 +130,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleInvalidScheduledMatchData(InvalidScheduledMatchDataException ex) {
         return ResponseEntity.badRequest().body(new ErrorResponse(ex.getMessage()));
     }
+
+    @ExceptionHandler(InvalidSanctionDataException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidSanctionData(InvalidSanctionDataException ex) {
+        return ResponseEntity.badRequest().body(new ErrorResponse(ex.getMessage()));
+    }
 }
