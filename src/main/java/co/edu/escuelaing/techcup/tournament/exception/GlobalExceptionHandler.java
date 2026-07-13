@@ -90,4 +90,9 @@ public class GlobalExceptionHandler {
                 )
         );
     }
+
+    @ExceptionHandler({InvalidCourtDataException.class, InvalidCourtImageException.class})
+    public ResponseEntity<ErrorResponse> handleInvalidCourtData(RuntimeException ex) {
+        return ResponseEntity.badRequest().body(new ErrorResponse(ex.getMessage()));
+    }
 }

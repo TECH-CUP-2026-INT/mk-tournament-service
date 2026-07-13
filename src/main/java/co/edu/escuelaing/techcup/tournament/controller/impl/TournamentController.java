@@ -1,6 +1,9 @@
 package co.edu.escuelaing.techcup.tournament.controller.impl;
 
+import co.edu.escuelaing.techcup.tournament.exception.InvalidCourtDataException;
 import co.edu.escuelaing.techcup.tournament.service.ChampionAssignment;
+import co.edu.escuelaing.techcup.tournament.service.Court;
+import co.edu.escuelaing.techcup.tournament.service.CourtSection;
 import co.edu.escuelaing.techcup.tournament.service.PreparationResult;
 import co.edu.escuelaing.techcup.tournament.service.Tournament;
 import co.edu.escuelaing.techcup.tournament.service.ports.ConsultHistoricalTournamentsUseCase;
@@ -13,8 +16,11 @@ import co.edu.escuelaing.techcup.tournament.service.ports.CheckTournamentPrepara
 import co.edu.escuelaing.techcup.tournament.service.ports.CreateTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.DeleteTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.FinalizeTournamentUseCase;
+import co.edu.escuelaing.techcup.tournament.service.ports.RegisterCourtUseCase;
+import co.edu.escuelaing.techcup.tournament.service.ports.RegisterCourtUseCase.RegisterCourtCommand;
 import co.edu.escuelaing.techcup.tournament.dto.request.CreateTournamentRequest;
 import co.edu.escuelaing.techcup.tournament.dto.response.ChampionResponse;
+import co.edu.escuelaing.techcup.tournament.dto.response.CourtResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.DeleteTournamentResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.PreparationResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.RulebookResponse;
@@ -40,6 +46,7 @@ public class TournamentController {
     private final GetChampionUseCase getChampionUseCase;
     private final AttachRulebookUseCase attachRulebook;
     private final ConsultRulebookUseCase consultRulebook;
+    private final RegisterCourtUseCase registerCourtUseCase;
     private final ConsultHistoricalTournamentsUseCase consultHistorical;
     private final TournamentRestMapper mapper;
 
@@ -51,6 +58,7 @@ public class TournamentController {
                                  GetChampionUseCase getChampionUseCase,
                                  AttachRulebookUseCase attachRulebook,
                                  ConsultRulebookUseCase consultRulebook,
+                                 RegisterCourtUseCase registerCourtUseCase,
                                  ConsultHistoricalTournamentsUseCase consultHistorical,
                                  TournamentRestMapper mapper) {
         this.createTournamentUseCase = createTournamentUseCase;
@@ -61,6 +69,7 @@ public class TournamentController {
         this.getChampionUseCase = getChampionUseCase;
         this.attachRulebook = attachRulebook;
         this.consultRulebook = consultRulebook;
+        this.registerCourtUseCase = registerCourtUseCase;
         this.consultHistorical = consultHistorical;
         this.mapper = mapper;
     }
@@ -166,6 +175,36 @@ public class TournamentController {
 
         return ResponseEntity.ok(new RulebookResponse(
                 updated.getId(), updated.getRulebookFileId(), "Reglamento adjuntado correctamente"
+        ));
+    }
+
+    @PostMapping("/{tournamentId}/courts")
+    public ResponseEntity<CourtResponse> registerCourt(
+            @PathVariable String tournamentId,
+            @RequestParam("section") String section,
+            @RequestParam(value = "description", required = false) String description,
+            @RequestParam(value = "image", required = false) MultipartFile image) throws IOException {
+
+        CourtSection courtSection;
+        try {
+            courtSection = CourtSection.valueOf(section);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidCourtDataException("Sección de cancha inválida: " + section);
+        }
+
+        Court court = registerCourtUseCase.register(new RegisterCourtCommand(
+                tournamentId,
+                courtSection,
+                description,
+                image != null ? image.getOriginalFilename() : null,
+                image != null ? image.getContentType() : null,
+                image != null ? image.getSize() : null,
+                image != null ? image.getInputStream() : null
+        ));
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(new CourtResponse(
+                court.getId(), court.getTournamentId(), court.getSection().name(),
+                court.getDescription(), court.getImageId(), "Cancha registrada correctamente"
         ));
     }
 }
