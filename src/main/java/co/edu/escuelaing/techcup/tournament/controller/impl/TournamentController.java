@@ -5,6 +5,7 @@ import co.edu.escuelaing.techcup.tournament.service.ChampionAssignment;
 import co.edu.escuelaing.techcup.tournament.service.Court;
 import co.edu.escuelaing.techcup.tournament.service.CourtSection;
 import co.edu.escuelaing.techcup.tournament.service.PreparationResult;
+import co.edu.escuelaing.techcup.tournament.service.RegistrationStatus;
 import co.edu.escuelaing.techcup.tournament.service.Tournament;
 import co.edu.escuelaing.techcup.tournament.service.ports.ConsultHistoricalTournamentsUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.ConsultRulebookUseCase;
@@ -30,15 +31,18 @@ import co.edu.escuelaing.techcup.tournament.service.ports.PauseTournamentUseCase
 import co.edu.escuelaing.techcup.tournament.service.ports.PauseTournamentUseCase.PauseTournamentCommand;
 import co.edu.escuelaing.techcup.tournament.service.ports.InactivateTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.InactivateTournamentUseCase.InactivateTournamentCommand;
+import co.edu.escuelaing.techcup.tournament.service.ports.DisqualifyTeamUseCase;
 import co.edu.escuelaing.techcup.tournament.dto.request.CreateTournamentRequest;
 import co.edu.escuelaing.techcup.tournament.dto.request.EditTournamentRequest;
 import co.edu.escuelaing.techcup.tournament.dto.request.PauseTournamentRequest;
 import co.edu.escuelaing.techcup.tournament.dto.request.InactivateTournamentRequest;
+import co.edu.escuelaing.techcup.tournament.dto.request.DisqualifyTeamRequest;
 import co.edu.escuelaing.techcup.tournament.dto.response.ChampionResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.CourtResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.DeleteTournamentResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.PauseTournamentResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.InactivateTournamentResponse;
+import co.edu.escuelaing.techcup.tournament.dto.response.DisqualifyTeamResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.PreparationResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.RulebookResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.TournamentResponse;
@@ -70,6 +74,7 @@ public class TournamentController {
     private final EditTournamentUseCase editTournamentUseCase;
     private final PauseTournamentUseCase pauseTournamentUseCase;
     private final InactivateTournamentUseCase inactivateTournamentUseCase;
+    private final DisqualifyTeamUseCase disqualifyTeamUseCase;
     private final StartTournamentPreparationUseCase startTournamentPreparation;
     private final ViewMatchupsUseCase viewMatchups;
     private final ViewMatchCourtUseCase viewMatchCourt;
@@ -89,6 +94,7 @@ public class TournamentController {
                                  EditTournamentUseCase editTournamentUseCase,
                                  PauseTournamentUseCase pauseTournamentUseCase,
                                  InactivateTournamentUseCase inactivateTournamentUseCase,
+                                 DisqualifyTeamUseCase disqualifyTeamUseCase,
                                  StartTournamentPreparationUseCase startTournamentPreparation,
                                  ViewMatchupsUseCase viewMatchups,
                                  ViewMatchCourtUseCase viewMatchCourt,
@@ -107,6 +113,7 @@ public class TournamentController {
         this.editTournamentUseCase = editTournamentUseCase;
         this.pauseTournamentUseCase = pauseTournamentUseCase;
         this.inactivateTournamentUseCase = inactivateTournamentUseCase;
+        this.disqualifyTeamUseCase = disqualifyTeamUseCase;
         this.startTournamentPreparation = startTournamentPreparation;
         this.viewMatchups = viewMatchups;
         this.viewMatchCourt = viewMatchCourt;
@@ -343,5 +350,16 @@ public class TournamentController {
 
         return ResponseEntity.ok(new InactivateTournamentResponse(
                 updated.getId(), updated.getStatus(), updated.isActive(), message));
+    }
+
+    @PatchMapping("/{tournamentId}/teams/{teamId}/disqualify")
+    public ResponseEntity<DisqualifyTeamResponse> disqualifyTeam(@PathVariable String tournamentId,
+                                                                   @PathVariable String teamId,
+                                                                   @Valid @RequestBody DisqualifyTeamRequest request) {
+        disqualifyTeamUseCase.disqualify(tournamentId, teamId, request.reason());
+
+        return ResponseEntity.ok(new DisqualifyTeamResponse(
+                tournamentId, teamId, RegistrationStatus.DISQUALIFIED,
+                "El equipo fue descalificado correctamente"));
     }
 }
