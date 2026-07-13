@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.Map;
-
+import co.edu.escuelaing.techcup.tournament.exception.InvalidRulebookFileException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -69,5 +69,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleChampionAssignmentErrors(RuntimeException ex) {
         HttpStatus status = ex instanceof MatchNotFoundException ? HttpStatus.NOT_FOUND : HttpStatus.CONFLICT;
         return ResponseEntity.status(status).body(new ErrorResponse(ex.getMessage()));
+    }
+    @ExceptionHandler(InvalidRulebookFileException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidRulebookFile(InvalidRulebookFileException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(ex.getMessage()));
     }
 }
