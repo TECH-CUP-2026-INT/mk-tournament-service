@@ -6,6 +6,7 @@ import co.edu.escuelaing.techcup.tournament.exception.InvalidTournamentDataExcep
 import co.edu.escuelaing.techcup.tournament.exception.InvalidTournamentDateRangeException;
 import co.edu.escuelaing.techcup.tournament.exception.InsufficientApprovedTeamsException;
 import co.edu.escuelaing.techcup.tournament.exception.MatchNotFoundException;
+import co.edu.escuelaing.techcup.tournament.exception.TeamDisqualificationNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.exception.TeamRemovalNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentCannotBeEditedException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentCannotBeFinalizedException;
@@ -237,6 +238,31 @@ public class Tournament extends AggregateRoot {
             }
         }
         return affected;
+    }
+
+    /**
+     * TC-48: descalifica un equipo del torneo. A diferencia de removeTeam(),
+     * el equipo NO se elimina de la lista: se conserva junto con sus estadísticas
+     * y resultados previos, pero queda excluido de la generación de partidos futuros
+     * (startPreparation() solo toma equipos con estado Aprobado). Es una acción
+     * permanente, a diferencia de la inactivación del torneo.
+     */
+    public void disqualifyTeam(String teamId, DisqualificationReason reason) {
+        assertActive();
+        if (reason == null) {
+            throw new TeamDisqualificationNotAllowedException("El motivo de descalificación es obligatorio");
+        }
+
+        TeamRegistration team = teams.stream()
+                .filter(t -> t.getTeamId().equals(teamId))
+                .findFirst()
+                .orElseThrow(() -> new TeamDisqualificationNotAllowedException("El equipo no está inscrito en este torneo"));
+
+        if (team.getRegistrationStatus() == RegistrationStatus.DISQUALIFIED) {
+            throw new TeamDisqualificationNotAllowedException("El equipo ya está descalificado");
+        }
+
+        team.setRegistrationStatus(RegistrationStatus.DISQUALIFIED);
     }
 
     /**
