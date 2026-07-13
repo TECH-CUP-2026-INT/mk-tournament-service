@@ -100,4 +100,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleTournamentCannotBeEdited(TournamentCannotBeEditedException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
     }
+
+    @ExceptionHandler({TournamentPreparationNotAllowedException.class, InsufficientApprovedTeamsException.class})
+    public ResponseEntity<ErrorResponse> handlePreparationNotAllowed(RuntimeException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(FixtureGenerationFailedException.class)
+    public ResponseEntity<ErrorResponse> handleFixtureGenerationFailed(FixtureGenerationFailedException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(new ErrorResponse(ex.getMessage()));
+    }
 }

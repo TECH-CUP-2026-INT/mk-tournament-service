@@ -10,24 +10,30 @@ public class Court extends AggregateRoot {
     private final CourtSection section;
     private final String description;
     private String imageId;
+    private String matchId;
 
-    private Court(String id, String tournamentId, CourtSection section, String description, String imageId) {
+    private Court(String id, String tournamentId, CourtSection section, String description, String imageId, String matchId) {
         super(id);
         this.tournamentId = tournamentId;
         this.section = section;
         this.description = description;
         this.imageId = imageId;
+        this.matchId = matchId;
     }
 
     public static Court create(String tournamentId, CourtSection section, String description) {
         validateTournamentId(tournamentId);
         validateSection(section);
         validateDescription(description);
-        return new Court(null, tournamentId, section, description, null);
+        return new Court(null, tournamentId, section, description, null, null);
     }
 
     public static Court reconstruct(String id, String tournamentId, CourtSection section, String description, String imageId) {
-        return new Court(id, tournamentId, section, description, imageId);
+        return new Court(id, tournamentId, section, description, imageId, null);
+    }
+
+    public static Court reconstruct(String id, String tournamentId, CourtSection section, String description, String imageId, String matchId) {
+        return new Court(id, tournamentId, section, description, imageId, matchId);
     }
 
     public void attachImage(String imageId) {
@@ -55,4 +61,5 @@ public class Court extends AggregateRoot {
     public CourtSection getSection() { return section; }
     public String getDescription() { return description; }
     public String getImageId() { return imageId; }
+    public String getMatchId() { return matchId; }
 }

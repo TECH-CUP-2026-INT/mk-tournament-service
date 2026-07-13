@@ -3,7 +3,6 @@ package co.edu.escuelaing.techcup.tournament.service.ports;
 import co.edu.escuelaing.techcup.tournament.service.Court;
 import java.util.Optional;
 
-public interface CourtRepositoryPort {
-    Court save(Court court);
-    Optional<Court> findByMatchId(String matchId);
+public interface ViewMatchCourtUseCase {
+    Optional<Court> getCourtByMatch(String matchId);
 }
