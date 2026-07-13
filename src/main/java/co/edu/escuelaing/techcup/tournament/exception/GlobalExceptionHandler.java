@@ -75,6 +75,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(ex.getMessage()));
     }
 
+    @ExceptionHandler(HistoricalTournamentNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleHistoricalNotFound(HistoricalTournamentNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(ex.getMessage()));
+    }
+
     @ExceptionHandler(RulebookNotAttachedException.class)
     public ResponseEntity<co.edu.escuelaing.techcup.tournament.dto.response.RulebookErrorResponse> handleRulebookNotAttached(RulebookNotAttachedException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
