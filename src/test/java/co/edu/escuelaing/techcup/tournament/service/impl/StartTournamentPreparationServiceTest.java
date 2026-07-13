@@ -3,10 +3,10 @@ package co.edu.escuelaing.techcup.tournament.service.impl;
 import co.edu.escuelaing.techcup.tournament.exception.FixtureGenerationFailedException;
 import co.edu.escuelaing.techcup.tournament.exception.InsufficientApprovedTeamsException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentNotFoundException;
+import co.edu.escuelaing.techcup.tournament.service.Enrollment;
+import co.edu.escuelaing.techcup.tournament.service.EnrollmentStatus;
 import co.edu.escuelaing.techcup.tournament.service.Match;
 import co.edu.escuelaing.techcup.tournament.service.MatchStatus;
-import co.edu.escuelaing.techcup.tournament.service.RegistrationStatus;
-import co.edu.escuelaing.techcup.tournament.service.TeamRegistration;
 import co.edu.escuelaing.techcup.tournament.service.Tournament;
 import co.edu.escuelaing.techcup.tournament.service.TournamentFormat;
 import co.edu.escuelaing.techcup.tournament.service.TournamentStatus;
@@ -32,9 +32,9 @@ import static org.mockito.Mockito.when;
 class StartTournamentPreparationServiceTest {
 
     private Tournament buildTournament(TournamentStatus status, int approvedCount) {
-        List<TeamRegistration> teams = new ArrayList<>();
+        List<Enrollment> teams = new ArrayList<>();
         for (int i = 0; i < approvedCount; i++) {
-            teams.add(new TeamRegistration("e" + i, "Equipo " + i, RegistrationStatus.APPROVED));
+            teams.add(new Enrollment("e" + i, "Equipo " + i, EnrollmentStatus.ENROLLED));
         }
         return Tournament.reconstruct(
                 "t1", "TechCup", TournamentType.NORMAL, TournamentFormat.BRACKETS, 8, BigDecimal.ZERO,

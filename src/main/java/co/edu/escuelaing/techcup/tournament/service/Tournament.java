@@ -41,6 +41,7 @@ public class Tournament extends AggregateRoot {
     private LocalTime matchEndTime;
     private TournamentStatus status;
     private List<TeamRegistration> teams;
+    private List<Enrollment> enrollments;
     private List<Match> matches;
     private String rulebookFileId;
     private String championTeamId;
@@ -66,6 +67,7 @@ public class Tournament extends AggregateRoot {
         this.matchEndTime = matchEndTime;
         this.status = status;
         this.teams = new ArrayList<>();
+        this.enrollments = new ArrayList<>();
         this.matches = new ArrayList<>();
     }
 
@@ -116,7 +118,7 @@ public class Tournament extends AggregateRoot {
                                          TournamentStatus status,
                                          List<TeamRegistration> teams, List<Match> matches,
                                          String championTeamId, ChampionResolution championResolution,
-                                         boolean paused, boolean active) {
+                                         boolean paused, boolean active, List<Enrollment> enrollments) {
         Tournament t = new Tournament(id, name, type, format, numberOfTeams, cost, startDate, endDate,
                 registrationDeadline, matchStartTime, matchEndTime, status);
         t.teams = teams != null ? new ArrayList<>(teams) : new ArrayList<>();
@@ -125,7 +127,26 @@ public class Tournament extends AggregateRoot {
         t.championResolution = championResolution;
         t.paused = paused;
         t.active = active;
+        t.enrollments = enrollments != null ? new ArrayList<>(enrollments) : new ArrayList<>();
         return t;
+    }
+
+    /**
+     * Sobrecarga de compatibilidad: reconstruye sin lista de Enrollment
+     * (torneos anteriores a TC-109, o llamadas que no necesitan el estado de pago).
+     */
+    public static Tournament reconstruct(String id, String name, TournamentType type, TournamentFormat format,
+                                         int numberOfTeams, BigDecimal cost,
+                                         LocalDate startDate, LocalDate endDate,
+                                         LocalDate registrationDeadline,
+                                         LocalTime matchStartTime, LocalTime matchEndTime,
+                                         TournamentStatus status,
+                                         List<TeamRegistration> teams, List<Match> matches,
+                                         String championTeamId, ChampionResolution championResolution,
+                                         boolean paused, boolean active) {
+        return reconstruct(id, name, type, format, numberOfTeams, cost, startDate, endDate, registrationDeadline,
+                matchStartTime, matchEndTime, status, teams, matches, championTeamId, championResolution,
+                paused, active, null);
     }
 
     /**
@@ -548,6 +569,8 @@ public class Tournament extends AggregateRoot {
     public void setStatus(TournamentStatus status) { this.status = status; }
     public List<TeamRegistration> getTeams() { return teams; }
     public void setTeams(List<TeamRegistration> teams) { this.teams = teams; }
+    public List<Enrollment> getEnrollments() { return enrollments; }
+    public void setEnrollments(List<Enrollment> enrollments) { this.enrollments = enrollments; }
     public List<Match> getMatches() { return matches; }
     public void setMatches(List<Match> matches) { this.matches = matches; }
     public String getRulebookFileId() { return rulebookFileId; }
