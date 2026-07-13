@@ -11,51 +11,59 @@ import co.edu.escuelaing.techcup.tournament.exception.TournamentCannotBeFinalize
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Tournament extends AggregateRoot {
 
     private static final int MAX_NAME_LENGTH = 100;
-    // TC-25 / TCF-50 (ya aprobado): la cantidad mínima de equipos para CREAR un torneo es 2.
-    private static final int MIN_TEAMS_TO_CREATE = 2;
+    // TCF-52: 3 es el mínimo de equipos para poder armar un triangular.
+    private static final int MIN_TEAMS_TO_CREATE = 3;
     // TC-28: para que un torneo esté "listo para activarse" se requieren al menos 3 equipos aprobados.
     private static final int MIN_APPROVED_TEAMS_TO_ACTIVATE = 3;
 
     private String name;
+    private TournamentType type;
+    private TournamentFormat format;
     private int numberOfTeams;
     private BigDecimal cost;
     private LocalDate startDate;
     private LocalDate endDate;
     private LocalDate registrationDeadline;
+    private LocalTime matchStartTime;
+    private LocalTime matchEndTime;
     private TournamentStatus status;
     private List<TeamRegistration> teams;
     private List<Match> matches;
     private String rulebookFileId;
     private String championTeamId;
     private ChampionResolution championResolution;
-    private TournamentType tournamentType;
-    private TournamentFormat tournamentFormat;
 
-    private Tournament(String id, String name, int numberOfTeams, BigDecimal cost,
+    private Tournament(String id, String name, TournamentType type, TournamentFormat format,
+                       int numberOfTeams, BigDecimal cost,
                        LocalDate startDate, LocalDate endDate, LocalDate registrationDeadline,
+                       LocalTime matchStartTime, LocalTime matchEndTime,
                        TournamentStatus status) {
         super(id);
         this.name = name;
+        this.type = type;
+        this.format = format;
         this.numberOfTeams = numberOfTeams;
         this.cost = cost;
         this.startDate = startDate;
         this.endDate = endDate;
         this.registrationDeadline = registrationDeadline;
+        this.matchStartTime = matchStartTime;
+        this.matchEndTime = matchEndTime;
         this.status = status;
         this.teams = new ArrayList<>();
         this.matches = new ArrayList<>();
-        this.tournamentType = TournamentType.NORMAL;
-        this.tournamentFormat = TournamentFormat.BRACKETS;
     }
 
     public Tournament(String id, String name, TournamentStatus status) {
-        this(id, name, 0, BigDecimal.ZERO, null, null, null, status);
+        this(id, name, TournamentType.NORMAL, TournamentFormat.BRACKETS, 0, BigDecimal.ZERO,
+                null, null, null, null, null, status);
     }
 
     public boolean isDraft() {
@@ -63,56 +71,72 @@ public class Tournament extends AggregateRoot {
     }
 
     /**
-     * TC-25: crea un torneo nuevo. Siempre nace en DRAFT,
-     * sin importar lo que envíe el cliente.
+     * TCF-52: crea un torneo nuevo. Siempre nace en ACTIVE,
+     * sin importar lo que envíe el cliente. Para torneos Lightning,
+     * endDate se deriva automáticamente de startDate (torneo de un solo día).
      */
-    public static Tournament create(String name, int numberOfTeams, BigDecimal cost,
+    public static Tournament create(String name, TournamentType type, TournamentFormat format,
+                                    int numberOfTeams, BigDecimal cost,
                                     LocalDate startDate, LocalDate endDate,
-                                    LocalDate registrationDeadline) {
+                                    LocalDate registrationDeadline,
+                                    LocalTime matchStartTime, LocalTime matchEndTime) {
         validateName(name);
+        validateType(type);
+        validateFormat(format);
         validateNumberOfTeams(numberOfTeams);
         validateCost(cost);
-        validateDateRange(startDate, endDate, registrationDeadline);
-        return new Tournament(null, name, numberOfTeams, cost, startDate, endDate,
-                registrationDeadline, TournamentStatus.DRAFT);
+        validateCommonDates(startDate, registrationDeadline);
+        validateNormalSchedule(type, startDate, endDate);
+        validateLightningSchedule(type, matchStartTime, matchEndTime);
+
+        LocalDate effectiveEndDate = type == TournamentType.LIGHTNING ? startDate : endDate;
+
+        return new Tournament(null, name, type, format, numberOfTeams, cost, startDate,
+                effectiveEndDate, registrationDeadline, matchStartTime, matchEndTime,
+                TournamentStatus.ACTIVE);
     }
 
     /**
      * Reconstruye un torneo desde la base de datos sin aplicar
-     * reglas de creación ni forzar el estado a DRAFT.
+     * reglas de creación ni forzar el estado.
      */
-    public static Tournament reconstruct(String id, String name, int numberOfTeams, BigDecimal cost,
+    public static Tournament reconstruct(String id, String name, TournamentType type, TournamentFormat format,
+                                         int numberOfTeams, BigDecimal cost,
                                          LocalDate startDate, LocalDate endDate,
-                                         LocalDate registrationDeadline, TournamentStatus status,
+                                         LocalDate registrationDeadline,
+                                         LocalTime matchStartTime, LocalTime matchEndTime,
+                                         TournamentStatus status,
                                          List<TeamRegistration> teams, List<Match> matches,
-                                         String championTeamId, ChampionResolution championResolution,
-                                         TournamentType tournamentType, TournamentFormat tournamentFormat) {
-        Tournament t = new Tournament(id, name, numberOfTeams, cost, startDate, endDate,
-                registrationDeadline, status);
+                                         String championTeamId, ChampionResolution championResolution) {
+        Tournament t = new Tournament(id, name, type, format, numberOfTeams, cost, startDate, endDate,
+                registrationDeadline, matchStartTime, matchEndTime, status);
         t.teams = teams != null ? new ArrayList<>(teams) : new ArrayList<>();
         t.matches = matches != null ? new ArrayList<>(matches) : new ArrayList<>();
         t.championTeamId = championTeamId;
         t.championResolution = championResolution;
-        t.tournamentType = tournamentType != null ? tournamentType : TournamentType.NORMAL;
-        t.tournamentFormat = tournamentFormat != null ? tournamentFormat : TournamentFormat.BRACKETS;
         return t;
     }
 
+    /**
+     * Sobrecarga de compatibilidad: reconstruye sin tipo/formato/horas de partido
+     * ni datos de campeón (torneos anteriores a TCF-52 o pruebas que no los necesitan).
+     */
     public static Tournament reconstruct(String id, String name, int numberOfTeams, BigDecimal cost,
                                          LocalDate startDate, LocalDate endDate,
                                          LocalDate registrationDeadline, TournamentStatus status,
                                          List<TeamRegistration> teams, List<Match> matches,
                                          String championTeamId, ChampionResolution championResolution) {
-        return reconstruct(id, name, numberOfTeams, cost, startDate, endDate, registrationDeadline,
-                status, teams, matches, championTeamId, championResolution, null, null);
+        return reconstruct(id, name, TournamentType.NORMAL, TournamentFormat.BRACKETS, numberOfTeams, cost,
+                startDate, endDate, registrationDeadline, null, null, status, teams, matches,
+                championTeamId, championResolution);
     }
 
     public static Tournament reconstruct(String id, String name, int numberOfTeams, BigDecimal cost,
                                          LocalDate startDate, LocalDate endDate,
                                          LocalDate registrationDeadline, TournamentStatus status,
                                          List<TeamRegistration> teams, List<Match> matches) {
-        return reconstruct(id, name, numberOfTeams, cost, startDate, endDate,
-                registrationDeadline, status, teams, matches, null, null);
+        return reconstruct(id, name, numberOfTeams, cost, startDate, endDate, registrationDeadline,
+                status, teams, matches, null, null);
     }
 
     /**
@@ -197,36 +221,55 @@ public class Tournament extends AggregateRoot {
 
     /**
      * TC-41: actualiza cualquier campo editable del torneo. Todos los parámetros
-     * son opcionales (null = no se toca ese campo); solo se validan y aplican
-     * los que llegan con un valor nuevo. No se puede editar un torneo Finalizado.
+     * son opcionales (null = no se toca ese campo). No se puede editar un torneo
+     * Finalizado. Tipo y formato (y las horas de partido asociadas a Lightning)
+     * solo se pueden cambiar mientras el torneo está en estado Activo.
      */
-    public void update(String name, TournamentType tournamentType, TournamentFormat tournamentFormat,
+    public void update(String name, TournamentType type, TournamentFormat format,
                        Integer numberOfTeams, BigDecimal cost, LocalDate registrationDeadline,
-                       LocalDate startDate, LocalDate endDate) {
+                       LocalDate startDate, LocalDate endDate,
+                       LocalTime matchStartTime, LocalTime matchEndTime) {
         if (status == TournamentStatus.FINISHED) {
             throw new TournamentCannotBeEditedException("No se puede editar un torneo en estado Finalizado");
         }
+        boolean changesTypeOrFormat = type != null || format != null || matchStartTime != null || matchEndTime != null;
+        if (changesTypeOrFormat && status != TournamentStatus.ACTIVE) {
+            throw new TournamentCannotBeEditedException(
+                    "El tipo, formato y horario del torneo solo se pueden editar mientras está en estado Activo");
+        }
 
         String newName = name != null ? name : this.name;
+        TournamentType newType = type != null ? type : this.type;
+        TournamentFormat newFormat = format != null ? format : this.format;
         int newNumberOfTeams = numberOfTeams != null ? numberOfTeams : this.numberOfTeams;
         BigDecimal newCost = cost != null ? cost : this.cost;
         LocalDate newRegistrationDeadline = registrationDeadline != null ? registrationDeadline : this.registrationDeadline;
         LocalDate newStartDate = startDate != null ? startDate : this.startDate;
         LocalDate newEndDate = endDate != null ? endDate : this.endDate;
+        LocalTime newMatchStartTime = matchStartTime != null ? matchStartTime : this.matchStartTime;
+        LocalTime newMatchEndTime = matchEndTime != null ? matchEndTime : this.matchEndTime;
 
         validateName(newName);
+        validateType(newType);
+        validateFormat(newFormat);
         validateNumberOfTeams(newNumberOfTeams);
         validateCost(newCost);
-        validateDateRange(newStartDate, newEndDate, newRegistrationDeadline);
+        validateCommonDates(newStartDate, newRegistrationDeadline);
+        validateNormalSchedule(newType, newStartDate, newEndDate);
+        validateLightningSchedule(newType, newMatchStartTime, newMatchEndTime);
+
+        LocalDate effectiveEndDate = newType == TournamentType.LIGHTNING ? newStartDate : newEndDate;
 
         this.name = newName;
+        this.type = newType;
+        this.format = newFormat;
         this.numberOfTeams = newNumberOfTeams;
         this.cost = newCost;
         this.registrationDeadline = newRegistrationDeadline;
         this.startDate = newStartDate;
-        this.endDate = newEndDate;
-        this.tournamentType = tournamentType != null ? tournamentType : this.tournamentType;
-        this.tournamentFormat = tournamentFormat != null ? tournamentFormat : this.tournamentFormat;
+        this.endDate = effectiveEndDate;
+        this.matchStartTime = newMatchStartTime;
+        this.matchEndTime = newMatchEndTime;
     }
 
     /**
@@ -287,18 +330,46 @@ public class Tournament extends AggregateRoot {
             throw new InvalidTournamentDataException("El costo de inscripción no puede ser negativo");
     }
 
-    private static void validateDateRange(LocalDate startDate, LocalDate endDate, LocalDate registrationDeadline) {
-        if (startDate == null || endDate == null || registrationDeadline == null)
-            throw new InvalidTournamentDataException("Las fechas del torneo son obligatorias");
+    private static void validateType(TournamentType type) {
+        if (type == null)
+            throw new InvalidTournamentDataException("El tipo de torneo es obligatorio");
+    }
+
+    private static void validateFormat(TournamentFormat format) {
+        if (format == null)
+            throw new InvalidTournamentDataException("El formato del torneo es obligatorio");
+    }
+
+    private static void validateCommonDates(LocalDate startDate, LocalDate registrationDeadline) {
+        if (startDate == null || registrationDeadline == null)
+            throw new InvalidTournamentDataException("La fecha de inicio y la fecha de cierre de inscripciones son obligatorias");
         if (!startDate.isAfter(registrationDeadline))
             throw new InvalidTournamentDateRangeException("La fecha de inicio debe ser posterior a la fecha de cierre de inscripciones");
+    }
+
+    private static void validateNormalSchedule(TournamentType type, LocalDate startDate, LocalDate endDate) {
+        if (type != TournamentType.NORMAL) return;
+        if (endDate == null)
+            throw new InvalidTournamentDataException("La fecha de fin es obligatoria para torneos de tipo Normal");
         if (endDate.isBefore(startDate))
             throw new InvalidTournamentDateRangeException("La fecha de fin debe ser posterior o igual a la fecha de inicio");
+    }
+
+    private static void validateLightningSchedule(TournamentType type, LocalTime matchStartTime, LocalTime matchEndTime) {
+        if (type != TournamentType.LIGHTNING) return;
+        if (matchStartTime == null || matchEndTime == null)
+            throw new InvalidTournamentDataException("Las horas de inicio y fin del partido son obligatorias para torneos de tipo Lightning");
+        if (!matchEndTime.isAfter(matchStartTime))
+            throw new InvalidTournamentDateRangeException("La hora de fin del partido debe ser posterior a la hora de inicio");
     }
 
     // --- Getters ---
 
     public String getName() { return name; }
+    public TournamentType getType() { return type; }
+    public TournamentFormat getFormat() { return format; }
+    public LocalTime getMatchStartTime() { return matchStartTime; }
+    public LocalTime getMatchEndTime() { return matchEndTime; }
     public int getNumberOfTeams() { return numberOfTeams; }
     public BigDecimal getCost() { return cost; }
     public LocalDate getStartDate() { return startDate; }
@@ -314,6 +385,4 @@ public class Tournament extends AggregateRoot {
     public void setRulebookFileId(String rulebookFileId) { this.rulebookFileId = rulebookFileId; }
     public String getChampionTeamId() { return championTeamId; }
     public ChampionResolution getChampionResolution() { return championResolution; }
-    public TournamentType getTournamentType() { return tournamentType; }
-    public TournamentFormat getTournamentFormat() { return tournamentFormat; }
 }

@@ -22,13 +22,15 @@ public class EditTournamentService implements EditTournamentUseCase {
 
         tournament.update(
                 command.name(),
-                command.tournamentType(),
-                command.tournamentFormat(),
+                command.type(),
+                command.format(),
                 command.numberOfTeams(),
                 command.cost(),
                 command.registrationDeadline(),
                 command.startDate(),
-                command.endDate()
+                command.endDate(),
+                command.matchStartTime(),
+                command.matchEndTime()
         );
 
         return tournamentRepository.save(tournament);

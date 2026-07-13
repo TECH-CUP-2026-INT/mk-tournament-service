@@ -6,6 +6,7 @@ import co.edu.escuelaing.techcup.tournament.service.TournamentFormat;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 public interface EditTournamentUseCase {
 
@@ -14,12 +15,14 @@ public interface EditTournamentUseCase {
     record EditTournamentCommand(
             String tournamentId,
             String name,
-            TournamentType tournamentType,
-            TournamentFormat tournamentFormat,
+            TournamentType type,
+            TournamentFormat format,
             Integer numberOfTeams,
             BigDecimal cost,
             LocalDate registrationDeadline,
             LocalDate startDate,
-            LocalDate endDate
+            LocalDate endDate,
+            LocalTime matchStartTime,
+            LocalTime matchEndTime
     ) {}
 }

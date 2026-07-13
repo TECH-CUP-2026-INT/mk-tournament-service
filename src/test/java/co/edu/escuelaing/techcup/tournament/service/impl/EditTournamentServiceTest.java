@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -32,9 +33,9 @@ class EditTournamentServiceTest {
     }
 
     @Test
-    void edit_camposValidos_actualizaYGuarda() {
+    void edit_camposValidosEnEstadoActivo_actualizaYGuarda() {
         TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
-        Tournament tournament = sampleTournament(TournamentStatus.DRAFT);
+        Tournament tournament = sampleTournament(TournamentStatus.ACTIVE);
 
         when(repositoryMock.findById("1")).thenReturn(Optional.of(tournament));
         when(repositoryMock.save(tournament)).thenReturn(tournament);
@@ -43,15 +44,50 @@ class EditTournamentServiceTest {
 
         EditTournamentCommand command = new EditTournamentCommand(
                 "1", "Copa Febrero", TournamentType.LIGHTNING, TournamentFormat.GROUPS,
-                null, null, null, null, null
+                null, null, null, null, null, LocalTime.of(9, 0), LocalTime.of(18, 0)
         );
 
         Tournament result = service.edit(command);
 
         assertEquals("Copa Febrero", result.getName());
-        assertEquals(TournamentType.LIGHTNING, result.getTournamentType());
-        assertEquals(TournamentFormat.GROUPS, result.getTournamentFormat());
+        assertEquals(TournamentType.LIGHTNING, result.getType());
+        assertEquals(TournamentFormat.GROUPS, result.getFormat());
         verify(repositoryMock).save(tournament);
+    }
+
+    @Test
+    void edit_nombreEnEstadoNoActivoSinTocarTipo_actualizaYGuarda() {
+        TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
+        Tournament tournament = sampleTournament(TournamentStatus.IN_PROGRESS);
+
+        when(repositoryMock.findById("1")).thenReturn(Optional.of(tournament));
+        when(repositoryMock.save(tournament)).thenReturn(tournament);
+
+        EditTournamentService service = new EditTournamentService(repositoryMock);
+
+        EditTournamentCommand command = new EditTournamentCommand(
+                "1", "Copa Febrero", null, null, null, null, null, null, null, null, null
+        );
+
+        Tournament result = service.edit(command);
+
+        assertEquals("Copa Febrero", result.getName());
+        verify(repositoryMock).save(tournament);
+    }
+
+    @Test
+    void edit_tipoEnEstadoNoActivo_lanzaTournamentCannotBeEditedException() {
+        TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
+        Tournament tournament = sampleTournament(TournamentStatus.IN_PROGRESS);
+        when(repositoryMock.findById("1")).thenReturn(Optional.of(tournament));
+
+        EditTournamentService service = new EditTournamentService(repositoryMock);
+
+        EditTournamentCommand command = new EditTournamentCommand(
+                "1", null, TournamentType.LIGHTNING, null, null, null, null, null, null, null, null
+        );
+
+        assertThrows(TournamentCannotBeEditedException.class, () -> service.edit(command));
     }
 
     @Test
@@ -62,7 +98,7 @@ class EditTournamentServiceTest {
         EditTournamentService service = new EditTournamentService(repositoryMock);
 
         EditTournamentCommand command = new EditTournamentCommand(
-                "99", "Nuevo Nombre", null, null, null, null, null, null, null
+                "99", "Nuevo Nombre", null, null, null, null, null, null, null, null, null
         );
 
         assertThrows(TournamentNotFoundException.class, () -> service.edit(command));
@@ -77,7 +113,7 @@ class EditTournamentServiceTest {
         EditTournamentService service = new EditTournamentService(repositoryMock);
 
         EditTournamentCommand command = new EditTournamentCommand(
-                "1", "Nuevo Nombre", null, null, null, null, null, null, null
+                "1", "Nuevo Nombre", null, null, null, null, null, null, null, null, null
         );
 
         assertThrows(TournamentCannotBeEditedException.class, () -> service.edit(command));
@@ -86,13 +122,13 @@ class EditTournamentServiceTest {
     @Test
     void edit_nombreVacio_lanzaInvalidTournamentDataException() {
         TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
-        Tournament tournament = sampleTournament(TournamentStatus.DRAFT);
+        Tournament tournament = sampleTournament(TournamentStatus.ACTIVE);
         when(repositoryMock.findById("1")).thenReturn(Optional.of(tournament));
 
         EditTournamentService service = new EditTournamentService(repositoryMock);
 
         EditTournamentCommand command = new EditTournamentCommand(
-                "1", " ", null, null, null, null, null, null, null
+                "1", " ", null, null, null, null, null, null, null, null, null
         );
 
         assertThrows(InvalidTournamentDataException.class, () -> service.edit(command));

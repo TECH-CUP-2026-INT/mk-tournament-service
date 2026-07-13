@@ -9,7 +9,9 @@ import co.edu.escuelaing.techcup.tournament.service.Tournament;
 import co.edu.escuelaing.techcup.tournament.service.ports.ConsultHistoricalTournamentsUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.ConsultRulebookUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.ViewRegisteredTeamsUseCase;
+import co.edu.escuelaing.techcup.tournament.service.ports.ViewMatchupsUseCase;
 import co.edu.escuelaing.techcup.tournament.dto.response.RegisteredTeamResponse;
+import co.edu.escuelaing.techcup.tournament.dto.response.MatchupResponse;
 import co.edu.escuelaing.techcup.tournament.service.ports.GetChampionUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.AssignChampionUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.AttachRulebookUseCase;
@@ -55,6 +57,7 @@ public class TournamentController {
     private final ConsultHistoricalTournamentsUseCase consultHistorical;
     private final ViewRegisteredTeamsUseCase viewRegisteredTeams;
     private final EditTournamentUseCase editTournamentUseCase;
+    private final ViewMatchupsUseCase viewMatchups;
     private final TournamentRestMapper mapper;
 
     public TournamentController(CreateTournamentUseCase createTournamentUseCase,
@@ -69,6 +72,7 @@ public class TournamentController {
                                  ConsultHistoricalTournamentsUseCase consultHistorical,
                                  ViewRegisteredTeamsUseCase viewRegisteredTeams,
                                  EditTournamentUseCase editTournamentUseCase,
+                                 ViewMatchupsUseCase viewMatchups,
                                  TournamentRestMapper mapper) {
         this.createTournamentUseCase = createTournamentUseCase;
         this.finalizeTournamentUseCase = finalizeTournamentUseCase;
@@ -82,6 +86,7 @@ public class TournamentController {
         this.consultHistorical = consultHistorical;
         this.viewRegisteredTeams = viewRegisteredTeams;
         this.editTournamentUseCase = editTournamentUseCase;
+        this.viewMatchups = viewMatchups;
         this.mapper = mapper;
     }
 
@@ -89,11 +94,15 @@ public class TournamentController {
     public ResponseEntity<TournamentResponse> create(@Valid @RequestBody CreateTournamentRequest request) {
         Tournament newTournament = Tournament.create(
                 request.name(),
+                request.type(),
+                request.format(),
                 request.numberOfTeams(),
                 request.cost(),
                 request.startDate(),
                 request.endDate(),
-                request.registrationDeadline()
+                request.registrationDeadline(),
+                request.matchStartTime(),
+                request.matchEndTime()
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toResponse(createTournamentUseCase.create(newTournament)));
     }
@@ -135,6 +144,24 @@ public class TournamentController {
         return ResponseEntity.ok(new DeleteTournamentResponse(
                 "El torneo '" + id + "' ha sido eliminado permanentemente."
         ));
+    }
+
+    @GetMapping("/{tournamentId}/matchups")
+    public ResponseEntity<java.util.List<MatchupResponse>> getMatchups(
+            @PathVariable String tournamentId) {
+        java.util.List<MatchupResponse> result = viewMatchups.getMatchups(tournamentId)
+                .stream()
+                .map(m -> new MatchupResponse(
+                        m.getMatchId(),
+                        m.getHomeTeamId(),
+                        m.getAwayTeamId(),
+                        m.getStatus(),
+                        m.getHomeScore(),
+                        m.getAwayScore(),
+                        m.isFinalMatch()
+                ))
+                .toList();
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/{tournamentId}/teams")
@@ -239,13 +266,15 @@ public class TournamentController {
         Tournament updated = editTournamentUseCase.edit(new EditTournamentCommand(
                 id,
                 request.name(),
-                request.tournamentType(),
-                request.tournamentFormat(),
+                request.type(),
+                request.format(),
                 request.numberOfTeams(),
                 request.cost(),
                 request.registrationDeadline(),
                 request.startDate(),
-                request.endDate()
+                request.endDate(),
+                request.matchStartTime(),
+                request.matchEndTime()
         ));
 
         return ResponseEntity.ok(mapper.toResponse(updated));
