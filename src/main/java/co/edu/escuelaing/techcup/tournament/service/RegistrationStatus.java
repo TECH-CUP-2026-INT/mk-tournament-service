@@ -4,5 +4,6 @@ public enum RegistrationStatus {
     PENDING,
     APPROVED,
     REJECTED,
-    DISQUALIFIED
+    DISQUALIFIED,
+    INACTIVE
 }

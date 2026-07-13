@@ -7,6 +7,7 @@ import co.edu.escuelaing.techcup.tournament.exception.InvalidTournamentDateRange
 import co.edu.escuelaing.techcup.tournament.exception.InsufficientApprovedTeamsException;
 import co.edu.escuelaing.techcup.tournament.exception.MatchNotFoundException;
 import co.edu.escuelaing.techcup.tournament.exception.TeamDisqualificationNotAllowedException;
+import co.edu.escuelaing.techcup.tournament.exception.TeamInactivationNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.exception.TeamRemovalNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentCannotBeEditedException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentCannotBeFinalizedException;
@@ -284,6 +285,25 @@ public class Tournament extends AggregateRoot {
         }
 
         team.setRegistrationStatus(RegistrationStatus.DISQUALIFIED);
+    }
+
+    /**
+     * TC-44: inactiva un equipo dentro del torneo. Es una medida administrativa
+     * temporal; no implica descalificación ni eliminación del equipo.
+     */
+    public void inactivateTeam(String teamId) {
+        assertActive();
+
+        TeamRegistration team = teams.stream()
+                .filter(t -> t.getTeamId().equals(teamId))
+                .findFirst()
+                .orElseThrow(() -> new TeamInactivationNotAllowedException("El equipo no está inscrito en este torneo"));
+
+        if (team.getRegistrationStatus() == RegistrationStatus.INACTIVE) {
+            throw new TeamInactivationNotAllowedException("El equipo ya está inactivo en este torneo");
+        }
+
+        team.setRegistrationStatus(RegistrationStatus.INACTIVE);
     }
 
     /**

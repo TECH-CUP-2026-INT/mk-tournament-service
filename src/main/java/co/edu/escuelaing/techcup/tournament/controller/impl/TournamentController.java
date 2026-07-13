@@ -36,6 +36,7 @@ import co.edu.escuelaing.techcup.tournament.service.ports.PauseTournamentUseCase
 import co.edu.escuelaing.techcup.tournament.service.ports.InactivateTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.InactivateTournamentUseCase.InactivateTournamentCommand;
 import co.edu.escuelaing.techcup.tournament.service.ports.DisqualifyTeamUseCase;
+import co.edu.escuelaing.techcup.tournament.service.ports.InactivateTeamUseCase;
 import co.edu.escuelaing.techcup.tournament.dto.request.CreateTournamentRequest;
 import co.edu.escuelaing.techcup.tournament.dto.request.EditTournamentRequest;
 import co.edu.escuelaing.techcup.tournament.dto.request.PauseTournamentRequest;
@@ -47,6 +48,7 @@ import co.edu.escuelaing.techcup.tournament.dto.response.DeleteTournamentRespons
 import co.edu.escuelaing.techcup.tournament.dto.response.PauseTournamentResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.InactivateTournamentResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.DisqualifyTeamResponse;
+import co.edu.escuelaing.techcup.tournament.dto.response.InactivateTeamResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.PreparationResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.RulebookResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.TournamentResponse;
@@ -80,6 +82,7 @@ public class TournamentController {
     private final PauseTournamentUseCase pauseTournamentUseCase;
     private final InactivateTournamentUseCase inactivateTournamentUseCase;
     private final DisqualifyTeamUseCase disqualifyTeamUseCase;
+    private final InactivateTeamUseCase inactivateTeamUseCase;
     private final StartTournamentPreparationUseCase startTournamentPreparation;
     private final ViewMatchupsUseCase viewMatchups;
     private final ViewMatchCourtUseCase viewMatchCourt;
@@ -101,6 +104,7 @@ public class TournamentController {
                                  PauseTournamentUseCase pauseTournamentUseCase,
                                  InactivateTournamentUseCase inactivateTournamentUseCase,
                                  DisqualifyTeamUseCase disqualifyTeamUseCase,
+                                 InactivateTeamUseCase inactivateTeamUseCase,
                                  StartTournamentPreparationUseCase startTournamentPreparation,
                                  ViewMatchupsUseCase viewMatchups,
                                  ViewMatchCourtUseCase viewMatchCourt,
@@ -121,6 +125,7 @@ public class TournamentController {
         this.pauseTournamentUseCase = pauseTournamentUseCase;
         this.inactivateTournamentUseCase = inactivateTournamentUseCase;
         this.disqualifyTeamUseCase = disqualifyTeamUseCase;
+        this.inactivateTeamUseCase = inactivateTeamUseCase;
         this.startTournamentPreparation = startTournamentPreparation;
         this.viewMatchups = viewMatchups;
         this.viewMatchCourt = viewMatchCourt;
@@ -397,5 +402,15 @@ public class TournamentController {
         return ResponseEntity.ok(new DisqualifyTeamResponse(
                 tournamentId, teamId, RegistrationStatus.DISQUALIFIED,
                 "El equipo fue descalificado correctamente"));
+    }
+
+    @PatchMapping("/{tournamentId}/teams/{teamId}/inactivate")
+    public ResponseEntity<InactivateTeamResponse> inactivateTeam(@PathVariable String tournamentId,
+                                                                   @PathVariable String teamId) {
+        inactivateTeamUseCase.inactivate(tournamentId, teamId);
+
+        return ResponseEntity.ok(new InactivateTeamResponse(
+                tournamentId, teamId, RegistrationStatus.INACTIVE,
+                "El equipo fue inactivado correctamente"));
     }
 }
