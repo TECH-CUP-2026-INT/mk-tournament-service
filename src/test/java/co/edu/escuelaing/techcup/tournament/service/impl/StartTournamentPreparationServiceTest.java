@@ -7,6 +7,8 @@ import co.edu.escuelaing.techcup.tournament.service.Enrollment;
 import co.edu.escuelaing.techcup.tournament.service.EnrollmentStatus;
 import co.edu.escuelaing.techcup.tournament.service.Match;
 import co.edu.escuelaing.techcup.tournament.service.MatchStatus;
+import co.edu.escuelaing.techcup.tournament.service.RegistrationStatus;
+import co.edu.escuelaing.techcup.tournament.service.TeamRegistration;
 import co.edu.escuelaing.techcup.tournament.service.Tournament;
 import co.edu.escuelaing.techcup.tournament.service.TournamentFormat;
 import co.edu.escuelaing.techcup.tournament.service.TournamentStatus;
@@ -32,15 +34,19 @@ import static org.mockito.Mockito.when;
 class StartTournamentPreparationServiceTest {
 
     private Tournament buildTournament(TournamentStatus status, int approvedCount) {
-        List<Enrollment> teams = new ArrayList<>();
+        List<TeamRegistration> teams = new ArrayList<>();
+        List<Enrollment> enrollments = new ArrayList<>();
         for (int i = 0; i < approvedCount; i++) {
-            teams.add(new Enrollment("e" + i, "Equipo " + i, EnrollmentStatus.ENROLLED));
+            teams.add(new TeamRegistration("e" + i, "Equipo " + i, RegistrationStatus.APPROVED));
+            enrollments.add(new Enrollment("e" + i, "Equipo " + i, EnrollmentStatus.ENROLLED));
         }
-        return Tournament.reconstruct(
+        Tournament tournament = Tournament.reconstruct(
                 "t1", "TechCup", TournamentType.NORMAL, TournamentFormat.BRACKETS, 8, BigDecimal.ZERO,
                 LocalDate.now().plusDays(2), LocalDate.now().plusDays(10), LocalDate.now(),
                 null, null, status, teams, new ArrayList<>(), null, null
         );
+        tournament.setEnrollments(enrollments);
+        return tournament;
     }
 
     @Test

@@ -126,9 +126,10 @@ public class ConsultEnrolledTeamsSteps {
         String tournamentId = tournaments.keySet().stream()
                 .reduce((first, second) -> second).orElseThrow();
         Tournament tournament = tournaments.get(tournamentId);
-        List<Enrollment> teams = new ArrayList<>(tournament.getTeams());
-        teams.add(enrollment);
-        tournament.setTeams(teams);
+        List<Enrollment> enrollments = tournament.getEnrollments() != null
+                ? new ArrayList<>(tournament.getEnrollments()) : new ArrayList<>();
+        enrollments.add(enrollment);
+        tournament.setEnrollments(enrollments);
         return tournamentId;
     }
 }
