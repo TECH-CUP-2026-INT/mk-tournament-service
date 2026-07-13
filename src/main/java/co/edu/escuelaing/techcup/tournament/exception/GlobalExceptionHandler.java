@@ -70,4 +70,9 @@ public class GlobalExceptionHandler {
         HttpStatus status = ex instanceof MatchNotFoundException ? HttpStatus.NOT_FOUND : HttpStatus.CONFLICT;
         return ResponseEntity.status(status).body(new ErrorResponse(ex.getMessage()));
     }
+
+    @ExceptionHandler(RulebookNotAttachedException.class)
+    public ResponseEntity<ErrorResponse> handleRulebookNotAttached(RulebookNotAttachedException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(ex.getMessage()));
+    }
 }
