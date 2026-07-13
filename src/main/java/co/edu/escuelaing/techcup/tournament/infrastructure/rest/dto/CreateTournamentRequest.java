@@ -1,6 +1,8 @@
 // infrastructure/rest/dto/CreateTournamentRequest.java
 package co.edu.escuelaing.techcup.tournament.infrastructure.rest.dto;
 
+import co.edu.escuelaing.techcup.tournament.domain.model.TournamentFormat;
+import co.edu.escuelaing.techcup.tournament.domain.model.TournamentType;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -9,6 +11,7 @@ import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 public record CreateTournamentRequest(
 
@@ -16,7 +19,13 @@ public record CreateTournamentRequest(
         @Size(max = 100, message = "El nombre no puede superar los 100 caracteres")
         String name,
 
-        @Min(value = 2, message = "La cantidad de equipos debe ser mayor o igual a 2")
+        @NotNull(message = "El tipo de torneo es obligatorio")
+        TournamentType type,
+
+        @NotNull(message = "El formato del torneo es obligatorio")
+        TournamentFormat format,
+
+        @Min(value = 3, message = "La cantidad de equipos debe ser mayor o igual a 3")
         int numberOfTeams,
 
         @NotNull(message = "El costo de inscripción es obligatorio")
@@ -26,9 +35,12 @@ public record CreateTournamentRequest(
         @NotNull(message = "La fecha de inicio es obligatoria")
         LocalDate startDate,
 
-        @NotNull(message = "La fecha de fin es obligatoria")
         LocalDate endDate,
 
         @NotNull(message = "La fecha de cierre de inscripciones es obligatoria")
-        LocalDate registrationDeadline
+        LocalDate registrationDeadline,
+
+        LocalTime matchStartTime,
+
+        LocalTime matchEndTime
 ) {}

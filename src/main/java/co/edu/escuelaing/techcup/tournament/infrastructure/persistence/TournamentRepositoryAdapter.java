@@ -32,11 +32,15 @@ public class TournamentRepositoryAdapter implements TournamentRepositoryPort {
         return new TournamentDocument(
                 tournament.getId(),
                 tournament.getName(),
+                tournament.getType().name(),
+                tournament.getFormat().name(),
                 tournament.getNumberOfTeams(),
                 tournament.getCost(),
                 tournament.getStartDate(),
                 tournament.getEndDate(),
                 tournament.getRegistrationDeadline(),
+                tournament.getMatchStartTime(),
+                tournament.getMatchEndTime(),
                 tournament.getStatus().name(),
                 tournament.getRulebookFileId()
         );
@@ -46,11 +50,15 @@ public class TournamentRepositoryAdapter implements TournamentRepositoryPort {
         Tournament tournament = Tournament.reconstruct(
                 document.getId(),
                 document.getName(),
+                TournamentType.valueOf(document.getType()),
+                TournamentFormat.valueOf(document.getFormat()),
                 document.getNumberOfTeams(),
                 document.getCost(),
                 document.getStartDate(),
                 document.getEndDate(),
                 document.getRegistrationDeadline(),
+                document.getMatchStartTime(),
+                document.getMatchEndTime(),
                 TournamentStatus.valueOf(document.getStatus()),
                 new ArrayList<>(),
                 new ArrayList<>()

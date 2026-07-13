@@ -14,10 +14,11 @@ class TournamentDomainTest {
 
     private Tournament buildTournament(TournamentStatus status, List<TeamRegistration> teams) {
         Tournament t = Tournament.reconstruct(
-                "t1", "TechCup", 4, BigDecimal.ZERO,
+                "t1", "TechCup", TournamentType.NORMAL, TournamentFormat.BRACKETS, 4, BigDecimal.ZERO,
                 LocalDate.now().plusDays(2),
                 LocalDate.now().plusDays(10),
                 LocalDate.now(),
+                null, null,
                 status,
                 new ArrayList<>(teams),
                 new ArrayList<>()
@@ -53,8 +54,9 @@ class TournamentDomainTest {
     @Test
     void preparation_sinFechas_retornaIncompleto() {
         Tournament t = Tournament.reconstruct(
-                "t1", "TechCup", 4, BigDecimal.ZERO,
+                "t1", "TechCup", TournamentType.NORMAL, TournamentFormat.BRACKETS, 4, BigDecimal.ZERO,
                 null, null, null,
+                null, null,
                 TournamentStatus.DRAFT,
                 new ArrayList<>(List.of(
                         new TeamRegistration("e1", "E1", RegistrationStatus.APPROVED),

@@ -5,6 +5,7 @@ import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidTournamentDa
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,48 +15,71 @@ public class Tournament extends AggregateRoot {
     private static final int MIN_TEAMS = 3;
 
     private final String name;
+    private final TournamentType type;
+    private final TournamentFormat format;
     private final int numberOfTeams;
     private final BigDecimal cost;
     private final LocalDate startDate;
     private final LocalDate endDate;
     private final LocalDate registrationDeadline;
+    private final LocalTime matchStartTime;
+    private final LocalTime matchEndTime;
     private TournamentStatus status;
     private List<TeamRegistration> teams;
     private List<Match> matches;
     private String rulebookFileId;
 
-    private Tournament(String id, String name, int numberOfTeams, BigDecimal cost,
+    private Tournament(String id, String name, TournamentType type, TournamentFormat format,
+                       int numberOfTeams, BigDecimal cost,
                        LocalDate startDate, LocalDate endDate, LocalDate registrationDeadline,
+                       LocalTime matchStartTime, LocalTime matchEndTime,
                        TournamentStatus status) {
         super(id);
         this.name = name;
+        this.type = type;
+        this.format = format;
         this.numberOfTeams = numberOfTeams;
         this.cost = cost;
         this.startDate = startDate;
         this.endDate = endDate;
         this.registrationDeadline = registrationDeadline;
+        this.matchStartTime = matchStartTime;
+        this.matchEndTime = matchEndTime;
         this.status = status;
         this.teams = new ArrayList<>();
         this.matches = new ArrayList<>();
     }
 
-    public static Tournament create(String name, int numberOfTeams, BigDecimal cost,
+    public static Tournament create(String name, TournamentType type, TournamentFormat format,
+                                    int numberOfTeams, BigDecimal cost,
                                     LocalDate startDate, LocalDate endDate,
-                                    LocalDate registrationDeadline) {
+                                    LocalDate registrationDeadline,
+                                    LocalTime matchStartTime, LocalTime matchEndTime) {
         validateName(name);
+        validateType(type);
+        validateFormat(format);
         validateNumberOfTeams(numberOfTeams);
         validateCost(cost);
-        validateDateRange(startDate, endDate, registrationDeadline);
-        return new Tournament(null, name, numberOfTeams, cost, startDate, endDate,
-                registrationDeadline, TournamentStatus.DRAFT);
+        validateCommonDates(startDate, registrationDeadline);
+        validateNormalSchedule(type, startDate, endDate);
+        validateLightningSchedule(type, matchStartTime, matchEndTime);
+
+        LocalDate effectiveEndDate = type == TournamentType.LIGHTNING ? startDate : endDate;
+
+        return new Tournament(null, name, type, format, numberOfTeams, cost, startDate,
+                effectiveEndDate, registrationDeadline, matchStartTime, matchEndTime,
+                TournamentStatus.ACTIVE);
     }
 
-    public static Tournament reconstruct(String id, String name, int numberOfTeams, BigDecimal cost,
+    public static Tournament reconstruct(String id, String name, TournamentType type, TournamentFormat format,
+                                         int numberOfTeams, BigDecimal cost,
                                          LocalDate startDate, LocalDate endDate,
-                                         LocalDate registrationDeadline, TournamentStatus status,
+                                         LocalDate registrationDeadline,
+                                         LocalTime matchStartTime, LocalTime matchEndTime,
+                                         TournamentStatus status,
                                          List<TeamRegistration> teams, List<Match> matches) {
-        Tournament t = new Tournament(id, name, numberOfTeams, cost, startDate, endDate,
-                registrationDeadline, status);
+        Tournament t = new Tournament(id, name, type, format, numberOfTeams, cost, startDate, endDate,
+                registrationDeadline, matchStartTime, matchEndTime, status);
         t.teams = teams != null ? new ArrayList<>(teams) : new ArrayList<>();
         t.matches = matches != null ? new ArrayList<>(matches) : new ArrayList<>();
         return t;
@@ -133,18 +157,46 @@ public class Tournament extends AggregateRoot {
             throw new InvalidTournamentDataException("El costo de inscripción no puede ser negativo");
     }
 
-    private static void validateDateRange(LocalDate startDate, LocalDate endDate, LocalDate registrationDeadline) {
-        if (startDate == null || endDate == null || registrationDeadline == null)
-            throw new InvalidTournamentDataException("Las fechas del torneo son obligatorias");
+    private static void validateType(TournamentType type) {
+        if (type == null)
+            throw new InvalidTournamentDataException("El tipo de torneo es obligatorio");
+    }
+
+    private static void validateFormat(TournamentFormat format) {
+        if (format == null)
+            throw new InvalidTournamentDataException("El formato del torneo es obligatorio");
+    }
+
+    private static void validateCommonDates(LocalDate startDate, LocalDate registrationDeadline) {
+        if (startDate == null || registrationDeadline == null)
+            throw new InvalidTournamentDataException("La fecha de inicio y la fecha de cierre de inscripciones son obligatorias");
         if (!startDate.isAfter(registrationDeadline))
             throw new InvalidTournamentDateRangeException("La fecha de inicio debe ser posterior a la fecha de cierre de inscripciones");
+    }
+
+    private static void validateNormalSchedule(TournamentType type, LocalDate startDate, LocalDate endDate) {
+        if (type != TournamentType.NORMAL) return;
+        if (endDate == null)
+            throw new InvalidTournamentDataException("La fecha de fin es obligatoria para torneos de tipo Normal");
         if (endDate.isBefore(startDate))
             throw new InvalidTournamentDateRangeException("La fecha de fin debe ser posterior o igual a la fecha de inicio");
+    }
+
+    private static void validateLightningSchedule(TournamentType type, LocalTime matchStartTime, LocalTime matchEndTime) {
+        if (type != TournamentType.LIGHTNING) return;
+        if (matchStartTime == null || matchEndTime == null)
+            throw new InvalidTournamentDataException("Las horas de inicio y fin del partido son obligatorias para torneos de tipo Lightning");
+        if (!matchEndTime.isAfter(matchStartTime))
+            throw new InvalidTournamentDateRangeException("La hora de fin del partido debe ser posterior a la hora de inicio");
     }
 
     // --- Getters ---
 
     public String getName() { return name; }
+    public TournamentType getType() { return type; }
+    public TournamentFormat getFormat() { return format; }
+    public LocalTime getMatchStartTime() { return matchStartTime; }
+    public LocalTime getMatchEndTime() { return matchEndTime; }
     public int getNumberOfTeams() { return numberOfTeams; }
     public BigDecimal getCost() { return cost; }
     public LocalDate getStartDate() { return startDate; }
