@@ -2,7 +2,7 @@ package co.edu.escuelaing.techcup.tournament.bdd.steps;
 
 import co.edu.escuelaing.techcup.tournament.service.impl.DeleteTournamentService;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentNotFoundException;
-import co.edu.escuelaing.techcup.tournament.exception.TournamentNotDraftException;
+import co.edu.escuelaing.techcup.tournament.exception.TournamentCannotBeDeletedException;
 import co.edu.escuelaing.techcup.tournament.service.Tournament;
 import co.edu.escuelaing.techcup.tournament.service.TournamentStatus;
 import co.edu.escuelaing.techcup.tournament.service.ports.TournamentRepositoryPort;
@@ -59,7 +59,7 @@ public class DeleteTournamentSteps {
     @Then("the deletion should be rejected with a business rule violation")
     public void theDeletionShouldBeRejectedWithABusinessRuleViolation() {
         assertNotNull(thrownException, "An exception should have been thrown");
-        assertInstanceOf(TournamentNotDraftException.class, thrownException);
+        assertInstanceOf(TournamentCannotBeDeletedException.class, thrownException);
         verify(repository, never()).deleteById(anyString());
     }
 

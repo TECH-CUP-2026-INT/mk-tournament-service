@@ -1,7 +1,7 @@
 package co.edu.escuelaing.techcup.tournament.service.impl;
 
 import co.edu.escuelaing.techcup.tournament.exception.TournamentNotFoundException;
-import co.edu.escuelaing.techcup.tournament.exception.TournamentNotDraftException;
+import co.edu.escuelaing.techcup.tournament.exception.TournamentCannotBeDeletedException;
 import co.edu.escuelaing.techcup.tournament.service.Tournament;
 import co.edu.escuelaing.techcup.tournament.service.TournamentStatus;
 import co.edu.escuelaing.techcup.tournament.service.ports.TournamentRepositoryPort;
@@ -28,10 +28,10 @@ class DeleteTournamentServiceTest {
     }
 
     @Test
-    @DisplayName("TC-29: Debe eliminar el torneo cuando el estado es DRAFT")
-    void shouldDeleteTournamentWhenStatusIsDraft() {
+    @DisplayName("TC-51: Debe eliminar el torneo cuando el estado es FINISHED")
+    void shouldDeleteTournamentWhenStatusIsFinished() {
         String id = "t-001";
-        Tournament tournament = new Tournament(id, "TechCup 2026", TournamentStatus.DRAFT);
+        Tournament tournament = new Tournament(id, "TechCup 2026", TournamentStatus.FINISHED);
         when(repository.findById(id)).thenReturn(Optional.of(tournament));
 
         assertDoesNotThrow(() -> service.delete(id));
@@ -40,15 +40,15 @@ class DeleteTournamentServiceTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = TournamentStatus.class, names = {"ACTIVE", "IN_PREPARATION", "IN_PROGRESS", "FINISHED"})
-    @DisplayName("TC-29: Debe lanzar TournamentNotDraftException para cualquier estado que no sea DRAFT")
-    void shouldThrowExceptionWhenTournamentIsNotDraft(TournamentStatus status) {
+    @EnumSource(value = TournamentStatus.class, names = {"DRAFT", "ACTIVE", "IN_PREPARATION", "IN_PROGRESS"})
+    @DisplayName("TC-51: Debe lanzar TournamentCannotBeDeletedException para cualquier estado que no sea FINISHED")
+    void shouldThrowExceptionWhenTournamentIsNotFinished(TournamentStatus status) {
         String id = "t-002";
         Tournament tournament = new Tournament(id, "TechCup 2026", status);
         when(repository.findById(id)).thenReturn(Optional.of(tournament));
 
-        TournamentNotDraftException ex = assertThrows(
-                TournamentNotDraftException.class,
+        TournamentCannotBeDeletedException ex = assertThrows(
+                TournamentCannotBeDeletedException.class,
                 () -> service.delete(id)
         );
 
@@ -57,7 +57,7 @@ class DeleteTournamentServiceTest {
     }
 
     @Test
-    @DisplayName("TC-29: Debe lanzar TournamentNotFoundException cuando el torneo no existe")
+    @DisplayName("TC-51: Debe lanzar TournamentNotFoundException cuando el torneo no existe")
     void shouldThrowExceptionWhenTournamentNotFound() {
         String id = "t-999";
         when(repository.findById(id)).thenReturn(Optional.empty());

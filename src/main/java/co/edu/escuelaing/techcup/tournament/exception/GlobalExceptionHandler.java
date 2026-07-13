@@ -6,7 +6,7 @@ import co.edu.escuelaing.techcup.tournament.exception.MatchNotFoundException;
 import co.edu.escuelaing.techcup.tournament.exception.InvalidTournamentDateRangeException;
 import co.edu.escuelaing.techcup.tournament.exception.TeamRemovalNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentCannotBeFinalizedException;
-import co.edu.escuelaing.techcup.tournament.exception.TournamentNotDraftException;
+import co.edu.escuelaing.techcup.tournament.exception.TournamentCannotBeDeletedException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentNotFoundException;
 import co.edu.escuelaing.techcup.tournament.dto.response.ErrorResponse;
 import org.springframework.http.HttpStatus;
@@ -26,8 +26,8 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse(ex.getMessage()));
     }
 
-    @ExceptionHandler(TournamentNotDraftException.class)
-    public ResponseEntity<ErrorResponse> handleNotDraft(TournamentNotDraftException ex) {
+    @ExceptionHandler(TournamentCannotBeDeletedException.class)
+    public ResponseEntity<ErrorResponse> handleCannotBeDeleted(TournamentCannotBeDeletedException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(new ErrorResponse(ex.getMessage()));
     }
