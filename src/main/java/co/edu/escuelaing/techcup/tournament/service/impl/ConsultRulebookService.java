@@ -25,6 +25,8 @@ public class ConsultRulebookService implements ConsultRulebookUseCase {
         Tournament tournament = tournamentRepository.findById(tournamentId)
                 .orElseThrow(() -> new TournamentNotFoundException(tournamentId));
 
+        tournament.assertActive();
+
         String fileId = tournament.getRulebookFileId();
         if (fileId == null || fileId.isBlank()) {
             throw new RulebookNotAttachedException(tournamentId);

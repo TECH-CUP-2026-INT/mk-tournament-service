@@ -19,6 +19,7 @@ public class CheckTournamentPreparationService implements CheckTournamentPrepara
     public PreparationResult check(String tournamentId) {
         Tournament tournament = repository.findById(tournamentId)
                 .orElseThrow(() -> new IllegalArgumentException("Torneo no encontrado: " + tournamentId));
+        tournament.assertActive();
         return tournament.checkPreparation();
     }
 }

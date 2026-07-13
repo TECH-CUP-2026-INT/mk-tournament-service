@@ -22,6 +22,7 @@ public class ViewRegisteredTeamsService implements ViewRegisteredTeamsUseCase {
     public List<TeamRegistration> getTeams(String tournamentId) {
         Tournament tournament = tournamentRepository.findById(tournamentId)
                 .orElseThrow(() -> new TournamentNotFoundException(tournamentId));
+        tournament.assertActive();
         return tournament.getTeams();
     }
 }

@@ -40,7 +40,8 @@ public class TournamentPersistenceMapper {
                 document.getChampionResolution() != null
                         ? ChampionResolution.valueOf(document.getChampionResolution())
                         : null,
-                document.isPaused()
+                document.isPaused(),
+                document.getActive() == null || document.getActive()
         );
     }
 
@@ -63,7 +64,8 @@ public class TournamentPersistenceMapper {
                 domain.getChampionResolution() != null ? domain.getChampionResolution().name() : null,
                 toTeamDocuments(domain.getTeams()),
                 toMatchDocuments(domain.getMatches()),
-                domain.isPaused()
+                domain.isPaused(),
+                domain.isActive()
         );
     }
 
