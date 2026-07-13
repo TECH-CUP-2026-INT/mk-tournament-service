@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -14,18 +15,88 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class TournamentTest {
 
     @Test
-    void create_withValidData_createsTournamentInDraftStatus() {
+    void create_withValidNormalData_createsTournamentInActiveStatus() {
         Tournament tournament = Tournament.create(
-                "Copa Enero",
-                8,
-                BigDecimal.valueOf(50000),
+                "Copa Enero", TournamentType.NORMAL, TournamentFormat.BRACKETS,
+                8, BigDecimal.valueOf(50000),
                 LocalDate.of(2026, 3, 1),
                 LocalDate.of(2026, 3, 20),
-                LocalDate.of(2026, 2, 20)
+                LocalDate.of(2026, 2, 20),
+                null, null
         );
 
         assertEquals("Copa Enero", tournament.getName());
-        assertEquals(TournamentStatus.DRAFT, tournament.getStatus());
+        assertEquals(TournamentStatus.ACTIVE, tournament.getStatus());
+    }
+
+    @Test
+    void create_withValidLightningData_derivesEndDateFromStartDate() {
+        Tournament tournament = Tournament.create(
+                "Copa Relámpago", TournamentType.LIGHTNING, TournamentFormat.GROUPS,
+                8, BigDecimal.valueOf(50000),
+                LocalDate.of(2026, 3, 1),
+                null,
+                LocalDate.of(2026, 2, 20),
+                LocalTime.of(9, 0), LocalTime.of(18, 0)
+        );
+
+        assertEquals(TournamentStatus.ACTIVE, tournament.getStatus());
+        assertEquals(LocalDate.of(2026, 3, 1), tournament.getEndDate());
+    }
+
+    @Test
+    void create_lightningWithoutTimes_throwsException() {
+        assertThrows(InvalidTournamentDataException.class,
+                () -> Tournament.create(
+                        "Copa Relámpago", TournamentType.LIGHTNING, TournamentFormat.GROUPS,
+                        8, BigDecimal.valueOf(50000),
+                        LocalDate.of(2026, 3, 1), null, LocalDate.of(2026, 2, 20),
+                        null, null
+                ));
+    }
+
+    @Test
+    void create_lightningWithEndTimeNotAfterStartTime_throwsException() {
+        assertThrows(InvalidTournamentDateRangeException.class,
+                () -> Tournament.create(
+                        "Copa Relámpago", TournamentType.LIGHTNING, TournamentFormat.GROUPS,
+                        8, BigDecimal.valueOf(50000),
+                        LocalDate.of(2026, 3, 1), null, LocalDate.of(2026, 2, 20),
+                        LocalTime.of(18, 0), LocalTime.of(9, 0)
+                ));
+    }
+
+    @Test
+    void create_normalWithoutEndDate_throwsException() {
+        assertThrows(InvalidTournamentDataException.class,
+                () -> Tournament.create(
+                        "Copa Enero", TournamentType.NORMAL, TournamentFormat.BRACKETS,
+                        8, BigDecimal.valueOf(50000),
+                        LocalDate.of(2026, 3, 1), null, LocalDate.of(2026, 2, 20),
+                        null, null
+                ));
+    }
+
+    @Test
+    void create_withNullType_throwsException() {
+        assertThrows(InvalidTournamentDataException.class,
+                () -> Tournament.create(
+                        "Copa Enero", null, TournamentFormat.BRACKETS,
+                        8, BigDecimal.valueOf(50000),
+                        LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 20), LocalDate.of(2026, 2, 20),
+                        null, null
+                ));
+    }
+
+    @Test
+    void create_withNullFormat_throwsException() {
+        assertThrows(InvalidTournamentDataException.class,
+                () -> Tournament.create(
+                        "Copa Enero", TournamentType.NORMAL, null,
+                        8, BigDecimal.valueOf(50000),
+                        LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 20), LocalDate.of(2026, 2, 20),
+                        null, null
+                ));
     }
 
     @Test
@@ -33,10 +104,12 @@ class TournamentTest {
         InvalidTournamentDateRangeException exception = assertThrows(
                 InvalidTournamentDateRangeException.class,
                 () -> Tournament.create(
-                        "Copa Enero", 8, BigDecimal.valueOf(50000),
+                        "Copa Enero", TournamentType.NORMAL, TournamentFormat.BRACKETS,
+                        8, BigDecimal.valueOf(50000),
                         LocalDate.of(2026, 3, 1),
                         LocalDate.of(2026, 3, 20),
-                        LocalDate.of(2026, 3, 1) // igual a startDate, no es anterior
+                        LocalDate.of(2026, 3, 1), // igual a startDate, no es anterior
+                        null, null
                 )
         );
 
@@ -49,10 +122,12 @@ class TournamentTest {
         InvalidTournamentDateRangeException exception = assertThrows(
                 InvalidTournamentDateRangeException.class,
                 () -> Tournament.create(
-                        "Copa Enero", 8, BigDecimal.valueOf(50000),
+                        "Copa Enero", TournamentType.NORMAL, TournamentFormat.BRACKETS,
+                        8, BigDecimal.valueOf(50000),
                         LocalDate.of(2026, 3, 10),
                         LocalDate.of(2026, 3, 5), // antes que startDate
-                        LocalDate.of(2026, 2, 20)
+                        LocalDate.of(2026, 2, 20),
+                        null, null
                 )
         );
 
@@ -64,8 +139,10 @@ class TournamentTest {
     void create_withBlankName_throwsException() {
         assertThrows(InvalidTournamentDataException.class,
                 () -> Tournament.create(
-                        " ", 8, BigDecimal.valueOf(50000),
-                        LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 20), LocalDate.of(2026, 2, 20)
+                        " ", TournamentType.NORMAL, TournamentFormat.BRACKETS,
+                        8, BigDecimal.valueOf(50000),
+                        LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 20), LocalDate.of(2026, 2, 20),
+                        null, null
                 ));
     }
 
@@ -73,8 +150,10 @@ class TournamentTest {
     void create_withFewerThanMinimumTeams_throwsException() {
         assertThrows(InvalidTournamentDataException.class,
                 () -> Tournament.create(
-                        "Copa Enero", 1, BigDecimal.valueOf(50000),
-                        LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 20), LocalDate.of(2026, 2, 20)
+                        "Copa Enero", TournamentType.NORMAL, TournamentFormat.BRACKETS,
+                        1, BigDecimal.valueOf(50000),
+                        LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 20), LocalDate.of(2026, 2, 20),
+                        null, null
                 ));
     }
 
@@ -82,8 +161,10 @@ class TournamentTest {
     void create_withNegativeCost_throwsException() {
         assertThrows(InvalidTournamentDataException.class,
                 () -> Tournament.create(
-                        "Copa Enero", 8, BigDecimal.valueOf(-1),
-                        LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 20), LocalDate.of(2026, 2, 20)
+                        "Copa Enero", TournamentType.NORMAL, TournamentFormat.BRACKETS,
+                        8, BigDecimal.valueOf(-1),
+                        LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 20), LocalDate.of(2026, 2, 20),
+                        null, null
                 ));
     }
 

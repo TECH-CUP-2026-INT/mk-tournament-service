@@ -83,11 +83,15 @@ public class TournamentController {
     public ResponseEntity<TournamentResponse> create(@Valid @RequestBody CreateTournamentRequest request) {
         Tournament newTournament = Tournament.create(
                 request.name(),
+                request.type(),
+                request.format(),
                 request.numberOfTeams(),
                 request.cost(),
                 request.startDate(),
                 request.endDate(),
-                request.registrationDeadline()
+                request.registrationDeadline(),
+                request.matchStartTime(),
+                request.matchEndTime()
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toResponse(createTournamentUseCase.create(newTournament)));
     }
