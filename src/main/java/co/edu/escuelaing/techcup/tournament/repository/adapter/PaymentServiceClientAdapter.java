@@ -1,11 +1,14 @@
 package co.edu.escuelaing.techcup.tournament.repository.adapter;
 
+import co.edu.escuelaing.techcup.tournament.exception.PaymentOrderCreationFailedException;
 import co.edu.escuelaing.techcup.tournament.service.PaymentOrderStatus;
 import co.edu.escuelaing.techcup.tournament.service.ports.PaymentServiceClientPort;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+
+import java.math.BigDecimal;
 
 /**
  * Cliente HTTP hacia el Payment Service (GET /payment-orders/{enrollmentId}).
@@ -46,5 +49,26 @@ public class PaymentServiceClientAdapter implements PaymentServiceClientPort {
         }
     }
 
+    @Override
+    public PaymentOrderReference createOrder(String enrollmentId, String teamId, String tournamentId, BigDecimal amount) {
+        try {
+            CreateOrderResponse response = restClient.post()
+                    .uri("/payment-orders")
+                    .body(new CreateOrderRequest(enrollmentId, teamId, tournamentId, amount))
+                    .retrieve()
+                    .body(CreateOrderResponse.class);
+            if (response == null) {
+                throw new IllegalStateException("Respuesta vacía del Payment Service");
+            }
+            return new PaymentOrderReference(response.paymentOrderId(), response.status());
+        } catch (Exception ex) {
+            throw new PaymentOrderCreationFailedException(enrollmentId, ex);
+        }
+    }
+
     private record PaymentOrderResponse(PaymentOrderStatus status) {}
+
+    private record CreateOrderRequest(String enrollmentId, String teamId, String tournamentId, BigDecimal amount) {}
+
+    private record CreateOrderResponse(String paymentOrderId, PaymentOrderStatus status) {}
 }

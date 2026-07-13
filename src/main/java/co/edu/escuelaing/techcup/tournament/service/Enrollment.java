@@ -50,4 +50,22 @@ public class Enrollment {
 
     public LocalDateTime getReservationExpiresAt() { return reservationExpiresAt; }
     public void setReservationExpiresAt(LocalDateTime reservationExpiresAt) { this.reservationExpiresAt = reservationExpiresAt; }
+
+    /**
+     * SyncEnrollmentStatusService: el Payment Service confirmó el pago
+     * (PaymentOrderStatus.APPROVED) — la inscripción queda confirmada.
+     */
+    public void markEnrolled(LocalDateTime confirmationDate) {
+        this.status = EnrollmentStatus.ENROLLED;
+        this.confirmationDate = confirmationDate;
+    }
+
+    /**
+     * SyncEnrollmentStatusService: el Payment Service rechazó el pago
+     * (PaymentOrderStatus.REJECTED) — el cupo queda libre automáticamente,
+     * ya que availableSlots se calcula en vivo sobre ENROLLED+RESERVED.
+     */
+    public void markRejected() {
+        this.status = EnrollmentStatus.REJECTED;
+    }
 }

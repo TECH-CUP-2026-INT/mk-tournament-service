@@ -10,4 +10,5 @@ public interface TournamentMongoRepository extends MongoRepository<TournamentDoc
     List<TournamentDocument> findAllByStatus(String status);
     Optional<TournamentDocument> findByIdAndStatus(String id, String status);
     Optional<TournamentDocument> findByMatchesMatchId(String matchId);
+    List<TournamentDocument> findByEnrollments_Status(String status);
 }

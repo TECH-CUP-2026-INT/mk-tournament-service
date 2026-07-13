@@ -6,18 +6,22 @@ import co.edu.escuelaing.techcup.tournament.exception.InvalidTournamentDataExcep
 import co.edu.escuelaing.techcup.tournament.exception.InvalidTournamentDateRangeException;
 import co.edu.escuelaing.techcup.tournament.exception.InsufficientApprovedTeamsException;
 import co.edu.escuelaing.techcup.tournament.exception.MatchNotFoundException;
+import co.edu.escuelaing.techcup.tournament.exception.NoAvailableSlotsException;
 import co.edu.escuelaing.techcup.tournament.exception.TeamDisqualificationNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.exception.TeamInactivationNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.exception.TeamRemovalNotAllowedException;
+import co.edu.escuelaing.techcup.tournament.exception.TeamRosterSizeInvalidException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentCannotBeEditedException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentCannotBeFinalizedException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentInactivationNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentInactiveException;
+import co.edu.escuelaing.techcup.tournament.exception.TournamentNotActiveForEnrollmentException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentPauseNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentPreparationNotAllowedException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +53,7 @@ public class Tournament extends AggregateRoot {
     private ChampionResolution championResolution;
     private boolean paused;
     private boolean active = true;
+    private Long version;
 
     private Tournament(String id, String name, TournamentType type, TournamentFormat format,
                        int numberOfTeams, BigDecimal cost,
@@ -119,7 +124,7 @@ public class Tournament extends AggregateRoot {
                                          TournamentStatus status,
                                          List<TeamRegistration> teams, List<Match> matches,
                                          String championTeamId, ChampionResolution championResolution,
-                                         boolean paused, boolean active, List<Enrollment> enrollments) {
+                                         boolean paused, boolean active, List<Enrollment> enrollments, Long version) {
         Tournament t = new Tournament(id, name, type, format, numberOfTeams, cost, startDate, endDate,
                 registrationDeadline, matchStartTime, matchEndTime, status);
         t.teams = teams != null ? new ArrayList<>(teams) : new ArrayList<>();
@@ -129,6 +134,7 @@ public class Tournament extends AggregateRoot {
         t.paused = paused;
         t.active = active;
         t.enrollments = enrollments != null ? new ArrayList<>(enrollments) : new ArrayList<>();
+        t.version = version;
         return t;
     }
 
@@ -147,7 +153,7 @@ public class Tournament extends AggregateRoot {
                                          boolean paused, boolean active) {
         return reconstruct(id, name, type, format, numberOfTeams, cost, startDate, endDate, registrationDeadline,
                 matchStartTime, matchEndTime, status, teams, matches, championTeamId, championResolution,
-                paused, active, null);
+                paused, active, null, null);
     }
 
     /**
@@ -285,6 +291,43 @@ public class Tournament extends AggregateRoot {
         }
 
         team.setRegistrationStatus(RegistrationStatus.DISQUALIFIED);
+    }
+
+    private static final int MIN_ROSTER_SIZE = 7;
+    private static final int MAX_ROSTER_SIZE = 12;
+    private static final int RESERVATION_MINUTES = 60;
+
+    /**
+     * Inscribe un equipo al torneo, reservando un cupo mientras se confirma el pago
+     * (ver EnrollTeamInTournamentService, que consulta el Team Service para el roster
+     * y llama al Payment Service inmediatamente después de que este método retorna).
+     */
+    public Enrollment enrollTeam(String teamId, String teamName, int rosterSize) {
+        assertActive();
+        if (status != TournamentStatus.ACTIVE) {
+            throw new TournamentNotActiveForEnrollmentException(
+                    "Solo se pueden inscribir equipos en torneos en estado Activo");
+        }
+        if (rosterSize < MIN_ROSTER_SIZE || rosterSize > MAX_ROSTER_SIZE) {
+            throw new TeamRosterSizeInvalidException(
+                    "El equipo debe tener entre " + MIN_ROSTER_SIZE + " y " + MAX_ROSTER_SIZE
+                            + " jugadores registrados, tiene " + rosterSize);
+        }
+        if (countActiveEnrollments() >= numberOfTeams) {
+            throw new NoAvailableSlotsException(
+                    "No hay cupos disponibles en el torneo '" + getId() + "'");
+        }
+
+        Enrollment enrollment = new Enrollment(teamId, teamName, EnrollmentStatus.RESERVED);
+        enrollment.setReservationExpiresAt(LocalDateTime.now().plusMinutes(RESERVATION_MINUTES));
+        enrollments.add(enrollment);
+        return enrollment;
+    }
+
+    private long countActiveEnrollments() {
+        return enrollments.stream()
+                .filter(e -> e.getStatus() == EnrollmentStatus.ENROLLED || e.getStatus() == EnrollmentStatus.RESERVED)
+                .count();
     }
 
     /**
@@ -599,4 +642,6 @@ public class Tournament extends AggregateRoot {
     public ChampionResolution getChampionResolution() { return championResolution; }
     public boolean isPaused() { return paused; }
     public boolean isActive() { return active; }
+    public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
 }

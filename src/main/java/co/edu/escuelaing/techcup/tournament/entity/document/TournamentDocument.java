@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
@@ -43,4 +44,8 @@ public class TournamentDocument {
     // que no tienen este campo en Mongo, se leen como null y se tratan como activos
     // en vez de caer por defecto en false (inactivos).
     private Boolean active;
+    // Optimistic locking (EnrollTeamInTournament): evita que dos capitanes tomen
+    // el último cupo a la vez cuando ambos guardan sobre la misma versión leída.
+    @Version
+    private Long version;
 }

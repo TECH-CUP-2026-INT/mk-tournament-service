@@ -47,7 +47,7 @@ class TournamentPersistenceMapperTest {
         TournamentDocument document = new TournamentDocument(
                 "t1", "TechCup", "NORMAL", "BRACKETS", 4, BigDecimal.ZERO,
                 LocalDate.now(), LocalDate.now().plusDays(1), LocalDate.now().minusDays(1),
-                null, null, "ACTIVE", null, null, null, null, null, null, false, null
+                null, null, "ACTIVE", null, null, null, null, null, null, false, null, null
         );
 
         Tournament reconstructed = TournamentPersistenceMapper.toDomain(document);

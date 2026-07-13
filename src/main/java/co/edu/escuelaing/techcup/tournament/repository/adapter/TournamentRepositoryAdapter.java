@@ -1,5 +1,6 @@
 package co.edu.escuelaing.techcup.tournament.repository.adapter;
 
+import co.edu.escuelaing.techcup.tournament.service.EnrollmentStatus;
 import co.edu.escuelaing.techcup.tournament.service.Tournament;
 import co.edu.escuelaing.techcup.tournament.service.TournamentStatus;
 import co.edu.escuelaing.techcup.tournament.service.ports.TournamentRepositoryPort;
@@ -53,5 +54,12 @@ public class TournamentRepositoryAdapter implements TournamentRepositoryPort {
     public Optional<Tournament> findByMatchId(String matchId) {
         return mongoRepository.findByMatchesMatchId(matchId)
                 .map(TournamentPersistenceMapper::toDomain);
+    }
+
+    @Override
+    public List<Tournament> findAllWithReservedEnrollments() {
+        return mongoRepository.findByEnrollments_Status(EnrollmentStatus.RESERVED.name()).stream()
+                .map(TournamentPersistenceMapper::toDomain)
+                .toList();
     }
 }
