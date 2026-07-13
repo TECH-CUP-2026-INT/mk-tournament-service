@@ -45,7 +45,8 @@ public class TournamentPersistenceMapper {
                         : null,
                 document.isPaused(),
                 document.getActive() == null || document.getActive(),
-                toEnrollmentDomainList(document.getEnrollments())
+                toEnrollmentDomainList(document.getEnrollments()),
+                document.getVersion()
         );
     }
 
@@ -70,7 +71,8 @@ public class TournamentPersistenceMapper {
                 toMatchDocuments(domain.getMatches()),
                 toEnrollmentDocumentList(domain.getEnrollments()),
                 domain.isPaused(),
-                domain.isActive()
+                domain.isActive(),
+                domain.getVersion()
         );
     }
 

@@ -13,4 +13,5 @@ public interface TournamentRepositoryPort {
     List<Tournament> findAllByStatus(TournamentStatus status);
     Optional<Tournament> findByIdAndStatus(String id, TournamentStatus status);
     Optional<Tournament> findByMatchId(String matchId);
+    List<Tournament> findAllWithReservedEnrollments();
 }

@@ -98,11 +98,14 @@ class GetEnrolledTeamsServiceTest {
     @Test
     void getEnrolledTeams_calculaAvailableSlotsSobreCapacidadDelTorneo() {
         Tournament tournament = Tournament.reconstruct(
-                "t1", "Copa ECI", 5, java.math.BigDecimal.ZERO,
+                "t1", "Copa ECI",
+                co.edu.escuelaing.techcup.tournament.service.TournamentType.NORMAL,
+                co.edu.escuelaing.techcup.tournament.service.TournamentFormat.BRACKETS,
+                5, java.math.BigDecimal.ZERO,
                 java.time.LocalDate.now().plusDays(2), java.time.LocalDate.now().plusDays(10),
-                java.time.LocalDate.now(), TournamentStatus.ACTIVE,
+                java.time.LocalDate.now(), null, null, TournamentStatus.ACTIVE,
                 List.of(),
-                List.of()
+                List.of(), null, null
         );
         tournament.setEnrollments(List.of(
                 new Enrollment("team1", "Los Tigres", EnrollmentStatus.ENROLLED),

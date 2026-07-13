@@ -165,4 +165,19 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleMatchInactive(MatchInactiveException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
     }
+
+    @ExceptionHandler({PaymentOrderCreationFailedException.class, TeamServiceUnavailableException.class})
+    public ResponseEntity<ErrorResponse> handleExternalServiceFailure(RuntimeException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(TeamRosterSizeInvalidException.class)
+    public ResponseEntity<ErrorResponse> handleTeamRosterSizeInvalid(TeamRosterSizeInvalidException ex) {
+        return ResponseEntity.badRequest().body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler({TournamentNotActiveForEnrollmentException.class, NoAvailableSlotsException.class})
+    public ResponseEntity<ErrorResponse> handleEnrollmentNotAllowed(RuntimeException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
+    }
 }
