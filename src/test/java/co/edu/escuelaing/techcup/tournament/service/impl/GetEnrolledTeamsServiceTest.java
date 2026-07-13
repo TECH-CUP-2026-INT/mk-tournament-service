@@ -34,7 +34,7 @@ class GetEnrolledTeamsServiceTest {
 
     private Tournament tournamentWith(Enrollment... enrollments) {
         Tournament tournament = new Tournament("t1", "Copa ECI", TournamentStatus.ACTIVE);
-        tournament.setTeams(List.of(enrollments));
+        tournament.setEnrollments(List.of(enrollments));
         when(tournamentRepository.findById("t1")).thenReturn(Optional.of(tournament));
         return tournament;
     }
@@ -101,12 +101,13 @@ class GetEnrolledTeamsServiceTest {
                 "t1", "Copa ECI", 5, java.math.BigDecimal.ZERO,
                 java.time.LocalDate.now().plusDays(2), java.time.LocalDate.now().plusDays(10),
                 java.time.LocalDate.now(), TournamentStatus.ACTIVE,
-                List.of(
-                        new Enrollment("team1", "Los Tigres", EnrollmentStatus.ENROLLED),
-                        new Enrollment("team2", "Los Leones", EnrollmentStatus.RESERVED)
-                ),
+                List.of(),
                 List.of()
         );
+        tournament.setEnrollments(List.of(
+                new Enrollment("team1", "Los Tigres", EnrollmentStatus.ENROLLED),
+                new Enrollment("team2", "Los Leones", EnrollmentStatus.RESERVED)
+        ));
         when(tournamentRepository.findById("t1")).thenReturn(Optional.of(tournament));
         when(paymentServiceClient.getOrderStatus(anyString())).thenReturn(PaymentOrderStatus.PENDING);
 

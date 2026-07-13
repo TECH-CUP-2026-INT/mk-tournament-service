@@ -28,11 +28,11 @@ public class GetEnrolledTeamsService implements GetEnrolledTeamsUseCase {
         Tournament tournament = tournamentRepository.findById(tournamentId)
                 .orElseThrow(() -> new TournamentNotFoundException(tournamentId));
 
-        List<Enrollment> enrolled = tournament.getTeams().stream()
+        List<Enrollment> enrolled = tournament.getEnrollments().stream()
                 .filter(e -> e.getStatus() == EnrollmentStatus.ENROLLED)
                 .toList();
 
-        List<ReservedTeamView> reserved = tournament.getTeams().stream()
+        List<ReservedTeamView> reserved = tournament.getEnrollments().stream()
                 .filter(e -> e.getStatus() == EnrollmentStatus.RESERVED)
                 .map(e -> new ReservedTeamView(e, paymentServiceClient.getOrderStatus(e.getEnrollmentId())))
                 .toList();

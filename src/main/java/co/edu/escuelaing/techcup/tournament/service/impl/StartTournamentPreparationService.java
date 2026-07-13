@@ -31,7 +31,7 @@ public class StartTournamentPreparationService implements StartTournamentPrepara
 
         tournament.validateReadyForPreparation();
 
-        List<String> enrolledTeamIds = tournament.getTeams().stream()
+        List<String> enrolledTeamIds = tournament.getEnrollments().stream()
                 .filter(team -> team.getStatus() == EnrollmentStatus.ENROLLED)
                 .map(team -> team.getTeamId())
                 .toList();
