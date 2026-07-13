@@ -1,6 +1,8 @@
 package co.edu.escuelaing.techcup.tournament.service;
 
 import co.edu.escuelaing.techcup.tournament.exception.ChampionAssignmentNotAllowedException;
+import co.edu.escuelaing.techcup.tournament.exception.MatchActivationNotAllowedException;
+import co.edu.escuelaing.techcup.tournament.exception.MatchInactiveException;
 
 public class Match {
 
@@ -12,15 +14,23 @@ public class Match {
     private int homeScore;
     private int awayScore;
     private String penaltyShootoutWinnerTeamId;
+    private boolean active = true;
 
     public Match() {}
 
     public Match(String matchId, String homeTeamId, String awayTeamId, MatchStatus status) {
-        this(matchId, homeTeamId, awayTeamId, status, false, 0, 0, null);
+        this(matchId, homeTeamId, awayTeamId, status, false, 0, 0, null, true);
     }
 
     public Match(String matchId, String homeTeamId, String awayTeamId, MatchStatus status,
                  boolean finalMatch, int homeScore, int awayScore, String penaltyShootoutWinnerTeamId) {
+        this(matchId, homeTeamId, awayTeamId, status, finalMatch, homeScore, awayScore,
+                penaltyShootoutWinnerTeamId, true);
+    }
+
+    public Match(String matchId, String homeTeamId, String awayTeamId, MatchStatus status,
+                 boolean finalMatch, int homeScore, int awayScore, String penaltyShootoutWinnerTeamId,
+                 boolean active) {
         this.matchId = matchId;
         this.homeTeamId = homeTeamId;
         this.awayTeamId = awayTeamId;
@@ -29,6 +39,7 @@ public class Match {
         this.homeScore = homeScore;
         this.awayScore = awayScore;
         this.penaltyShootoutWinnerTeamId = penaltyShootoutWinnerTeamId;
+        this.active = active;
     }
 
     public boolean involvesteam(String teamId) {
@@ -51,7 +62,41 @@ public class Match {
         return homeScore == awayScore;
     }
 
+    public boolean isActive() {
+        return active;
+    }
+
+    /**
+     * Bloquea el registro de nuevos eventos de árbitro (marcador, penales,
+     * no-show) sobre un partido inactivo, preservando los datos ya
+     * registrados. Tarjetas, sustituciones y manejo del reloj no se
+     * modelan en este servicio: son responsabilidad del Servicio de
+     * Partidos, que debe consultar este estado antes de aceptar esos
+     * eventos (dependencia pendiente).
+     */
+    public void assertActive() {
+        if (!active) {
+            throw new MatchInactiveException(
+                    "El partido está inactivo, no se pueden registrar eventos de árbitro sobre él");
+        }
+    }
+
+    public void inactivate() {
+        if (!active) {
+            throw new MatchActivationNotAllowedException("El partido ya está inactivo");
+        }
+        this.active = false;
+    }
+
+    public void reactivate() {
+        if (active) {
+            throw new MatchActivationNotAllowedException("El partido ya está activo");
+        }
+        this.active = true;
+    }
+
     public void markAsNoShow() {
+        assertActive();
         this.status = MatchStatus.FINISHED_NO_SHOW;
     }
 
@@ -60,6 +105,7 @@ public class Match {
      * Los penales no se suman al marcador; se registran por separado.
      */
     public void finish(int homeScore, int awayScore) {
+        assertActive();
         if (!finalMatch) {
             throw new ChampionAssignmentNotAllowedException(
                     "Solo el partido marcado como Final puede finalizarse para asignar campeón");
@@ -73,6 +119,7 @@ public class Match {
      * Registra el ganador de la tanda de penales (integración pendiente con módulo de arbitraje).
      */
     public void recordPenaltyShootoutWinner(String winnerTeamId) {
+        assertActive();
         if (!isTiedInRegulation()) {
             throw new ChampionAssignmentNotAllowedException(
                     "La tanda de penales solo aplica cuando hay empate en tiempo reglamentario");
