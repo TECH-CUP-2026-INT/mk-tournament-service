@@ -23,6 +23,8 @@ public class GetChampionService implements GetChampionUseCase {
                 .orElseThrow(() -> new TournamentNotFoundException(
                         "No se encontro un torneo con id " + tournamentId));
 
+        tournament.assertActive();
+
         if (tournament.getChampionTeamId() == null || tournament.getChampionResolution() == null) {
             throw new ChampionAssignmentNotAllowedException(
                     "El torneo aún no tiene campeón asignado");

@@ -28,13 +28,17 @@ import co.edu.escuelaing.techcup.tournament.service.ports.EditTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.EditTournamentUseCase.EditTournamentCommand;
 import co.edu.escuelaing.techcup.tournament.service.ports.PauseTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.PauseTournamentUseCase.PauseTournamentCommand;
+import co.edu.escuelaing.techcup.tournament.service.ports.InactivateTournamentUseCase;
+import co.edu.escuelaing.techcup.tournament.service.ports.InactivateTournamentUseCase.InactivateTournamentCommand;
 import co.edu.escuelaing.techcup.tournament.dto.request.CreateTournamentRequest;
 import co.edu.escuelaing.techcup.tournament.dto.request.EditTournamentRequest;
 import co.edu.escuelaing.techcup.tournament.dto.request.PauseTournamentRequest;
+import co.edu.escuelaing.techcup.tournament.dto.request.InactivateTournamentRequest;
 import co.edu.escuelaing.techcup.tournament.dto.response.ChampionResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.CourtResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.DeleteTournamentResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.PauseTournamentResponse;
+import co.edu.escuelaing.techcup.tournament.dto.response.InactivateTournamentResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.PreparationResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.RulebookResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.TournamentResponse;
@@ -65,6 +69,7 @@ public class TournamentController {
     private final ViewRegisteredTeamsUseCase viewRegisteredTeams;
     private final EditTournamentUseCase editTournamentUseCase;
     private final PauseTournamentUseCase pauseTournamentUseCase;
+    private final InactivateTournamentUseCase inactivateTournamentUseCase;
     private final StartTournamentPreparationUseCase startTournamentPreparation;
     private final ViewMatchupsUseCase viewMatchups;
     private final ViewMatchCourtUseCase viewMatchCourt;
@@ -83,6 +88,7 @@ public class TournamentController {
                                  ViewRegisteredTeamsUseCase viewRegisteredTeams,
                                  EditTournamentUseCase editTournamentUseCase,
                                  PauseTournamentUseCase pauseTournamentUseCase,
+                                 InactivateTournamentUseCase inactivateTournamentUseCase,
                                  StartTournamentPreparationUseCase startTournamentPreparation,
                                  ViewMatchupsUseCase viewMatchups,
                                  ViewMatchCourtUseCase viewMatchCourt,
@@ -100,6 +106,7 @@ public class TournamentController {
         this.viewRegisteredTeams = viewRegisteredTeams;
         this.editTournamentUseCase = editTournamentUseCase;
         this.pauseTournamentUseCase = pauseTournamentUseCase;
+        this.inactivateTournamentUseCase = inactivateTournamentUseCase;
         this.startTournamentPreparation = startTournamentPreparation;
         this.viewMatchups = viewMatchups;
         this.viewMatchCourt = viewMatchCourt;
@@ -323,5 +330,18 @@ public class TournamentController {
 
         return ResponseEntity.ok(new PauseTournamentResponse(
                 updated.getId(), updated.getStatus(), updated.isPaused(), message));
+    }
+
+    @PatchMapping("/{id}/inactivate")
+    public ResponseEntity<InactivateTournamentResponse> inactivate(@PathVariable String id,
+                                                                     @Valid @RequestBody InactivateTournamentRequest request) {
+        Tournament updated = inactivateTournamentUseCase.execute(new InactivateTournamentCommand(id, request.action()));
+
+        String message = updated.isActive()
+                ? "El torneo fue reactivado correctamente"
+                : "El torneo fue inactivado correctamente";
+
+        return ResponseEntity.ok(new InactivateTournamentResponse(
+                updated.getId(), updated.getStatus(), updated.isActive(), message));
     }
 }

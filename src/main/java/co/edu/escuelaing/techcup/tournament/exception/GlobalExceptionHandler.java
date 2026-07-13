@@ -106,6 +106,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
     }
 
+    @ExceptionHandler(TournamentInactivationNotAllowedException.class)
+    public ResponseEntity<ErrorResponse> handleTournamentInactivationNotAllowed(TournamentInactivationNotAllowedException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(TournamentInactiveException.class)
+    public ResponseEntity<ErrorResponse> handleTournamentInactive(TournamentInactiveException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
+    }
+
     @ExceptionHandler({TournamentPreparationNotAllowedException.class, InsufficientApprovedTeamsException.class})
     public ResponseEntity<ErrorResponse> handlePreparationNotAllowed(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
