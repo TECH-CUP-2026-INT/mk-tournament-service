@@ -14,7 +14,8 @@ public class CourtPersistenceMapper {
                 document.getTournamentId(),
                 CourtSection.valueOf(document.getSection()),
                 document.getDescription(),
-                document.getImageId()
+                document.getImageId(),
+                document.getMatchId()
         );
     }
 
@@ -24,7 +25,8 @@ public class CourtPersistenceMapper {
                 domain.getTournamentId(),
                 domain.getSection().name(),
                 domain.getDescription(),
-                domain.getImageId()
+                domain.getImageId(),
+                domain.getMatchId()
         );
     }
 }

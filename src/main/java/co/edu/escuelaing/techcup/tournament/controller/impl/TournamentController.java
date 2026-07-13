@@ -10,6 +10,8 @@ import co.edu.escuelaing.techcup.tournament.service.ports.ConsultHistoricalTourn
 import co.edu.escuelaing.techcup.tournament.service.ports.ConsultRulebookUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.ViewRegisteredTeamsUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.ViewMatchupsUseCase;
+import co.edu.escuelaing.techcup.tournament.service.ports.ViewMatchCourtUseCase;
+import co.edu.escuelaing.techcup.tournament.dto.response.MatchCourtResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.RegisteredTeamResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.MatchupResponse;
 import co.edu.escuelaing.techcup.tournament.service.ports.GetChampionUseCase;
@@ -54,6 +56,7 @@ public class TournamentController {
     private final ConsultHistoricalTournamentsUseCase consultHistorical;
     private final ViewRegisteredTeamsUseCase viewRegisteredTeams;
     private final ViewMatchupsUseCase viewMatchups;
+    private final ViewMatchCourtUseCase viewMatchCourt;
     private final TournamentRestMapper mapper;
 
     public TournamentController(CreateTournamentUseCase createTournamentUseCase,
@@ -68,6 +71,7 @@ public class TournamentController {
                                  ConsultHistoricalTournamentsUseCase consultHistorical,
                                  ViewRegisteredTeamsUseCase viewRegisteredTeams,
                                  ViewMatchupsUseCase viewMatchups,
+                                 ViewMatchCourtUseCase viewMatchCourt,
                                  TournamentRestMapper mapper) {
         this.createTournamentUseCase = createTournamentUseCase;
         this.finalizeTournamentUseCase = finalizeTournamentUseCase;
@@ -81,6 +85,7 @@ public class TournamentController {
         this.consultHistorical = consultHistorical;
         this.viewRegisteredTeams = viewRegisteredTeams;
         this.viewMatchups = viewMatchups;
+        this.viewMatchCourt = viewMatchCourt;
         this.mapper = mapper;
     }
 
@@ -156,6 +161,16 @@ public class TournamentController {
                 ))
                 .toList();
         return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/matches/{matchId}/court")
+    public ResponseEntity<MatchCourtResponse> getMatchCourt(@PathVariable String matchId) {
+        return viewMatchCourt.getCourtByMatch(matchId)
+                .map(c -> ResponseEntity.ok(new MatchCourtResponse(
+                        c.getId(), c.getMatchId(), c.getSection().name(),
+                        c.getDescription(), c.getImageId(), null
+                )))
+                .orElse(ResponseEntity.ok(MatchCourtResponse.pending(matchId)));
     }
 
     @GetMapping("/{tournamentId}/teams")

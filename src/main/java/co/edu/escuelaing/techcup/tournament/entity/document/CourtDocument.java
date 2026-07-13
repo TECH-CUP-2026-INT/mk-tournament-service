@@ -20,4 +20,5 @@ public class CourtDocument {
     private String section;
     private String description;
     private String imageId;
+    private String matchId;
 }
