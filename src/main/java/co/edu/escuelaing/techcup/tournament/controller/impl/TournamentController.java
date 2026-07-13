@@ -9,7 +9,9 @@ import co.edu.escuelaing.techcup.tournament.service.Tournament;
 import co.edu.escuelaing.techcup.tournament.service.ports.ConsultHistoricalTournamentsUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.ConsultRulebookUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.ViewRegisteredTeamsUseCase;
+import co.edu.escuelaing.techcup.tournament.service.ports.ViewMatchupsUseCase;
 import co.edu.escuelaing.techcup.tournament.dto.response.RegisteredTeamResponse;
+import co.edu.escuelaing.techcup.tournament.dto.response.MatchupResponse;
 import co.edu.escuelaing.techcup.tournament.service.ports.GetChampionUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.AssignChampionUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.AttachRulebookUseCase;
@@ -27,10 +29,8 @@ import co.edu.escuelaing.techcup.tournament.dto.response.DeleteTournamentRespons
 import co.edu.escuelaing.techcup.tournament.dto.response.PreparationResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.RulebookResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.TournamentResponse;
-import co.edu.escuelaing.techcup.tournament.dto.response.MatchResponse;
 import co.edu.escuelaing.techcup.tournament.mapper.TournamentRestMapper;
 import co.edu.escuelaing.techcup.tournament.service.ports.StartTournamentPreparationUseCase;
-import co.edu.escuelaing.techcup.tournament.service.ports.ViewMatchesUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -55,7 +55,7 @@ public class TournamentController {
     private final ConsultHistoricalTournamentsUseCase consultHistorical;
     private final ViewRegisteredTeamsUseCase viewRegisteredTeams;
     private final StartTournamentPreparationUseCase startTournamentPreparation;
-    private final ViewMatchesUseCase viewMatches;
+    private final ViewMatchupsUseCase viewMatchups;
     private final TournamentRestMapper mapper;
 
     public TournamentController(CreateTournamentUseCase createTournamentUseCase,
@@ -70,7 +70,7 @@ public class TournamentController {
                                  ConsultHistoricalTournamentsUseCase consultHistorical,
                                  ViewRegisteredTeamsUseCase viewRegisteredTeams,
                                  StartTournamentPreparationUseCase startTournamentPreparation,
-                                 ViewMatchesUseCase viewMatches,
+                                 ViewMatchupsUseCase viewMatchups,
                                  TournamentRestMapper mapper) {
         this.createTournamentUseCase = createTournamentUseCase;
         this.finalizeTournamentUseCase = finalizeTournamentUseCase;
@@ -84,7 +84,7 @@ public class TournamentController {
         this.consultHistorical = consultHistorical;
         this.viewRegisteredTeams = viewRegisteredTeams;
         this.startTournamentPreparation = startTournamentPreparation;
-        this.viewMatches = viewMatches;
+        this.viewMatchups = viewMatchups;
         this.mapper = mapper;
     }
 
@@ -118,15 +118,6 @@ public class TournamentController {
         return ResponseEntity.ok(mapper.toResponse(tournament));
     }
 
-    @GetMapping("/{tournamentId}/matches")
-    public ResponseEntity<java.util.List<MatchResponse>> getMatches(@PathVariable String tournamentId) {
-        java.util.List<MatchResponse> result = viewMatches.getMatches(tournamentId)
-                .stream()
-                .map(m -> new MatchResponse(m.getMatchId(), m.getHomeTeamId(), m.getAwayTeamId(), m.getStatus()))
-                .toList();
-        return ResponseEntity.ok(result);
-    }
-
     @GetMapping("/{tournamentId}/preparation")
     public ResponseEntity<PreparationResponse> checkPreparation(@PathVariable String tournamentId) {
         PreparationResult result = checkPreparation.check(tournamentId);
@@ -157,6 +148,24 @@ public class TournamentController {
         return ResponseEntity.ok(new DeleteTournamentResponse(
                 "El torneo '" + id + "' ha sido eliminado permanentemente."
         ));
+    }
+
+    @GetMapping("/{tournamentId}/matchups")
+    public ResponseEntity<java.util.List<MatchupResponse>> getMatchups(
+            @PathVariable String tournamentId) {
+        java.util.List<MatchupResponse> result = viewMatchups.getMatchups(tournamentId)
+                .stream()
+                .map(m -> new MatchupResponse(
+                        m.getMatchId(),
+                        m.getHomeTeamId(),
+                        m.getAwayTeamId(),
+                        m.getStatus(),
+                        m.getHomeScore(),
+                        m.getAwayScore(),
+                        m.isFinalMatch()
+                ))
+                .toList();
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/{tournamentId}/teams")
