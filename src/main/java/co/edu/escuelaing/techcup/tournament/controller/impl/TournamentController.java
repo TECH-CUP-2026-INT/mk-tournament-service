@@ -20,7 +20,10 @@ import co.edu.escuelaing.techcup.tournament.service.ports.DeleteTournamentUseCas
 import co.edu.escuelaing.techcup.tournament.service.ports.FinalizeTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.RegisterCourtUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.RegisterCourtUseCase.RegisterCourtCommand;
+import co.edu.escuelaing.techcup.tournament.service.ports.EditTournamentUseCase;
+import co.edu.escuelaing.techcup.tournament.service.ports.EditTournamentUseCase.EditTournamentCommand;
 import co.edu.escuelaing.techcup.tournament.dto.request.CreateTournamentRequest;
+import co.edu.escuelaing.techcup.tournament.dto.request.EditTournamentRequest;
 import co.edu.escuelaing.techcup.tournament.dto.response.ChampionResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.CourtResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.DeleteTournamentResponse;
@@ -51,6 +54,7 @@ public class TournamentController {
     private final RegisterCourtUseCase registerCourtUseCase;
     private final ConsultHistoricalTournamentsUseCase consultHistorical;
     private final ViewRegisteredTeamsUseCase viewRegisteredTeams;
+    private final EditTournamentUseCase editTournamentUseCase;
     private final TournamentRestMapper mapper;
 
     public TournamentController(CreateTournamentUseCase createTournamentUseCase,
@@ -64,6 +68,7 @@ public class TournamentController {
                                  RegisterCourtUseCase registerCourtUseCase,
                                  ConsultHistoricalTournamentsUseCase consultHistorical,
                                  ViewRegisteredTeamsUseCase viewRegisteredTeams,
+                                 EditTournamentUseCase editTournamentUseCase,
                                  TournamentRestMapper mapper) {
         this.createTournamentUseCase = createTournamentUseCase;
         this.finalizeTournamentUseCase = finalizeTournamentUseCase;
@@ -76,6 +81,7 @@ public class TournamentController {
         this.registerCourtUseCase = registerCourtUseCase;
         this.consultHistorical = consultHistorical;
         this.viewRegisteredTeams = viewRegisteredTeams;
+        this.editTournamentUseCase = editTournamentUseCase;
         this.mapper = mapper;
     }
 
@@ -226,5 +232,22 @@ public class TournamentController {
                 court.getId(), court.getTournamentId(), court.getSection().name(),
                 court.getDescription(), court.getImageId(), "Cancha registrada correctamente"
         ));
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<TournamentResponse> edit(@PathVariable String id, @Valid @RequestBody EditTournamentRequest request) {
+        Tournament updated = editTournamentUseCase.edit(new EditTournamentCommand(
+                id,
+                request.name(),
+                request.tournamentType(),
+                request.tournamentFormat(),
+                request.numberOfTeams(),
+                request.cost(),
+                request.registrationDeadline(),
+                request.startDate(),
+                request.endDate()
+        ));
+
+        return ResponseEntity.ok(mapper.toResponse(updated));
     }
 }

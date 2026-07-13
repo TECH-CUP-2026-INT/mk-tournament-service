@@ -29,4 +29,6 @@ public class TournamentDocument {
     private String rulebookFileId;
     private String championTeamId;
     private String championResolution;
+    private String tournamentType;
+    private String tournamentFormat;
 }

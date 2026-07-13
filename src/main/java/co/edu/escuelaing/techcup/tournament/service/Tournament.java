@@ -6,6 +6,7 @@ import co.edu.escuelaing.techcup.tournament.exception.InvalidTournamentDataExcep
 import co.edu.escuelaing.techcup.tournament.exception.InvalidTournamentDateRangeException;
 import co.edu.escuelaing.techcup.tournament.exception.MatchNotFoundException;
 import co.edu.escuelaing.techcup.tournament.exception.TeamRemovalNotAllowedException;
+import co.edu.escuelaing.techcup.tournament.exception.TournamentCannotBeEditedException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentCannotBeFinalizedException;
 
 import java.math.BigDecimal;
@@ -21,18 +22,20 @@ public class Tournament extends AggregateRoot {
     // TC-28: para que un torneo esté "listo para activarse" se requieren al menos 3 equipos aprobados.
     private static final int MIN_APPROVED_TEAMS_TO_ACTIVATE = 3;
 
-    private final String name;
-    private final int numberOfTeams;
-    private final BigDecimal cost;
-    private final LocalDate startDate;
-    private final LocalDate endDate;
-    private final LocalDate registrationDeadline;
+    private String name;
+    private int numberOfTeams;
+    private BigDecimal cost;
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private LocalDate registrationDeadline;
     private TournamentStatus status;
     private List<TeamRegistration> teams;
     private List<Match> matches;
     private String rulebookFileId;
     private String championTeamId;
     private ChampionResolution championResolution;
+    private TournamentType tournamentType;
+    private TournamentFormat tournamentFormat;
 
     private Tournament(String id, String name, int numberOfTeams, BigDecimal cost,
                        LocalDate startDate, LocalDate endDate, LocalDate registrationDeadline,
@@ -47,6 +50,8 @@ public class Tournament extends AggregateRoot {
         this.status = status;
         this.teams = new ArrayList<>();
         this.matches = new ArrayList<>();
+        this.tournamentType = TournamentType.NORMAL;
+        this.tournamentFormat = TournamentFormat.BRACKETS;
     }
 
     public Tournament(String id, String name, TournamentStatus status) {
@@ -80,14 +85,26 @@ public class Tournament extends AggregateRoot {
                                          LocalDate startDate, LocalDate endDate,
                                          LocalDate registrationDeadline, TournamentStatus status,
                                          List<TeamRegistration> teams, List<Match> matches,
-                                         String championTeamId, ChampionResolution championResolution) {
+                                         String championTeamId, ChampionResolution championResolution,
+                                         TournamentType tournamentType, TournamentFormat tournamentFormat) {
         Tournament t = new Tournament(id, name, numberOfTeams, cost, startDate, endDate,
                 registrationDeadline, status);
         t.teams = teams != null ? new ArrayList<>(teams) : new ArrayList<>();
         t.matches = matches != null ? new ArrayList<>(matches) : new ArrayList<>();
         t.championTeamId = championTeamId;
         t.championResolution = championResolution;
+        t.tournamentType = tournamentType != null ? tournamentType : TournamentType.NORMAL;
+        t.tournamentFormat = tournamentFormat != null ? tournamentFormat : TournamentFormat.BRACKETS;
         return t;
+    }
+
+    public static Tournament reconstruct(String id, String name, int numberOfTeams, BigDecimal cost,
+                                         LocalDate startDate, LocalDate endDate,
+                                         LocalDate registrationDeadline, TournamentStatus status,
+                                         List<TeamRegistration> teams, List<Match> matches,
+                                         String championTeamId, ChampionResolution championResolution) {
+        return reconstruct(id, name, numberOfTeams, cost, startDate, endDate, registrationDeadline,
+                status, teams, matches, championTeamId, championResolution, null, null);
     }
 
     public static Tournament reconstruct(String id, String name, int numberOfTeams, BigDecimal cost,
@@ -179,6 +196,40 @@ public class Tournament extends AggregateRoot {
     }
 
     /**
+     * TC-41: actualiza cualquier campo editable del torneo. Todos los parámetros
+     * son opcionales (null = no se toca ese campo); solo se validan y aplican
+     * los que llegan con un valor nuevo. No se puede editar un torneo Finalizado.
+     */
+    public void update(String name, TournamentType tournamentType, TournamentFormat tournamentFormat,
+                       Integer numberOfTeams, BigDecimal cost, LocalDate registrationDeadline,
+                       LocalDate startDate, LocalDate endDate) {
+        if (status == TournamentStatus.FINISHED) {
+            throw new TournamentCannotBeEditedException("No se puede editar un torneo en estado Finalizado");
+        }
+
+        String newName = name != null ? name : this.name;
+        int newNumberOfTeams = numberOfTeams != null ? numberOfTeams : this.numberOfTeams;
+        BigDecimal newCost = cost != null ? cost : this.cost;
+        LocalDate newRegistrationDeadline = registrationDeadline != null ? registrationDeadline : this.registrationDeadline;
+        LocalDate newStartDate = startDate != null ? startDate : this.startDate;
+        LocalDate newEndDate = endDate != null ? endDate : this.endDate;
+
+        validateName(newName);
+        validateNumberOfTeams(newNumberOfTeams);
+        validateCost(newCost);
+        validateDateRange(newStartDate, newEndDate, newRegistrationDeadline);
+
+        this.name = newName;
+        this.numberOfTeams = newNumberOfTeams;
+        this.cost = newCost;
+        this.registrationDeadline = newRegistrationDeadline;
+        this.startDate = newStartDate;
+        this.endDate = newEndDate;
+        this.tournamentType = tournamentType != null ? tournamentType : this.tournamentType;
+        this.tournamentFormat = tournamentFormat != null ? tournamentFormat : this.tournamentFormat;
+    }
+
+    /**
      * Asigna automáticamente al campeón cuando el partido marcado como Final
      * pasa a estado Finalizado. Si hay empate en tiempo reglamentario, espera
      * el resultado de penales registrado en el partido.
@@ -263,4 +314,6 @@ public class Tournament extends AggregateRoot {
     public void setRulebookFileId(String rulebookFileId) { this.rulebookFileId = rulebookFileId; }
     public String getChampionTeamId() { return championTeamId; }
     public ChampionResolution getChampionResolution() { return championResolution; }
+    public TournamentType getTournamentType() { return tournamentType; }
+    public TournamentFormat getTournamentFormat() { return tournamentFormat; }
 }
