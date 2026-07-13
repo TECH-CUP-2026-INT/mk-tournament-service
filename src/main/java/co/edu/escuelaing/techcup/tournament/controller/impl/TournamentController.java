@@ -3,6 +3,7 @@ package co.edu.escuelaing.techcup.tournament.controller.impl;
 import co.edu.escuelaing.techcup.tournament.service.ChampionAssignment;
 import co.edu.escuelaing.techcup.tournament.service.PreparationResult;
 import co.edu.escuelaing.techcup.tournament.service.Tournament;
+import co.edu.escuelaing.techcup.tournament.service.ports.ConsultHistoricalTournamentsUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.ConsultRulebookUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.GetChampionUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.AssignChampionUseCase;
@@ -39,6 +40,7 @@ public class TournamentController {
     private final GetChampionUseCase getChampionUseCase;
     private final AttachRulebookUseCase attachRulebook;
     private final ConsultRulebookUseCase consultRulebook;
+    private final ConsultHistoricalTournamentsUseCase consultHistorical;
     private final TournamentRestMapper mapper;
 
     public TournamentController(CreateTournamentUseCase createTournamentUseCase,
@@ -49,6 +51,7 @@ public class TournamentController {
                                  GetChampionUseCase getChampionUseCase,
                                  AttachRulebookUseCase attachRulebook,
                                  ConsultRulebookUseCase consultRulebook,
+                                 ConsultHistoricalTournamentsUseCase consultHistorical,
                                  TournamentRestMapper mapper) {
         this.createTournamentUseCase = createTournamentUseCase;
         this.finalizeTournamentUseCase = finalizeTournamentUseCase;
@@ -58,6 +61,7 @@ public class TournamentController {
         this.getChampionUseCase = getChampionUseCase;
         this.attachRulebook = attachRulebook;
         this.consultRulebook = consultRulebook;
+        this.consultHistorical = consultHistorical;
         this.mapper = mapper;
     }
 
@@ -111,6 +115,30 @@ public class TournamentController {
         return ResponseEntity.ok(new DeleteTournamentResponse(
                 "El torneo '" + id + "' ha sido eliminado permanentemente."
         ));
+    }
+
+    @GetMapping("/history")
+    public ResponseEntity<java.util.List<co.edu.escuelaing.techcup.tournament.dto.response.HistoricalTournamentResponse>> getHistory() {
+        java.util.List<co.edu.escuelaing.techcup.tournament.dto.response.HistoricalTournamentResponse> result =
+                consultHistorical.findAll().stream()
+                        .map(this::toHistoricalResponse)
+                        .toList();
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/history/{tournamentId}")
+    public ResponseEntity<co.edu.escuelaing.techcup.tournament.dto.response.HistoricalTournamentResponse> getHistoricalById(
+            @PathVariable String tournamentId) {
+        return ResponseEntity.ok(toHistoricalResponse(consultHistorical.findById(tournamentId)));
+    }
+
+    private co.edu.escuelaing.techcup.tournament.dto.response.HistoricalTournamentResponse toHistoricalResponse(
+            co.edu.escuelaing.techcup.tournament.service.Tournament t) {
+        return new co.edu.escuelaing.techcup.tournament.dto.response.HistoricalTournamentResponse(
+                t.getId(), t.getName(), t.getNumberOfTeams(), t.getCost(),
+                t.getStartDate(), t.getEndDate(), t.getRegistrationDeadline(),
+                t.getStatus(), t.getChampionTeamId()
+        );
     }
 
     @GetMapping("/{tournamentId}/rulebook")
