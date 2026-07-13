@@ -3,6 +3,7 @@ package co.edu.escuelaing.techcup.tournament.service.impl;
 import co.edu.escuelaing.techcup.tournament.exception.InvalidCourtImageException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentNotFoundException;
 import co.edu.escuelaing.techcup.tournament.service.Court;
+import co.edu.escuelaing.techcup.tournament.service.Tournament;
 import co.edu.escuelaing.techcup.tournament.service.ports.CourtImageStoragePort;
 import co.edu.escuelaing.techcup.tournament.service.ports.CourtRepositoryPort;
 import co.edu.escuelaing.techcup.tournament.service.ports.RegisterCourtUseCase;
@@ -26,8 +27,9 @@ public class RegisterCourtService implements RegisterCourtUseCase {
 
     @Override
     public Court register(RegisterCourtCommand command) {
-        tournamentRepository.findById(command.tournamentId())
+        Tournament tournament = tournamentRepository.findById(command.tournamentId())
                 .orElseThrow(() -> new TournamentNotFoundException(command.tournamentId()));
+        tournament.assertActive();
 
         Court court = Court.create(command.tournamentId(), command.section(), command.description());
 

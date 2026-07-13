@@ -6,7 +6,7 @@ import co.edu.escuelaing.techcup.tournament.exception.MatchNotFoundException;
 import co.edu.escuelaing.techcup.tournament.exception.InvalidTournamentDateRangeException;
 import co.edu.escuelaing.techcup.tournament.exception.TeamRemovalNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentCannotBeFinalizedException;
-import co.edu.escuelaing.techcup.tournament.exception.TournamentNotDraftException;
+import co.edu.escuelaing.techcup.tournament.exception.TournamentCannotBeDeletedException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentNotFoundException;
 import co.edu.escuelaing.techcup.tournament.dto.response.ErrorResponse;
 import org.springframework.http.HttpStatus;
@@ -26,8 +26,8 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse(ex.getMessage()));
     }
 
-    @ExceptionHandler(TournamentNotDraftException.class)
-    public ResponseEntity<ErrorResponse> handleNotDraft(TournamentNotDraftException ex) {
+    @ExceptionHandler(TournamentCannotBeDeletedException.class)
+    public ResponseEntity<ErrorResponse> handleCannotBeDeleted(TournamentCannotBeDeletedException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(new ErrorResponse(ex.getMessage()));
     }
@@ -96,6 +96,31 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(new ErrorResponse(ex.getMessage()));
     }
 
+    @ExceptionHandler(TournamentCannotBeEditedException.class)
+    public ResponseEntity<ErrorResponse> handleTournamentCannotBeEdited(TournamentCannotBeEditedException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(TournamentPauseNotAllowedException.class)
+    public ResponseEntity<ErrorResponse> handleTournamentPauseNotAllowed(TournamentPauseNotAllowedException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(TournamentInactivationNotAllowedException.class)
+    public ResponseEntity<ErrorResponse> handleTournamentInactivationNotAllowed(TournamentInactivationNotAllowedException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(TournamentInactiveException.class)
+    public ResponseEntity<ErrorResponse> handleTournamentInactive(TournamentInactiveException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(TeamDisqualificationNotAllowedException.class)
+    public ResponseEntity<ErrorResponse> handleTeamDisqualificationNotAllowed(TeamDisqualificationNotAllowedException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
+    }
+
     @ExceptionHandler({TournamentPreparationNotAllowedException.class, InsufficientApprovedTeamsException.class})
     public ResponseEntity<ErrorResponse> handlePreparationNotAllowed(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
@@ -104,5 +129,25 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(FixtureGenerationFailedException.class)
     public ResponseEntity<ErrorResponse> handleFixtureGenerationFailed(FixtureGenerationFailedException ex) {
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler({MatchupNotFoundException.class, CourtNotFoundException.class})
+    public ResponseEntity<ErrorResponse> handleScheduleMatchNotFound(RuntimeException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(ScheduleConflictException.class)
+    public ResponseEntity<ErrorResponse> handleScheduleConflict(ScheduleConflictException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidScheduledMatchDataException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidScheduledMatchData(InvalidScheduledMatchDataException ex) {
+        return ResponseEntity.badRequest().body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidSanctionDataException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidSanctionData(InvalidSanctionDataException ex) {
+        return ResponseEntity.badRequest().body(new ErrorResponse(ex.getMessage()));
     }
 }
