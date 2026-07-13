@@ -72,7 +72,13 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(RulebookNotAttachedException.class)
-    public ResponseEntity<ErrorResponse> handleRulebookNotAttached(RulebookNotAttachedException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(ex.getMessage()));
+    public ResponseEntity<co.edu.escuelaing.techcup.tournament.dto.response.RulebookErrorResponse> handleRulebookNotAttached(RulebookNotAttachedException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                new co.edu.escuelaing.techcup.tournament.dto.response.RulebookErrorResponse(
+                        "RULEBOOK_NOT_FOUND",
+                        ex.getMessage(),
+                        "El organizador debe subir el reglamento del torneo antes de que pueda ser consultado"
+                )
+        );
     }
 }
