@@ -37,4 +37,5 @@ public class TournamentDocument {
     private String championResolution;
     private List<TeamRegistrationDocument> teams;
     private List<MatchDocument> matches;
+    private boolean paused;
 }
