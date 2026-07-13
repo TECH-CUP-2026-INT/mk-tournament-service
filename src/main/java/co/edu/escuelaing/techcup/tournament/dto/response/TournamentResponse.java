@@ -20,5 +20,6 @@ public record TournamentResponse(
         LocalDate registrationDeadline,
         LocalTime matchStartTime,
         LocalTime matchEndTime,
-        TournamentStatus status
+        TournamentStatus status,
+        boolean paused
 ) {}

@@ -34,4 +34,5 @@ public class TournamentDocument {
     private String rulebookFileId;
     private String championTeamId;
     private String championResolution;
+    private boolean paused;
 }
