@@ -1,5 +1,7 @@
 package co.edu.escuelaing.techcup.tournament.mapper;
 
+import co.edu.escuelaing.techcup.tournament.service.Enrollment;
+import co.edu.escuelaing.techcup.tournament.service.EnrollmentStatus;
 import co.edu.escuelaing.techcup.tournament.service.Match;
 import co.edu.escuelaing.techcup.tournament.service.MatchStatus;
 import co.edu.escuelaing.techcup.tournament.service.RegistrationStatus;
@@ -9,6 +11,7 @@ import co.edu.escuelaing.techcup.tournament.service.TournamentFormat;
 import co.edu.escuelaing.techcup.tournament.service.TournamentStatus;
 import co.edu.escuelaing.techcup.tournament.service.TournamentType;
 import co.edu.escuelaing.techcup.tournament.service.ChampionResolution;
+import co.edu.escuelaing.techcup.tournament.entity.document.EnrollmentDocument;
 import co.edu.escuelaing.techcup.tournament.entity.document.MatchDocument;
 import co.edu.escuelaing.techcup.tournament.entity.document.TeamRegistrationDocument;
 import co.edu.escuelaing.techcup.tournament.entity.document.TournamentDocument;
@@ -41,7 +44,8 @@ public class TournamentPersistenceMapper {
                         ? ChampionResolution.valueOf(document.getChampionResolution())
                         : null,
                 document.isPaused(),
-                document.getActive() == null || document.getActive()
+                document.getActive() == null || document.getActive(),
+                toEnrollmentDomainList(document.getEnrollments())
         );
     }
 
@@ -64,6 +68,7 @@ public class TournamentPersistenceMapper {
                 domain.getChampionResolution() != null ? domain.getChampionResolution().name() : null,
                 toTeamDocuments(domain.getTeams()),
                 toMatchDocuments(domain.getMatches()),
+                toEnrollmentDocumentList(domain.getEnrollments()),
                 domain.isPaused(),
                 domain.isActive()
         );
@@ -100,6 +105,35 @@ public class TournamentPersistenceMapper {
                 .map(m -> new MatchDocument(m.getMatchId(), m.getHomeTeamId(), m.getAwayTeamId(),
                         m.getStatus().name(), m.isFinalMatch(), m.getHomeScore(), m.getAwayScore(),
                         m.getPenaltyShootoutWinnerTeamId()))
+                .toList();
+    }
+
+    private static List<Enrollment> toEnrollmentDomainList(List<EnrollmentDocument> documents) {
+        if (documents == null) return new ArrayList<>();
+        return documents.stream()
+                .map(d -> new Enrollment(
+                        d.getEnrollmentId(),
+                        d.getTeamId(),
+                        d.getTeamName(),
+                        EnrollmentStatus.valueOf(d.getStatus()),
+                        d.getConfirmationDate(),
+                        d.getReservationExpiresAt()
+                ))
+                .toList();
+    }
+
+    private static List<EnrollmentDocument> toEnrollmentDocumentList(List<Enrollment> enrollments) {
+        if (enrollments == null) return new ArrayList<>();
+        return enrollments.stream()
+                .map(e -> new EnrollmentDocument(
+                        e.getEnrollmentId(),
+                        e.getTeamId(),
+                        e.getTeamName(),
+                        e.getStatus().name(),
+                        e.getPoints(),
+                        e.getConfirmationDate(),
+                        e.getReservationExpiresAt()
+                ))
                 .toList();
     }
 }

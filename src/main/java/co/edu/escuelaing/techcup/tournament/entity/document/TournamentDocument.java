@@ -37,6 +37,7 @@ public class TournamentDocument {
     private String championResolution;
     private List<TeamRegistrationDocument> teams;
     private List<MatchDocument> matches;
+    private List<EnrollmentDocument> enrollments;
     private boolean paused;
     // Boolean (no boolean primitivo): así los torneos guardados antes de TCF-154,
     // que no tienen este campo en Mongo, se leen como null y se tratan como activos
