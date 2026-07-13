@@ -27,7 +27,10 @@ import co.edu.escuelaing.techcup.tournament.dto.response.DeleteTournamentRespons
 import co.edu.escuelaing.techcup.tournament.dto.response.PreparationResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.RulebookResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.TournamentResponse;
+import co.edu.escuelaing.techcup.tournament.dto.response.MatchResponse;
 import co.edu.escuelaing.techcup.tournament.mapper.TournamentRestMapper;
+import co.edu.escuelaing.techcup.tournament.service.ports.StartTournamentPreparationUseCase;
+import co.edu.escuelaing.techcup.tournament.service.ports.ViewMatchesUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -51,6 +54,8 @@ public class TournamentController {
     private final RegisterCourtUseCase registerCourtUseCase;
     private final ConsultHistoricalTournamentsUseCase consultHistorical;
     private final ViewRegisteredTeamsUseCase viewRegisteredTeams;
+    private final StartTournamentPreparationUseCase startTournamentPreparation;
+    private final ViewMatchesUseCase viewMatches;
     private final TournamentRestMapper mapper;
 
     public TournamentController(CreateTournamentUseCase createTournamentUseCase,
@@ -64,6 +69,8 @@ public class TournamentController {
                                  RegisterCourtUseCase registerCourtUseCase,
                                  ConsultHistoricalTournamentsUseCase consultHistorical,
                                  ViewRegisteredTeamsUseCase viewRegisteredTeams,
+                                 StartTournamentPreparationUseCase startTournamentPreparation,
+                                 ViewMatchesUseCase viewMatches,
                                  TournamentRestMapper mapper) {
         this.createTournamentUseCase = createTournamentUseCase;
         this.finalizeTournamentUseCase = finalizeTournamentUseCase;
@@ -76,6 +83,8 @@ public class TournamentController {
         this.registerCourtUseCase = registerCourtUseCase;
         this.consultHistorical = consultHistorical;
         this.viewRegisteredTeams = viewRegisteredTeams;
+        this.startTournamentPreparation = startTournamentPreparation;
+        this.viewMatches = viewMatches;
         this.mapper = mapper;
     }
 
@@ -101,6 +110,21 @@ public class TournamentController {
         Tournament finalized = finalizeTournamentUseCase.finalizeTournament(id);
 
         return ResponseEntity.ok(mapper.toResponse(finalized));
+    }
+
+    @PatchMapping("/{id}/prepare")
+    public ResponseEntity<TournamentResponse> prepare(@PathVariable String id) {
+        Tournament tournament = startTournamentPreparation.startPreparation(id);
+        return ResponseEntity.ok(mapper.toResponse(tournament));
+    }
+
+    @GetMapping("/{tournamentId}/matches")
+    public ResponseEntity<java.util.List<MatchResponse>> getMatches(@PathVariable String tournamentId) {
+        java.util.List<MatchResponse> result = viewMatches.getMatches(tournamentId)
+                .stream()
+                .map(m -> new MatchResponse(m.getMatchId(), m.getHomeTeamId(), m.getAwayTeamId(), m.getStatus()))
+                .toList();
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/{tournamentId}/preparation")
