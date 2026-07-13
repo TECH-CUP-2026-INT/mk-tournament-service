@@ -9,7 +9,9 @@ import co.edu.escuelaing.techcup.tournament.service.Tournament;
 import co.edu.escuelaing.techcup.tournament.service.ports.ConsultHistoricalTournamentsUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.ConsultRulebookUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.ViewRegisteredTeamsUseCase;
+import co.edu.escuelaing.techcup.tournament.service.ports.ViewMatchupsUseCase;
 import co.edu.escuelaing.techcup.tournament.dto.response.RegisteredTeamResponse;
+import co.edu.escuelaing.techcup.tournament.dto.response.MatchupResponse;
 import co.edu.escuelaing.techcup.tournament.service.ports.GetChampionUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.AssignChampionUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.AttachRulebookUseCase;
@@ -51,6 +53,7 @@ public class TournamentController {
     private final RegisterCourtUseCase registerCourtUseCase;
     private final ConsultHistoricalTournamentsUseCase consultHistorical;
     private final ViewRegisteredTeamsUseCase viewRegisteredTeams;
+    private final ViewMatchupsUseCase viewMatchups;
     private final TournamentRestMapper mapper;
 
     public TournamentController(CreateTournamentUseCase createTournamentUseCase,
@@ -64,6 +67,7 @@ public class TournamentController {
                                  RegisterCourtUseCase registerCourtUseCase,
                                  ConsultHistoricalTournamentsUseCase consultHistorical,
                                  ViewRegisteredTeamsUseCase viewRegisteredTeams,
+                                 ViewMatchupsUseCase viewMatchups,
                                  TournamentRestMapper mapper) {
         this.createTournamentUseCase = createTournamentUseCase;
         this.finalizeTournamentUseCase = finalizeTournamentUseCase;
@@ -76,6 +80,7 @@ public class TournamentController {
         this.registerCourtUseCase = registerCourtUseCase;
         this.consultHistorical = consultHistorical;
         this.viewRegisteredTeams = viewRegisteredTeams;
+        this.viewMatchups = viewMatchups;
         this.mapper = mapper;
     }
 
@@ -133,6 +138,24 @@ public class TournamentController {
         return ResponseEntity.ok(new DeleteTournamentResponse(
                 "El torneo '" + id + "' ha sido eliminado permanentemente."
         ));
+    }
+
+    @GetMapping("/{tournamentId}/matchups")
+    public ResponseEntity<java.util.List<MatchupResponse>> getMatchups(
+            @PathVariable String tournamentId) {
+        java.util.List<MatchupResponse> result = viewMatchups.getMatchups(tournamentId)
+                .stream()
+                .map(m -> new MatchupResponse(
+                        m.getMatchId(),
+                        m.getHomeTeamId(),
+                        m.getAwayTeamId(),
+                        m.getStatus(),
+                        m.getHomeScore(),
+                        m.getAwayScore(),
+                        m.isFinalMatch()
+                ))
+                .toList();
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/{tournamentId}/teams")
