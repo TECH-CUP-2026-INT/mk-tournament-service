@@ -9,6 +9,8 @@ import co.edu.escuelaing.techcup.tournament.exception.MatchNotFoundException;
 import co.edu.escuelaing.techcup.tournament.exception.TeamRemovalNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentCannotBeEditedException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentCannotBeFinalizedException;
+import co.edu.escuelaing.techcup.tournament.exception.TournamentInactivationNotAllowedException;
+import co.edu.escuelaing.techcup.tournament.exception.TournamentInactiveException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentPauseNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentPreparationNotAllowedException;
 
@@ -43,6 +45,7 @@ public class Tournament extends AggregateRoot {
     private String championTeamId;
     private ChampionResolution championResolution;
     private boolean paused;
+    private boolean active = true;
 
     private Tournament(String id, String name, TournamentType type, TournamentFormat format,
                        int numberOfTeams, BigDecimal cost,
@@ -112,7 +115,7 @@ public class Tournament extends AggregateRoot {
                                          TournamentStatus status,
                                          List<TeamRegistration> teams, List<Match> matches,
                                          String championTeamId, ChampionResolution championResolution,
-                                         boolean paused) {
+                                         boolean paused, boolean active) {
         Tournament t = new Tournament(id, name, type, format, numberOfTeams, cost, startDate, endDate,
                 registrationDeadline, matchStartTime, matchEndTime, status);
         t.teams = teams != null ? new ArrayList<>(teams) : new ArrayList<>();
@@ -120,7 +123,25 @@ public class Tournament extends AggregateRoot {
         t.championTeamId = championTeamId;
         t.championResolution = championResolution;
         t.paused = paused;
+        t.active = active;
         return t;
+    }
+
+    /**
+     * Sobrecarga de compatibilidad: reconstruye sin dato de inactivación
+     * (torneos anteriores a TCF-154, se asumen activos).
+     */
+    public static Tournament reconstruct(String id, String name, TournamentType type, TournamentFormat format,
+                                         int numberOfTeams, BigDecimal cost,
+                                         LocalDate startDate, LocalDate endDate,
+                                         LocalDate registrationDeadline,
+                                         LocalTime matchStartTime, LocalTime matchEndTime,
+                                         TournamentStatus status,
+                                         List<TeamRegistration> teams, List<Match> matches,
+                                         String championTeamId, ChampionResolution championResolution,
+                                         boolean paused) {
+        return reconstruct(id, name, type, format, numberOfTeams, cost, startDate, endDate, registrationDeadline,
+                matchStartTime, matchEndTime, status, teams, matches, championTeamId, championResolution, paused, true);
     }
 
     /**
@@ -197,6 +218,7 @@ public class Tournament extends AggregateRoot {
     }
 
     public List<Match> removeTeam(String teamId, RemovalReason reason) {
+        assertActive();
         if (status != TournamentStatus.ACTIVE && status != TournamentStatus.IN_PROGRESS)
             throw new TeamRemovalNotAllowedException("Solo se puede remover equipos en torneos Activos o En Progreso");
 
@@ -224,6 +246,7 @@ public class Tournament extends AggregateRoot {
      * antes de invocar la API externa de generación de fixture.
      */
     public void validateReadyForPreparation() {
+        assertActive();
         if (status != TournamentStatus.ACTIVE)
             throw new TournamentPreparationNotAllowedException(
                     "Solo se puede iniciar la preparación de torneos en estado Activo");
@@ -246,6 +269,7 @@ public class Tournament extends AggregateRoot {
     }
 
     public void attachRulebook(String rulebookFileId) {
+        assertActive();
         if (rulebookFileId == null || rulebookFileId.isBlank())
             throw new IllegalArgumentException("El id del archivo de reglamento no puede estar vacío");
         this.rulebookFileId = rulebookFileId;
@@ -258,6 +282,7 @@ public class Tournament extends AggregateRoot {
      * sea probable de forma determinista en las pruebas unitarias.
      */
     public void finish(LocalDate currentDate) {
+        assertActive();
         if (status != TournamentStatus.IN_PROGRESS) {
             throw new TournamentCannotBeFinalizedException(
                     "El torneo debe estar En Progreso para poder finalizarse");
@@ -275,6 +300,7 @@ public class Tournament extends AggregateRoot {
      * si está Activo o En Progreso.
      */
     public void pause() {
+        assertActive();
         if (paused) {
             throw new TournamentPauseNotAllowedException("El torneo ya está pausado");
         }
@@ -289,10 +315,49 @@ public class Tournament extends AggregateRoot {
      * TC-42: reanuda un torneo pausado, restaurando la inscripción de equipos.
      */
     public void resume() {
+        assertActive();
         if (!paused) {
             throw new TournamentPauseNotAllowedException("El torneo no está pausado");
         }
         this.paused = false;
+    }
+
+    /**
+     * TC-43: inactiva el torneo, bloqueando todas las funcionalidades asociadas
+     * (a diferencia de pausar, ni siquiera se puede consultar mientras está inactivo).
+     * Solo se puede inactivar un torneo Activo o En Progreso.
+     */
+    public void inactivate() {
+        if (!active) {
+            throw new TournamentInactivationNotAllowedException("El torneo ya está inactivo");
+        }
+        if (status != TournamentStatus.ACTIVE && status != TournamentStatus.IN_PROGRESS) {
+            throw new TournamentInactivationNotAllowedException(
+                    "Solo se puede inactivar un torneo en estado Activo o En Progreso");
+        }
+        this.active = false;
+    }
+
+    /**
+     * TC-43: reactiva el torneo, restaurando todas sus funcionalidades.
+     */
+    public void reactivate() {
+        if (active) {
+            throw new TournamentInactivationNotAllowedException("El torneo no está inactivo");
+        }
+        this.active = true;
+    }
+
+    /**
+     * Bloquea cualquier operación sobre el torneo (consulta o escritura)
+     * mientras esté inactivo. Se usa en todas las funcionalidades asociadas
+     * al torneo, no solo en las de escritura.
+     */
+    public void assertActive() {
+        if (!active) {
+            throw new TournamentInactiveException(
+                    "El torneo está inactivo, no se puede realizar esta operación");
+        }
     }
 
     /**
@@ -305,6 +370,7 @@ public class Tournament extends AggregateRoot {
                        Integer numberOfTeams, BigDecimal cost, LocalDate registrationDeadline,
                        LocalDate startDate, LocalDate endDate,
                        LocalTime matchStartTime, LocalTime matchEndTime) {
+        assertActive();
         if (status == TournamentStatus.FINISHED) {
             throw new TournamentCannotBeEditedException("No se puede editar un torneo en estado Finalizado");
         }
@@ -354,6 +420,7 @@ public class Tournament extends AggregateRoot {
      * el resultado de penales registrado en el partido.
      */
     public ChampionAssignment assignChampionWhenFinalMatchFinished(String matchId) {
+        assertActive();
         Match match = findMatch(matchId);
 
         if (!match.isFinalMatch()) {
@@ -462,4 +529,5 @@ public class Tournament extends AggregateRoot {
     public String getChampionTeamId() { return championTeamId; }
     public ChampionResolution getChampionResolution() { return championResolution; }
     public boolean isPaused() { return paused; }
+    public boolean isActive() { return active; }
 }

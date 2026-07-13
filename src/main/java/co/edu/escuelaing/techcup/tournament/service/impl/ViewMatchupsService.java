@@ -22,6 +22,7 @@ public class ViewMatchupsService implements ViewMatchupsUseCase {
     public List<Match> getMatchups(String tournamentId) {
         Tournament tournament = tournamentRepository.findById(tournamentId)
                 .orElseThrow(() -> new TournamentNotFoundException(tournamentId));
+        tournament.assertActive();
         return tournament.getMatches();
     }
 }
