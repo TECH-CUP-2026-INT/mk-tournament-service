@@ -9,6 +9,7 @@ import co.edu.escuelaing.techcup.tournament.exception.MatchNotFoundException;
 import co.edu.escuelaing.techcup.tournament.exception.TeamRemovalNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentCannotBeEditedException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentCannotBeFinalizedException;
+import co.edu.escuelaing.techcup.tournament.exception.TournamentPauseNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentPreparationNotAllowedException;
 
 import java.math.BigDecimal;
@@ -41,6 +42,7 @@ public class Tournament extends AggregateRoot {
     private String rulebookFileId;
     private String championTeamId;
     private ChampionResolution championResolution;
+    private boolean paused;
 
     private Tournament(String id, String name, TournamentType type, TournamentFormat format,
                        int numberOfTeams, BigDecimal cost,
@@ -109,14 +111,32 @@ public class Tournament extends AggregateRoot {
                                          LocalTime matchStartTime, LocalTime matchEndTime,
                                          TournamentStatus status,
                                          List<TeamRegistration> teams, List<Match> matches,
-                                         String championTeamId, ChampionResolution championResolution) {
+                                         String championTeamId, ChampionResolution championResolution,
+                                         boolean paused) {
         Tournament t = new Tournament(id, name, type, format, numberOfTeams, cost, startDate, endDate,
                 registrationDeadline, matchStartTime, matchEndTime, status);
         t.teams = teams != null ? new ArrayList<>(teams) : new ArrayList<>();
         t.matches = matches != null ? new ArrayList<>(matches) : new ArrayList<>();
         t.championTeamId = championTeamId;
         t.championResolution = championResolution;
+        t.paused = paused;
         return t;
+    }
+
+    /**
+     * Sobrecarga de compatibilidad: reconstruye sin dato de pausa
+     * (torneos anteriores a TCF-153, se asumen no pausados).
+     */
+    public static Tournament reconstruct(String id, String name, TournamentType type, TournamentFormat format,
+                                         int numberOfTeams, BigDecimal cost,
+                                         LocalDate startDate, LocalDate endDate,
+                                         LocalDate registrationDeadline,
+                                         LocalTime matchStartTime, LocalTime matchEndTime,
+                                         TournamentStatus status,
+                                         List<TeamRegistration> teams, List<Match> matches,
+                                         String championTeamId, ChampionResolution championResolution) {
+        return reconstruct(id, name, type, format, numberOfTeams, cost, startDate, endDate, registrationDeadline,
+                matchStartTime, matchEndTime, status, teams, matches, championTeamId, championResolution, false);
     }
 
     /**
@@ -247,6 +267,32 @@ public class Tournament extends AggregateRoot {
                     "La fecha de fin no ha sido alcanzada");
         }
         this.status = TournamentStatus.FINISHED;
+    }
+
+    /**
+     * TC-42: pausa el torneo, suspendiendo la inscripción de equipos.
+     * El torneo se mantiene visible y consultable; solo se puede pausar
+     * si está Activo o En Progreso.
+     */
+    public void pause() {
+        if (paused) {
+            throw new TournamentPauseNotAllowedException("El torneo ya está pausado");
+        }
+        if (status != TournamentStatus.ACTIVE && status != TournamentStatus.IN_PROGRESS) {
+            throw new TournamentPauseNotAllowedException(
+                    "Solo se puede pausar un torneo en estado Activo o En Progreso");
+        }
+        this.paused = true;
+    }
+
+    /**
+     * TC-42: reanuda un torneo pausado, restaurando la inscripción de equipos.
+     */
+    public void resume() {
+        if (!paused) {
+            throw new TournamentPauseNotAllowedException("El torneo no está pausado");
+        }
+        this.paused = false;
     }
 
     /**
@@ -415,4 +461,5 @@ public class Tournament extends AggregateRoot {
     public void setRulebookFileId(String rulebookFileId) { this.rulebookFileId = rulebookFileId; }
     public String getChampionTeamId() { return championTeamId; }
     public ChampionResolution getChampionResolution() { return championResolution; }
+    public boolean isPaused() { return paused; }
 }

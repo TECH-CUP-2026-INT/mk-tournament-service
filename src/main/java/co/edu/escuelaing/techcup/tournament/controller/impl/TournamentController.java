@@ -26,11 +26,15 @@ import co.edu.escuelaing.techcup.tournament.service.ports.RegisterCourtUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.RegisterCourtUseCase.RegisterCourtCommand;
 import co.edu.escuelaing.techcup.tournament.service.ports.EditTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.EditTournamentUseCase.EditTournamentCommand;
+import co.edu.escuelaing.techcup.tournament.service.ports.PauseTournamentUseCase;
+import co.edu.escuelaing.techcup.tournament.service.ports.PauseTournamentUseCase.PauseTournamentCommand;
 import co.edu.escuelaing.techcup.tournament.dto.request.CreateTournamentRequest;
 import co.edu.escuelaing.techcup.tournament.dto.request.EditTournamentRequest;
+import co.edu.escuelaing.techcup.tournament.dto.request.PauseTournamentRequest;
 import co.edu.escuelaing.techcup.tournament.dto.response.ChampionResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.CourtResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.DeleteTournamentResponse;
+import co.edu.escuelaing.techcup.tournament.dto.response.PauseTournamentResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.PreparationResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.RulebookResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.TournamentResponse;
@@ -60,6 +64,7 @@ public class TournamentController {
     private final ConsultHistoricalTournamentsUseCase consultHistorical;
     private final ViewRegisteredTeamsUseCase viewRegisteredTeams;
     private final EditTournamentUseCase editTournamentUseCase;
+    private final PauseTournamentUseCase pauseTournamentUseCase;
     private final StartTournamentPreparationUseCase startTournamentPreparation;
     private final ViewMatchupsUseCase viewMatchups;
     private final ViewMatchCourtUseCase viewMatchCourt;
@@ -77,6 +82,7 @@ public class TournamentController {
                                  ConsultHistoricalTournamentsUseCase consultHistorical,
                                  ViewRegisteredTeamsUseCase viewRegisteredTeams,
                                  EditTournamentUseCase editTournamentUseCase,
+                                 PauseTournamentUseCase pauseTournamentUseCase,
                                  StartTournamentPreparationUseCase startTournamentPreparation,
                                  ViewMatchupsUseCase viewMatchups,
                                  ViewMatchCourtUseCase viewMatchCourt,
@@ -93,6 +99,7 @@ public class TournamentController {
         this.consultHistorical = consultHistorical;
         this.viewRegisteredTeams = viewRegisteredTeams;
         this.editTournamentUseCase = editTournamentUseCase;
+        this.pauseTournamentUseCase = pauseTournamentUseCase;
         this.startTournamentPreparation = startTournamentPreparation;
         this.viewMatchups = viewMatchups;
         this.viewMatchCourt = viewMatchCourt;
@@ -303,5 +310,18 @@ public class TournamentController {
         ));
 
         return ResponseEntity.ok(mapper.toResponse(updated));
+    }
+
+    @PatchMapping("/{id}/pause")
+    public ResponseEntity<PauseTournamentResponse> pause(@PathVariable String id,
+                                                           @Valid @RequestBody PauseTournamentRequest request) {
+        Tournament updated = pauseTournamentUseCase.execute(new PauseTournamentCommand(id, request.action()));
+
+        String message = updated.isPaused()
+                ? "El torneo fue pausado correctamente"
+                : "El torneo fue reanudado correctamente";
+
+        return ResponseEntity.ok(new PauseTournamentResponse(
+                updated.getId(), updated.getStatus(), updated.isPaused(), message));
     }
 }
