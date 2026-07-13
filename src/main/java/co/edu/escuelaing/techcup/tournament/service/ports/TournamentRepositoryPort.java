@@ -12,4 +12,5 @@ public interface TournamentRepositoryPort {
     void deleteById(String id);
     List<Tournament> findAllByStatus(TournamentStatus status);
     Optional<Tournament> findByIdAndStatus(String id, TournamentStatus status);
+    Optional<Tournament> findByMatchId(String matchId);
 }

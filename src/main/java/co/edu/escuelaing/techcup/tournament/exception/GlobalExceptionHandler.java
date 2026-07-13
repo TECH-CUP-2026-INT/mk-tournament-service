@@ -110,4 +110,19 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleFixtureGenerationFailed(FixtureGenerationFailedException ex) {
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(new ErrorResponse(ex.getMessage()));
     }
+
+    @ExceptionHandler({MatchupNotFoundException.class, CourtNotFoundException.class})
+    public ResponseEntity<ErrorResponse> handleScheduleMatchNotFound(RuntimeException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(ScheduleConflictException.class)
+    public ResponseEntity<ErrorResponse> handleScheduleConflict(ScheduleConflictException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidScheduledMatchDataException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidScheduledMatchData(InvalidScheduledMatchDataException ex) {
+        return ResponseEntity.badRequest().body(new ErrorResponse(ex.getMessage()));
+    }
 }

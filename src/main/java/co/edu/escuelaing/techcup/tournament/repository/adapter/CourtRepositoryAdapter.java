@@ -24,6 +24,11 @@ public class CourtRepositoryAdapter implements CourtRepositoryPort {
     }
 
     @Override
+    public Optional<Court> findById(String id) {
+        return mongoRepository.findById(id).map(CourtPersistenceMapper::toDomain);
+    }
+
+    @Override
     public Optional<Court> findByMatchId(String matchId) {
         return mongoRepository.findByMatchId(matchId).map(CourtPersistenceMapper::toDomain);
     }
