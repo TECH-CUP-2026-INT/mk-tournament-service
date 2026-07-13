@@ -7,6 +7,7 @@ import co.edu.escuelaing.techcup.tournament.exception.InvalidTournamentDateRange
 import co.edu.escuelaing.techcup.tournament.exception.InsufficientApprovedTeamsException;
 import co.edu.escuelaing.techcup.tournament.exception.MatchNotFoundException;
 import co.edu.escuelaing.techcup.tournament.exception.TeamRemovalNotAllowedException;
+import co.edu.escuelaing.techcup.tournament.exception.TournamentCannotBeEditedException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentCannotBeFinalizedException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentPreparationNotAllowedException;
 
@@ -19,21 +20,21 @@ import java.util.List;
 public class Tournament extends AggregateRoot {
 
     private static final int MAX_NAME_LENGTH = 100;
-    // TCF-52: la cantidad mínima de equipos para CREAR un torneo es 3.
+    // TCF-52: 3 es el mínimo de equipos para poder armar un triangular.
     private static final int MIN_TEAMS_TO_CREATE = 3;
     // TC-28: para que un torneo esté "listo para activarse" se requieren al menos 3 equipos aprobados.
     private static final int MIN_APPROVED_TEAMS_TO_ACTIVATE = 3;
 
-    private final String name;
-    private final TournamentType type;
-    private final TournamentFormat format;
-    private final int numberOfTeams;
-    private final BigDecimal cost;
-    private final LocalDate startDate;
-    private final LocalDate endDate;
-    private final LocalDate registrationDeadline;
-    private final LocalTime matchStartTime;
-    private final LocalTime matchEndTime;
+    private String name;
+    private TournamentType type;
+    private TournamentFormat format;
+    private int numberOfTeams;
+    private BigDecimal cost;
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private LocalDate registrationDeadline;
+    private LocalTime matchStartTime;
+    private LocalTime matchEndTime;
     private TournamentStatus status;
     private List<TeamRegistration> teams;
     private List<Match> matches;
@@ -125,9 +126,19 @@ public class Tournament extends AggregateRoot {
     public static Tournament reconstruct(String id, String name, int numberOfTeams, BigDecimal cost,
                                          LocalDate startDate, LocalDate endDate,
                                          LocalDate registrationDeadline, TournamentStatus status,
-                                         List<TeamRegistration> teams, List<Match> matches) {
+                                         List<TeamRegistration> teams, List<Match> matches,
+                                         String championTeamId, ChampionResolution championResolution) {
         return reconstruct(id, name, TournamentType.NORMAL, TournamentFormat.BRACKETS, numberOfTeams, cost,
-                startDate, endDate, registrationDeadline, null, null, status, teams, matches, null, null);
+                startDate, endDate, registrationDeadline, null, null, status, teams, matches,
+                championTeamId, championResolution);
+    }
+
+    public static Tournament reconstruct(String id, String name, int numberOfTeams, BigDecimal cost,
+                                         LocalDate startDate, LocalDate endDate,
+                                         LocalDate registrationDeadline, TournamentStatus status,
+                                         List<TeamRegistration> teams, List<Match> matches) {
+        return reconstruct(id, name, numberOfTeams, cost, startDate, endDate, registrationDeadline,
+                status, teams, matches, null, null);
     }
 
     /**
@@ -236,6 +247,59 @@ public class Tournament extends AggregateRoot {
                     "La fecha de fin no ha sido alcanzada");
         }
         this.status = TournamentStatus.FINISHED;
+    }
+
+    /**
+     * TC-41: actualiza cualquier campo editable del torneo. Todos los parámetros
+     * son opcionales (null = no se toca ese campo). No se puede editar un torneo
+     * Finalizado. Tipo y formato (y las horas de partido asociadas a Lightning)
+     * solo se pueden cambiar mientras el torneo está en estado Activo.
+     */
+    public void update(String name, TournamentType type, TournamentFormat format,
+                       Integer numberOfTeams, BigDecimal cost, LocalDate registrationDeadline,
+                       LocalDate startDate, LocalDate endDate,
+                       LocalTime matchStartTime, LocalTime matchEndTime) {
+        if (status == TournamentStatus.FINISHED) {
+            throw new TournamentCannotBeEditedException("No se puede editar un torneo en estado Finalizado");
+        }
+        boolean changesTypeOrFormat = type != null || format != null || matchStartTime != null || matchEndTime != null;
+        if (changesTypeOrFormat && status != TournamentStatus.ACTIVE) {
+            throw new TournamentCannotBeEditedException(
+                    "El tipo, formato y horario del torneo solo se pueden editar mientras está en estado Activo");
+        }
+
+        String newName = name != null ? name : this.name;
+        TournamentType newType = type != null ? type : this.type;
+        TournamentFormat newFormat = format != null ? format : this.format;
+        int newNumberOfTeams = numberOfTeams != null ? numberOfTeams : this.numberOfTeams;
+        BigDecimal newCost = cost != null ? cost : this.cost;
+        LocalDate newRegistrationDeadline = registrationDeadline != null ? registrationDeadline : this.registrationDeadline;
+        LocalDate newStartDate = startDate != null ? startDate : this.startDate;
+        LocalDate newEndDate = endDate != null ? endDate : this.endDate;
+        LocalTime newMatchStartTime = matchStartTime != null ? matchStartTime : this.matchStartTime;
+        LocalTime newMatchEndTime = matchEndTime != null ? matchEndTime : this.matchEndTime;
+
+        validateName(newName);
+        validateType(newType);
+        validateFormat(newFormat);
+        validateNumberOfTeams(newNumberOfTeams);
+        validateCost(newCost);
+        validateCommonDates(newStartDate, newRegistrationDeadline);
+        validateNormalSchedule(newType, newStartDate, newEndDate);
+        validateLightningSchedule(newType, newMatchStartTime, newMatchEndTime);
+
+        LocalDate effectiveEndDate = newType == TournamentType.LIGHTNING ? newStartDate : newEndDate;
+
+        this.name = newName;
+        this.type = newType;
+        this.format = newFormat;
+        this.numberOfTeams = newNumberOfTeams;
+        this.cost = newCost;
+        this.registrationDeadline = newRegistrationDeadline;
+        this.startDate = newStartDate;
+        this.endDate = effectiveEndDate;
+        this.matchStartTime = newMatchStartTime;
+        this.matchEndTime = newMatchEndTime;
     }
 
     /**
