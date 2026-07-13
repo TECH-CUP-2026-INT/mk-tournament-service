@@ -150,4 +150,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleInvalidSanctionData(InvalidSanctionDataException ex) {
         return ResponseEntity.badRequest().body(new ErrorResponse(ex.getMessage()));
     }
+
+    @ExceptionHandler(MatchActivationNotAllowedException.class)
+    public ResponseEntity<ErrorResponse> handleMatchActivationNotAllowed(MatchActivationNotAllowedException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(MatchInactiveException.class)
+    public ResponseEntity<ErrorResponse> handleMatchInactive(MatchInactiveException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
+    }
 }

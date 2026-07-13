@@ -19,4 +19,8 @@ public class MatchDocument {
     private int homeScore;
     private int awayScore;
     private String penaltyShootoutWinnerTeamId;
+    // Boolean (no boolean primitivo): así los partidos guardados antes de esta
+    // historia, que no tienen este campo en Mongo, se leen como null y se
+    // tratan como activos en vez de caer por defecto en false (inactivos).
+    private Boolean active;
 }

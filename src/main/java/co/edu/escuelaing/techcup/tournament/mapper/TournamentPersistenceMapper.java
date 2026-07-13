@@ -95,7 +95,8 @@ public class TournamentPersistenceMapper {
         return documents.stream()
                 .map(d -> new Match(d.getMatchId(), d.getHomeTeamId(), d.getAwayTeamId(),
                         MatchStatus.valueOf(d.getStatus()), d.isFinalMatch(), d.getHomeScore(),
-                        d.getAwayScore(), d.getPenaltyShootoutWinnerTeamId()))
+                        d.getAwayScore(), d.getPenaltyShootoutWinnerTeamId(),
+                        d.getActive() == null || d.getActive()))
                 .toList();
     }
 
@@ -104,7 +105,7 @@ public class TournamentPersistenceMapper {
         return matches.stream()
                 .map(m -> new MatchDocument(m.getMatchId(), m.getHomeTeamId(), m.getAwayTeamId(),
                         m.getStatus().name(), m.isFinalMatch(), m.getHomeScore(), m.getAwayScore(),
-                        m.getPenaltyShootoutWinnerTeamId()))
+                        m.getPenaltyShootoutWinnerTeamId(), m.isActive()))
                 .toList();
     }
 
