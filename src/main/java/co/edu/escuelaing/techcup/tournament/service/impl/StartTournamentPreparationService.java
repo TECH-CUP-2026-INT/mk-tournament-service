@@ -2,8 +2,8 @@ package co.edu.escuelaing.techcup.tournament.service.impl;
 
 import co.edu.escuelaing.techcup.tournament.exception.FixtureGenerationFailedException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentNotFoundException;
+import co.edu.escuelaing.techcup.tournament.service.EnrollmentStatus;
 import co.edu.escuelaing.techcup.tournament.service.Match;
-import co.edu.escuelaing.techcup.tournament.service.RegistrationStatus;
 import co.edu.escuelaing.techcup.tournament.service.Tournament;
 import co.edu.escuelaing.techcup.tournament.service.ports.FixtureGenerationPort;
 import co.edu.escuelaing.techcup.tournament.service.ports.StartTournamentPreparationUseCase;
@@ -31,8 +31,8 @@ public class StartTournamentPreparationService implements StartTournamentPrepara
 
         tournament.validateReadyForPreparation();
 
-        List<String> approvedTeamIds = tournament.getTeams().stream()
-                .filter(team -> team.getRegistrationStatus() == RegistrationStatus.APPROVED)
+        List<String> enrolledTeamIds = tournament.getTeams().stream()
+                .filter(team -> team.getStatus() == EnrollmentStatus.ENROLLED)
                 .map(team -> team.getTeamId())
                 .toList();
 
@@ -40,7 +40,7 @@ public class StartTournamentPreparationService implements StartTournamentPrepara
         try {
             generatedMatches = fixtureGenerationPort.generateFixture(
                     new FixtureGenerationPort.FixtureGenerationRequest(
-                            tournamentId, approvedTeamIds, tournament.getFormat()));
+                            tournamentId, enrolledTeamIds, tournament.getFormat()));
         } catch (RuntimeException e) {
             throw new FixtureGenerationFailedException(tournamentId, e);
         }

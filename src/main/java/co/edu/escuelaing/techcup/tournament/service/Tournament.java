@@ -35,7 +35,7 @@ public class Tournament extends AggregateRoot {
     private final LocalTime matchStartTime;
     private final LocalTime matchEndTime;
     private TournamentStatus status;
-    private List<TeamRegistration> teams;
+    private List<Enrollment> teams;
     private List<Match> matches;
     private String rulebookFileId;
     private String championTeamId;
@@ -107,7 +107,7 @@ public class Tournament extends AggregateRoot {
                                          LocalDate registrationDeadline,
                                          LocalTime matchStartTime, LocalTime matchEndTime,
                                          TournamentStatus status,
-                                         List<TeamRegistration> teams, List<Match> matches,
+                                         List<Enrollment> teams, List<Match> matches,
                                          String championTeamId, ChampionResolution championResolution) {
         Tournament t = new Tournament(id, name, type, format, numberOfTeams, cost, startDate, endDate,
                 registrationDeadline, matchStartTime, matchEndTime, status);
@@ -125,7 +125,7 @@ public class Tournament extends AggregateRoot {
     public static Tournament reconstruct(String id, String name, int numberOfTeams, BigDecimal cost,
                                          LocalDate startDate, LocalDate endDate,
                                          LocalDate registrationDeadline, TournamentStatus status,
-                                         List<TeamRegistration> teams, List<Match> matches) {
+                                         List<Enrollment> teams, List<Match> matches) {
         return reconstruct(id, name, TournamentType.NORMAL, TournamentFormat.BRACKETS, numberOfTeams, cost,
                 startDate, endDate, registrationDeadline, null, null, status, teams, matches, null, null);
     }
@@ -151,17 +151,17 @@ public class Tournament extends AggregateRoot {
         else if (!endDate.isAfter(startDate))
             missing.add("La fecha de fin debe ser posterior a la de inicio");
 
-        long approvedCount = countApprovedTeams();
-        if (approvedCount < MIN_APPROVED_TEAMS_TO_ACTIVATE)
-            missing.add("Se requieren al menos " + MIN_APPROVED_TEAMS_TO_ACTIVATE + " equipos aprobados, faltan " + (MIN_APPROVED_TEAMS_TO_ACTIVATE - approvedCount));
+        long enrolledCount = countEnrolledTeams();
+        if (enrolledCount < MIN_APPROVED_TEAMS_TO_ACTIVATE)
+            missing.add("Se requieren al menos " + MIN_APPROVED_TEAMS_TO_ACTIVATE + " equipos inscritos, faltan " + (MIN_APPROVED_TEAMS_TO_ACTIVATE - enrolledCount));
 
         boolean ready = missing.isEmpty();
-        return new PreparationResult(ready, missing, approvedCount);
+        return new PreparationResult(ready, missing, enrolledCount);
     }
 
-    private long countApprovedTeams() {
+    private long countEnrolledTeams() {
         return teams.stream()
-                .filter(t -> t.getRegistrationStatus() == RegistrationStatus.APPROVED)
+                .filter(t -> t.getStatus() == EnrollmentStatus.ENROLLED)
                 .count();
     }
 
@@ -169,7 +169,7 @@ public class Tournament extends AggregateRoot {
         if (status != TournamentStatus.ACTIVE && status != TournamentStatus.IN_PROGRESS)
             throw new TeamRemovalNotAllowedException("Solo se puede remover equipos en torneos Activos o En Progreso");
 
-        TeamRegistration team = teams.stream()
+        Enrollment team = teams.stream()
                 .filter(t -> t.getTeamId().equals(teamId))
                 .findFirst()
                 .orElseThrow(() -> new TeamRemovalNotAllowedException("El equipo no está inscrito en este torneo"));
@@ -196,11 +196,11 @@ public class Tournament extends AggregateRoot {
         if (status != TournamentStatus.ACTIVE)
             throw new TournamentPreparationNotAllowedException(
                     "Solo se puede iniciar la preparación de torneos en estado Activo");
-        long approved = countApprovedTeams();
-        if (approved < MIN_APPROVED_TEAMS_TO_ACTIVATE)
+        long enrolled = countEnrolledTeams();
+        if (enrolled < MIN_APPROVED_TEAMS_TO_ACTIVATE)
             throw new InsufficientApprovedTeamsException(
                     "Se requieren al menos " + MIN_APPROVED_TEAMS_TO_ACTIVATE
-                            + " equipos aprobados para iniciar la preparación, hay " + approved);
+                            + " equipos inscritos para iniciar la preparación, hay " + enrolled);
     }
 
     /**
@@ -343,8 +343,8 @@ public class Tournament extends AggregateRoot {
     public LocalDate getRegistrationDeadline() { return registrationDeadline; }
     public TournamentStatus getStatus() { return status; }
     public void setStatus(TournamentStatus status) { this.status = status; }
-    public List<TeamRegistration> getTeams() { return teams; }
-    public void setTeams(List<TeamRegistration> teams) { this.teams = teams; }
+    public List<Enrollment> getTeams() { return teams; }
+    public void setTeams(List<Enrollment> teams) { this.teams = teams; }
     public List<Match> getMatches() { return matches; }
     public void setMatches(List<Match> matches) { this.matches = matches; }
     public String getRulebookFileId() { return rulebookFileId; }

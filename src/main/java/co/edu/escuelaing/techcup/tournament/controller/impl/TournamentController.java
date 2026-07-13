@@ -8,11 +8,13 @@ import co.edu.escuelaing.techcup.tournament.service.PreparationResult;
 import co.edu.escuelaing.techcup.tournament.service.Tournament;
 import co.edu.escuelaing.techcup.tournament.service.ports.ConsultHistoricalTournamentsUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.ConsultRulebookUseCase;
-import co.edu.escuelaing.techcup.tournament.service.ports.ViewRegisteredTeamsUseCase;
+import co.edu.escuelaing.techcup.tournament.service.ports.GetEnrolledTeamsUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.ViewMatchupsUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.ViewMatchCourtUseCase;
+import co.edu.escuelaing.techcup.tournament.dto.response.EnrolledTeamResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.MatchCourtResponse;
-import co.edu.escuelaing.techcup.tournament.dto.response.RegisteredTeamResponse;
+import co.edu.escuelaing.techcup.tournament.dto.response.RegisteredTeamsResponse;
+import co.edu.escuelaing.techcup.tournament.dto.response.ReservedTeamResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.MatchupResponse;
 import co.edu.escuelaing.techcup.tournament.service.ports.GetChampionUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.AssignChampionUseCase;
@@ -55,7 +57,7 @@ public class TournamentController {
     private final ConsultRulebookUseCase consultRulebook;
     private final RegisterCourtUseCase registerCourtUseCase;
     private final ConsultHistoricalTournamentsUseCase consultHistorical;
-    private final ViewRegisteredTeamsUseCase viewRegisteredTeams;
+    private final GetEnrolledTeamsUseCase getEnrolledTeams;
     private final StartTournamentPreparationUseCase startTournamentPreparation;
     private final ViewMatchupsUseCase viewMatchups;
     private final ViewMatchCourtUseCase viewMatchCourt;
@@ -71,7 +73,7 @@ public class TournamentController {
                                  ConsultRulebookUseCase consultRulebook,
                                  RegisterCourtUseCase registerCourtUseCase,
                                  ConsultHistoricalTournamentsUseCase consultHistorical,
-                                 ViewRegisteredTeamsUseCase viewRegisteredTeams,
+                                 GetEnrolledTeamsUseCase getEnrolledTeams,
                                  StartTournamentPreparationUseCase startTournamentPreparation,
                                  ViewMatchupsUseCase viewMatchups,
                                  ViewMatchCourtUseCase viewMatchCourt,
@@ -86,7 +88,7 @@ public class TournamentController {
         this.consultRulebook = consultRulebook;
         this.registerCourtUseCase = registerCourtUseCase;
         this.consultHistorical = consultHistorical;
-        this.viewRegisteredTeams = viewRegisteredTeams;
+        this.getEnrolledTeams = getEnrolledTeams;
         this.startTournamentPreparation = startTournamentPreparation;
         this.viewMatchups = viewMatchups;
         this.viewMatchCourt = viewMatchCourt;
@@ -184,18 +186,32 @@ public class TournamentController {
     }
 
     @GetMapping("/{tournamentId}/teams")
-    public ResponseEntity<java.util.List<RegisteredTeamResponse>> getRegisteredTeams(
+    public ResponseEntity<RegisteredTeamsResponse> getRegisteredTeams(
             @PathVariable String tournamentId) {
-        java.util.List<RegisteredTeamResponse> result = viewRegisteredTeams.getTeams(tournamentId)
-                .stream()
-                .map(t -> new RegisteredTeamResponse(
-                        t.getTeamId(),
-                        t.getTeamName(),
-                        t.getRegistrationStatus(),
-                        "https://placeholder.com/teams/" + t.getTeamId() + "/logo"
+        GetEnrolledTeamsUseCase.EnrolledTeamsView view = getEnrolledTeams.getEnrolledTeams(tournamentId);
+
+        java.util.List<EnrolledTeamResponse> enrolledTeams = view.enrolled().stream()
+                .map(e -> new EnrolledTeamResponse(
+                        e.getTeamId(),
+                        e.getTeamName(),
+                        "https://placeholder.com/teams/" + e.getTeamId() + "/logo",
+                        e.getEnrollmentId(),
+                        e.getConfirmationDate()
                 ))
                 .toList();
-        return ResponseEntity.ok(result);
+
+        java.util.List<ReservedTeamResponse> reservedTeams = view.reserved().stream()
+                .map(r -> new ReservedTeamResponse(
+                        r.enrollment().getTeamId(),
+                        r.enrollment().getTeamName(),
+                        r.enrollment().getEnrollmentId(),
+                        r.livePaymentStatus(),
+                        r.enrollment().getReservationExpiresAt()
+                ))
+                .toList();
+
+        return ResponseEntity.ok(new RegisteredTeamsResponse(
+                enrolledTeams, reservedTeams, enrolledTeams.size(), reservedTeams.size(), view.availableSlots()));
     }
 
     @GetMapping("/history")
