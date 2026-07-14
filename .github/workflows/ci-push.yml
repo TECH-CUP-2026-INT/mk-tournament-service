@@ -67,26 +67,6 @@ jobs:
           path: target/surefire-reports/
           retention-days: 7
 
-      - name: Debug secrets whitespace (temporal)
-        env:
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          echo "SONAR_HOST_URL length=${#SONAR_HOST_URL}"
-          case "$SONAR_HOST_URL" in
-            *$'\n') echo "SONAR_HOST_URL: termina en newline" ;;
-          esac
-          case "$SONAR_HOST_URL" in
-            *' ') echo "SONAR_HOST_URL: termina en espacio" ;;
-          esac
-          echo "SONAR_TOKEN length=${#SONAR_TOKEN}"
-          case "$SONAR_TOKEN" in
-            *$'\n') echo "SONAR_TOKEN: termina en newline" ;;
-          esac
-          case "$SONAR_TOKEN" in
-            *' ') echo "SONAR_TOKEN: termina en espacio" ;;
-          esac
-
       - name: Análisis estático con SonarQube
         if: success()
         env:
