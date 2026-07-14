@@ -1,0 +1,61 @@
+package co.edu.escuelaing.techcup.tournament.controller.impl;
+
+import co.edu.escuelaing.techcup.tournament.dto.response.AuditEventResponse;
+import co.edu.escuelaing.techcup.tournament.service.AuditEventFilter;
+import co.edu.escuelaing.techcup.tournament.service.ports.ConsultAuditEventsUseCase;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.time.LocalDate;
+import java.util.List;
+
+/**
+ * TC-40: consulta del log de auditoría. Hoy sin control de acceso real
+ * (ver SecurityConfig) — pendiente del futuro Servicio de Identidad
+ * (JWT + roles Admin/Organizer).
+ */
+@RestController
+@RequestMapping("/audit-events")
+@Tag(name = "Auditoría", description = "Consulta del log de eventos de auditoría (TC-40)")
+public class AuditEventController {
+
+    private final ConsultAuditEventsUseCase consultAuditEventsUseCase;
+
+    public AuditEventController(ConsultAuditEventsUseCase consultAuditEventsUseCase) {
+        this.consultAuditEventsUseCase = consultAuditEventsUseCase;
+    }
+
+    @Operation(summary = "Consultar eventos de auditoría con filtros opcionales (fecha, tipo de evento, torneo)",
+            description = "Los filtros presentes se combinan con AND. Todos son opcionales.")
+    @ApiResponse(responseCode = "200", description = "Lista de eventos de auditoría que cumplen los filtros",
+            content = @Content(schema = @Schema(implementation = AuditEventResponse.class)))
+    @GetMapping
+    public ResponseEntity<List<AuditEventResponse>> consult(
+            @Parameter(description = "Fecha de inicio del rango (ISO 8601)", example = "2026-01-01", required = false)
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @Parameter(description = "Fecha de fin del rango (ISO 8601)", example = "2026-01-31", required = false)
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @Parameter(description = "Tipo de acción auditada", example = "CreateTournamentService.create", required = false)
+            @RequestParam(required = false) String eventType,
+            @Parameter(description = "ID del torneo a filtrar", example = "abc123", required = false)
+            @RequestParam(required = false) String tournamentId) {
+
+        List<AuditEventResponse> result = consultAuditEventsUseCase
+                .consult(new AuditEventFilter(from, to, eventType, tournamentId))
+                .stream()
+                .map(e -> new AuditEventResponse(e.getTimestamp(), e.getActor(), e.getActionType(), e.getAffectedEntityId()))
+                .toList();
+
+        return ResponseEntity.ok(result);
+    }
+}
