@@ -28,7 +28,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/sanctions")
-@Tag(name = "Sanciones", description = "Aplicación y consulta de sanciones a jugadores")
+@Tag(name = "Sanctions", description = "Applying and querying player sanctions")
 public class SanctionController {
 
     private final ApplySanctionUseCase applySanctionUseCase;
@@ -43,13 +43,13 @@ public class SanctionController {
         this.recordMatchFinishedUseCase = recordMatchFinishedUseCase;
     }
 
-    @Operation(summary = "Aplicar sanción a jugador",
-            description = "Roja = 1 partido; 2 amarillas en partidos distintos = 1 partido; 2 amarillas en el mismo "
-                    + "partido = roja; por conducta el Organizador define los partidos de sanción.")
+    @Operation(summary = "Apply sanction to player",
+            description = "Red card = 1 match; 2 yellow cards in different matches = 1 match; 2 yellow cards in the "
+                    + "same match = red card; for conduct sanctions, the Organizer defines the number of matches suspended.")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Sanción aplicada",
+            @ApiResponse(responseCode = "201", description = "Sanction applied",
                     content = @Content(schema = @Schema(implementation = SanctionResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos", content = @Content)
+            @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content)
     })
     @PostMapping
     public ResponseEntity<SanctionResponse> apply(@Valid @RequestBody ApplySanctionRequest request) {
@@ -59,12 +59,13 @@ public class SanctionController {
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(sanction));
     }
 
-    @Operation(summary = "Consultar sanciones activas de un jugador")
-    @ApiResponse(responseCode = "200", description = "Lista de sanciones activas del jugador",
+    @Operation(summary = "Get a player's active sanctions",
+            description = "Returns only sanctions still in effect (matchesRemaining > 0); served ones are omitted.")
+    @ApiResponse(responseCode = "200", description = "List of the player's active sanctions",
             content = @Content(schema = @Schema(implementation = SanctionResponse.class)))
     @GetMapping("/{playerId}")
     public ResponseEntity<List<SanctionResponse>> getActiveSanctions(
-            @Parameter(description = "ID del jugador", example = "player_123") @PathVariable String playerId) {
+            @Parameter(description = "Player ID", example = "player_123") @PathVariable String playerId) {
         List<SanctionResponse> result = viewPlayerSanctionUseCase.getActiveSanctions(playerId)
                 .stream()
                 .map(this::toResponse)
@@ -73,15 +74,15 @@ public class SanctionController {
     }
 
     /**
-     * Punto de integración pendiente: la futura historia "Finalizar partido"
-     * debe invocar este endpoint cuando un partido finaliza. Hoy no hay
-     * nada que lo dispare automáticamente.
+     * Pending integration point: the future "Finish match" story must invoke
+     * this endpoint whenever a match finishes. Today nothing triggers it
+     * automatically.
      */
-    @Operation(summary = "Registrar fin de partido (reduce partidos pendientes de sanción) — integración interna",
-            description = "Integración interna pendiente: hoy no existe ningún disparador automático. La futura "
-                    + "historia \"Finalizar partido\" del Servicio de Partidos debe invocar este endpoint cuando un "
-                    + "partido finaliza, para descontar un partido de suspensión a los jugadores sancionados.")
-    @ApiResponse(responseCode = "200", description = "Fin de partido registrado")
+    @Operation(summary = "Record match finished (internal integration point)",
+            description = "Pending internal integration: no automatic trigger exists yet. The future \"Finish match\" "
+                    + "story in the Match Service must call this endpoint whenever a match finishes, so one match of "
+                    + "suspension is served for every sanctioned player with an active sanction.")
+    @ApiResponse(responseCode = "200", description = "Match-finished event recorded")
     @PostMapping("/match-finished")
     public ResponseEntity<Void> recordMatchFinished() {
         recordMatchFinishedUseCase.recordMatchFinished();

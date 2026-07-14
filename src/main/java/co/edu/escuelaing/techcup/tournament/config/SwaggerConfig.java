@@ -19,24 +19,35 @@ public class SwaggerConfig {
                 .info(new Info()
                         .title("TechCup — Tournament Service API")
                         .description("""
-                                API REST del microservicio de gestión de torneos de la plataforma TechCup Fútbol.
-                                Permite crear, editar, pausar, finalizar e inactivar torneos;
-                                inscribir equipos; gestionar canchas, árbitros, sanciones y el historial de eventos.
+                                REST API for the tournament management microservice of the TechCup Football platform.
 
-                                **Servicios externos requeridos:**
-                                - `payment-service` en `http://localhost:8081` — validación de pagos de inscripción.
-                                - `team-service` en `http://localhost:8082` — consulta de datos del equipo.
+                                Covers the full tournament lifecycle: creation, editing, pausing, finalizing and
+                                inactivating tournaments; team enrollment; scheduling matches with courts and referees;
+                                bracket/group/league fixture generation; player sanctions; champion assignment; and an
+                                audit trail of every action performed through the API.
+
+                                **Conventions**
+                                - All endpoints are currently open (`permitAll()`) — there is no Identity Service with
+                                  JWT/roles yet. Role names shown per endpoint describe the intended business owner of
+                                  the action, not an enforced restriction.
+                                - Timestamps use ISO-8601 (`yyyy-MM-dd` for dates, `HH:mm:ss` for times).
+                                - `4xx` responses signal invalid input or a state conflict; `5xx` responses signal an
+                                  unexpected internal failure.
+
+                                **External dependencies**
+                                - `payment-service` at `http://localhost:8081` — validates enrollment payments.
+                                - `team-service` at `http://localhost:8082` — resolves team data.
                                 """)
                         .version("0.0.1-SNAPSHOT")
                         .contact(new Contact()
-                                .name("Equipo MK — TechCup 2026 INT")
+                                .name("Team MK — TechCup 2026 INT")
                                 .email("hever.barrera@mail.escuelaing.edu.co"))
                         .license(new License()
-                                .name("Uso académico interno")
+                                .name("Internal academic use")
                                 .url("https://github.com/TECH-CUP-2026-INT/mk-tournament-service")))
                 .servers(List.of(
-                        new Server().url("http://localhost:8080").description("Desarrollo local"),
-                        new Server().url("https://api.techcup.escuelaing.edu.co").description("Producción (pendiente)")
+                        new Server().url("http://localhost:8080").description("Local development"),
+                        new Server().url("https://api.techcup.escuelaing.edu.co").description("Production (pending)")
                 ));
     }
 }

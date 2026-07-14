@@ -78,7 +78,7 @@ import java.io.IOException;
 
 @RestController
 @RequestMapping("/tournaments")
-@Tag(name = "Torneos", description = "Creación, edición y gestión del ciclo de vida de torneos")
+@Tag(name = "Tournaments", description = "Creating, editing, and managing the full tournament lifecycle")
 public class TournamentController {
 
     private final CreateTournamentUseCase createTournamentUseCase;
@@ -153,11 +153,13 @@ public class TournamentController {
         this.mapper = mapper;
     }
 
-    @Operation(summary = "Crear torneo")
+    @Operation(summary = "Create tournament",
+            description = "Creates a tournament directly in ACTIVE status. See CreateTournamentRequest for the "
+                    + "NORMAL vs LIGHTNING field rules.")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Torneo creado",
+            @ApiResponse(responseCode = "201", description = "Tournament created",
                     content = @Content(schema = @Schema(implementation = TournamentResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos", content = @Content)
+            @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content)
     })
     @PostMapping
     public ResponseEntity<TournamentResponse> create(@Valid @RequestBody CreateTournamentRequest request) {
@@ -176,90 +178,100 @@ public class TournamentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toResponse(createTournamentUseCase.create(newTournament)));
     }
 
-    @Operation(summary = "Finalizar torneo")
+    @Operation(summary = "Finalize tournament",
+            description = "Moves the tournament to FINISHED and archives it to the historical read-only view. "
+                    + "Only allowed once the tournament is In Progress and the end date has been reached.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Torneo finalizado",
+            @ApiResponse(responseCode = "200", description = "Tournament finalized",
                     content = @Content(schema = @Schema(implementation = TournamentResponse.class))),
-            @ApiResponse(responseCode = "409", description = "El torneo no puede finalizarse en su estado actual", content = @Content)
+            @ApiResponse(responseCode = "409", description = "The tournament cannot be finalized in its current state", content = @Content)
     })
     @PatchMapping("/{id}/finalize")
     public ResponseEntity<TournamentResponse> finalize(
-            @Parameter(description = "ID del torneo", example = "abc123") @PathVariable String id) {
+            @Parameter(description = "Tournament ID", example = "abc123") @PathVariable String id) {
         Tournament finalized = finalizeTournamentUseCase.finalizeTournament(id);
 
         return ResponseEntity.ok(mapper.toResponse(finalized));
     }
 
-    @Operation(summary = "Iniciar fase de preparación")
+    @Operation(summary = "Start preparation phase",
+            description = "Moves the tournament to IN_PREPARATION and generates its fixture (matchups) at random, "
+                    + "based on the tournament's format. Requires at least 3 approved teams.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Preparación iniciada",
+            @ApiResponse(responseCode = "200", description = "Preparation started, fixture generated",
                     content = @Content(schema = @Schema(implementation = TournamentResponse.class))),
-            @ApiResponse(responseCode = "409", description = "El torneo no cumple los requisitos para pasar a preparación", content = @Content)
+            @ApiResponse(responseCode = "409", description = "The tournament does not meet the requirements to enter preparation", content = @Content)
     })
     @PatchMapping("/{id}/prepare")
     public ResponseEntity<TournamentResponse> prepare(
-            @Parameter(description = "ID del torneo", example = "abc123") @PathVariable String id) {
+            @Parameter(description = "Tournament ID", example = "abc123") @PathVariable String id) {
         Tournament tournament = startTournamentPreparation.startPreparation(id);
         return ResponseEntity.ok(mapper.toResponse(tournament));
     }
 
-    @Operation(summary = "Consultar estado de preparación")
-    @ApiResponse(responseCode = "200", description = "Estado de preparación del torneo",
+    @Operation(summary = "Check preparation readiness",
+            description = "Reports whether the tournament already meets the requirements to move into preparation "
+                    + "(at least 3 approved teams), and lists what's missing otherwise.")
+    @ApiResponse(responseCode = "200", description = "Tournament preparation readiness",
             content = @Content(schema = @Schema(implementation = PreparationResponse.class)))
     @GetMapping("/{tournamentId}/preparation")
     public ResponseEntity<PreparationResponse> checkPreparation(
-            @Parameter(description = "ID del torneo", example = "abc123") @PathVariable String tournamentId) {
+            @Parameter(description = "Tournament ID", example = "abc123") @PathVariable String tournamentId) {
         PreparationResult result = checkPreparation.check(tournamentId);
-        String status = result.isReadyToActivate() ? "completo" : "incompleto";
+        String status = result.isReadyToActivate() ? "complete" : "incomplete";
         return ResponseEntity.ok(new PreparationResponse(status, result.isReadyToActivate(),
                 result.getApprovedTeamsCount(), result.getMissingRequirements()));
     }
 
-    @Operation(summary = "Asignar campeón del torneo",
-            description = "Se dispara cuando el partido marcado como final finaliza. Si hay empate en tiempo reglamentario, requiere que ya se haya registrado el ganador de la tanda de penales.")
-    @ApiResponse(responseCode = "200", description = "Campeón asignado",
+    @Operation(summary = "Assign tournament champion",
+            description = "Triggered when the match marked as the final finishes. If the score is tied in "
+                    + "regulation time, the penalty shootout winner must already have been recorded first.")
+    @ApiResponse(responseCode = "200", description = "Champion assigned",
             content = @Content(schema = @Schema(implementation = ChampionResponse.class)))
     @PostMapping("/{tournamentId}/matches/{matchId}/champion")
     public ResponseEntity<ChampionResponse> assignChampion(
-            @Parameter(description = "ID del torneo", example = "abc123") @PathVariable String tournamentId,
-            @Parameter(description = "ID del partido final", example = "m01") @PathVariable String matchId) {
+            @Parameter(description = "Tournament ID", example = "abc123") @PathVariable String tournamentId,
+            @Parameter(description = "ID of the final match", example = "m01") @PathVariable String matchId) {
         ChampionAssignment assignment = assignChampionUseCase.assignChampion(tournamentId, matchId);
         return ResponseEntity.ok(new ChampionResponse(
                 tournamentId, assignment.championTeamId(), assignment.resolution()));
     }
 
-    @Operation(summary = "Consultar campeón del torneo")
-    @ApiResponse(responseCode = "200", description = "Campeón del torneo",
+    @Operation(summary = "Get tournament champion")
+    @ApiResponse(responseCode = "200", description = "Tournament champion",
             content = @Content(schema = @Schema(implementation = ChampionResponse.class)))
     @GetMapping("/{tournamentId}/champion")
     public ResponseEntity<ChampionResponse> getChampion(
-            @Parameter(description = "ID del torneo", example = "abc123") @PathVariable String tournamentId) {
+            @Parameter(description = "Tournament ID", example = "abc123") @PathVariable String tournamentId) {
         ChampionAssignment assignment = getChampionUseCase.getChampion(tournamentId);
         return ResponseEntity.ok(new ChampionResponse(
                 tournamentId, assignment.championTeamId(), assignment.resolution()));
     }
 
-    @Operation(summary = "Eliminar torneo (solo estado Borrador)")
+    @Operation(summary = "Delete tournament (Draft status only)",
+            description = "Permanently deletes a tournament. Only allowed while it is still in Draft status.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Torneo eliminado",
+            @ApiResponse(responseCode = "200", description = "Tournament deleted",
                     content = @Content(schema = @Schema(implementation = DeleteTournamentResponse.class))),
-            @ApiResponse(responseCode = "409", description = "El torneo no está en estado Borrador", content = @Content)
+            @ApiResponse(responseCode = "409", description = "The tournament is not in Draft status", content = @Content)
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<DeleteTournamentResponse> delete(
-            @Parameter(description = "ID del torneo", example = "abc123") @PathVariable String id) {
+            @Parameter(description = "Tournament ID", example = "abc123") @PathVariable String id) {
         deleteTournamentUseCase.delete(id);
         return ResponseEntity.ok(new DeleteTournamentResponse(
-                "El torneo '" + id + "' ha sido eliminado permanentemente."
+                "Tournament '" + id + "' has been permanently deleted."
         ));
     }
 
-    @Operation(summary = "Consultar fixture / bracket")
-    @ApiResponse(responseCode = "200", description = "Lista de emparejamientos del torneo",
+    @Operation(summary = "Get fixture / bracket",
+            description = "Returns every matchup generated for the tournament, with current results. Slots not yet "
+                    + "resolved (future bracket rounds) are returned with null team IDs.")
+    @ApiResponse(responseCode = "200", description = "List of tournament matchups",
             content = @Content(schema = @Schema(implementation = MatchupResponse.class)))
     @GetMapping("/{tournamentId}/matchups")
     public ResponseEntity<java.util.List<MatchupResponse>> getMatchups(
-            @Parameter(description = "ID del torneo", example = "abc123") @PathVariable String tournamentId) {
+            @Parameter(description = "Tournament ID", example = "abc123") @PathVariable String tournamentId) {
         java.util.List<MatchupResponse> result = viewMatchups.getMatchups(tournamentId)
                 .stream()
                 .map(m -> new MatchupResponse(
@@ -275,12 +287,14 @@ public class TournamentController {
         return ResponseEntity.ok(result);
     }
 
-    @Operation(summary = "Consultar cancha asignada a un partido")
-    @ApiResponse(responseCode = "200", description = "Cancha asignada al partido (o estado pendiente si aún no se ha programado)",
+    @Operation(summary = "Get the court assigned to a match",
+            description = "Returns a pending placeholder (200, with a message) instead of 404 if the match hasn't "
+                    + "been scheduled to a court yet.")
+    @ApiResponse(responseCode = "200", description = "Court assigned to the match (or a pending state if not scheduled yet)",
             content = @Content(schema = @Schema(implementation = MatchCourtResponse.class)))
     @GetMapping("/matches/{matchId}/court")
     public ResponseEntity<MatchCourtResponse> getMatchCourt(
-            @Parameter(description = "ID del partido", example = "m01") @PathVariable String matchId) {
+            @Parameter(description = "Match ID", example = "m01") @PathVariable String matchId) {
         return viewMatchCourt.getCourtByMatch(matchId)
                 .map(c -> ResponseEntity.ok(new MatchCourtResponse(
                         c.getId(), c.getMatchId(), c.getSection().name(),
@@ -289,12 +303,14 @@ public class TournamentController {
                 .orElse(ResponseEntity.ok(MatchCourtResponse.pending(matchId)));
     }
 
-    @Operation(summary = "Listar equipos registrados")
-    @ApiResponse(responseCode = "200", description = "Lista de equipos registrados en el torneo",
+    @Operation(summary = "List registered teams",
+            description = "Legacy registration view (name + status). For payment/reservation details, use "
+                    + "GET /tournaments/{tournamentId}/enrollments instead.")
+    @ApiResponse(responseCode = "200", description = "List of teams registered in the tournament",
             content = @Content(schema = @Schema(implementation = RegisteredTeamResponse.class)))
     @GetMapping("/{tournamentId}/teams")
     public ResponseEntity<java.util.List<RegisteredTeamResponse>> getRegisteredTeams(
-            @Parameter(description = "ID del torneo", example = "abc123") @PathVariable String tournamentId) {
+            @Parameter(description = "Tournament ID", example = "abc123") @PathVariable String tournamentId) {
         java.util.List<RegisteredTeamResponse> result = viewRegisteredTeams.getTeams(tournamentId)
                 .stream()
                 .map(t -> new RegisteredTeamResponse(
@@ -307,12 +323,14 @@ public class TournamentController {
         return ResponseEntity.ok(result);
     }
 
-    @Operation(summary = "Listar equipos inscritos y en reserva")
-    @ApiResponse(responseCode = "200", description = "Equipos inscritos confirmados y equipos con cupo reservado pendiente de pago",
+    @Operation(summary = "List enrolled and reserved teams",
+            description = "Returns teams with a confirmed (paid) enrollment separately from teams with a slot "
+                    + "reservation still awaiting payment confirmation, plus how many slots remain open.")
+    @ApiResponse(responseCode = "200", description = "Enrolled teams and reserved teams",
             content = @Content(schema = @Schema(implementation = RegisteredTeamsResponse.class)))
     @GetMapping("/{tournamentId}/enrollments")
     public ResponseEntity<RegisteredTeamsResponse> getEnrolledTeams(
-            @Parameter(description = "ID del torneo", example = "abc123") @PathVariable String tournamentId) {
+            @Parameter(description = "Tournament ID", example = "abc123") @PathVariable String tournamentId) {
         GetEnrolledTeamsUseCase.EnrolledTeamsView view = getEnrolledTeams.getEnrolledTeams(tournamentId);
 
         java.util.List<EnrolledTeamResponse> enrolledTeams = view.enrolled().stream()
@@ -339,24 +357,27 @@ public class TournamentController {
                 enrolledTeams, reservedTeams, enrolledTeams.size(), reservedTeams.size(), view.availableSlots()));
     }
 
-    @Operation(summary = "Inscribir equipo en torneo")
+    @Operation(summary = "Enroll team in tournament",
+            description = "The team captain enrolls their team. The tournament must be ACTIVE and have open slots; "
+                    + "the enrollment starts as RESERVED/PENDING_PAYMENT until payment-service confirms payment.")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Equipo inscrito",
+            @ApiResponse(responseCode = "201", description = "Team enrolled",
                     content = @Content(schema = @Schema(implementation = EnrollmentResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos", content = @Content),
-            @ApiResponse(responseCode = "409", description = "El equipo ya está inscrito o no hay cupo disponible", content = @Content)
+            @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content),
+            @ApiResponse(responseCode = "409", description = "The team is already enrolled, or there are no open slots", content = @Content)
     })
     @PostMapping("/{tournamentId}/enrollments")
     public ResponseEntity<EnrollmentResponse> enrollTeam(
-            @Parameter(description = "ID del torneo", example = "abc123") @PathVariable String tournamentId,
+            @Parameter(description = "Tournament ID", example = "abc123") @PathVariable String tournamentId,
             @Valid @RequestBody EnrollTeamRequest request) {
         Enrollment enrollment = enrollTeamInTournamentUseCase.enrollTeam(tournamentId, request.teamId());
         return ResponseEntity.status(HttpStatus.CREATED).body(new EnrollmentResponse(
                 enrollment.getEnrollmentId(), enrollment.getStatus(), enrollment.getReservationExpiresAt()));
     }
 
-    @Operation(summary = "Listar torneos históricos")
-    @ApiResponse(responseCode = "200", description = "Lista de torneos finalizados",
+    @Operation(summary = "List historical tournaments",
+            description = "Read-only list of every finished tournament, accessible without authentication.")
+    @ApiResponse(responseCode = "200", description = "List of finished tournaments",
             content = @Content(schema = @Schema(implementation = co.edu.escuelaing.techcup.tournament.dto.response.HistoricalTournamentResponse.class)))
     @GetMapping("/history")
     public ResponseEntity<java.util.List<co.edu.escuelaing.techcup.tournament.dto.response.HistoricalTournamentResponse>> getHistory() {
@@ -367,15 +388,15 @@ public class TournamentController {
         return ResponseEntity.ok(result);
     }
 
-    @Operation(summary = "Consultar torneo histórico por ID")
+    @Operation(summary = "Get historical tournament by ID")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Torneo histórico encontrado",
+            @ApiResponse(responseCode = "200", description = "Historical tournament found",
                     content = @Content(schema = @Schema(implementation = co.edu.escuelaing.techcup.tournament.dto.response.HistoricalTournamentResponse.class))),
-            @ApiResponse(responseCode = "404", description = "El torneo no existe o no está finalizado", content = @Content)
+            @ApiResponse(responseCode = "404", description = "The tournament doesn't exist or hasn't finished yet", content = @Content)
     })
     @GetMapping("/history/{tournamentId}")
     public ResponseEntity<co.edu.escuelaing.techcup.tournament.dto.response.HistoricalTournamentResponse> getHistoricalById(
-            @Parameter(description = "ID del torneo", example = "abc123") @PathVariable String tournamentId) {
+            @Parameter(description = "Tournament ID", example = "abc123") @PathVariable String tournamentId) {
         return ResponseEntity.ok(toHistoricalResponse(consultHistorical.findById(tournamentId)));
     }
 
@@ -388,15 +409,16 @@ public class TournamentController {
         );
     }
 
-    @Operation(summary = "Descargar reglamento (PDF)")
+    @Operation(summary = "Download rulebook (PDF)",
+            description = "Streams the tournament's rulebook file inline as application/pdf.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Archivo PDF del reglamento",
+            @ApiResponse(responseCode = "200", description = "Rulebook PDF file",
                     content = @Content(mediaType = MediaType.APPLICATION_PDF_VALUE)),
-            @ApiResponse(responseCode = "404", description = "El torneo no tiene reglamento adjunto", content = @Content)
+            @ApiResponse(responseCode = "404", description = "The tournament has no rulebook attached", content = @Content)
     })
     @GetMapping("/{tournamentId}/rulebook")
     public ResponseEntity<org.springframework.core.io.InputStreamResource> consultRulebook(
-            @Parameter(description = "ID del torneo", example = "abc123") @PathVariable String tournamentId) {
+            @Parameter(description = "Tournament ID", example = "abc123") @PathVariable String tournamentId) {
         ConsultRulebookUseCase.RulebookResource resource = consultRulebook.consult(tournamentId);
         return ResponseEntity.ok()
                 .header("Content-Disposition", "inline; filename=\"" + resource.fileName() + "\"")
@@ -404,13 +426,15 @@ public class TournamentController {
                 .body(new org.springframework.core.io.InputStreamResource(resource.content()));
     }
 
-    @Operation(summary = "Adjuntar reglamento (PDF)", description = "El cuerpo de la petición es multipart/form-data.")
-    @ApiResponse(responseCode = "200", description = "Reglamento adjuntado",
+    @Operation(summary = "Attach rulebook (PDF)",
+            description = "Uploads and attaches the official rulebook PDF (max. 10 MB) to the tournament. "
+                    + "The request body is multipart/form-data.")
+    @ApiResponse(responseCode = "200", description = "Rulebook attached",
             content = @Content(schema = @Schema(implementation = RulebookResponse.class)))
     @PostMapping(value = "/{tournamentId}/rulebook", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<RulebookResponse> attachRulebook(
-            @Parameter(description = "ID del torneo", example = "abc123") @PathVariable String tournamentId,
-            @Parameter(description = "Archivo PDF del reglamento (máx. 10 MB)") @RequestParam("file") MultipartFile file) throws IOException {
+            @Parameter(description = "Tournament ID", example = "abc123") @PathVariable String tournamentId,
+            @Parameter(description = "Rulebook PDF file (max. 10 MB)") @RequestParam("file") MultipartFile file) throws IOException {
 
         Tournament updated = attachRulebook.attach(new AttachRulebookCommand(
                 tournamentId,
@@ -421,28 +445,32 @@ public class TournamentController {
         ));
 
         return ResponseEntity.ok(new RulebookResponse(
-                updated.getId(), updated.getRulebookFileId(), "Reglamento adjuntado correctamente"
+                updated.getId(), updated.getRulebookFileId(), "Rulebook attached successfully"
         ));
     }
 
-    @Operation(summary = "Registrar cancha", description = "El cuerpo de la petición es multipart/form-data.")
+    @Operation(summary = "Register court",
+            description = "Registers a court on one of the 4 campus map sections, with an optional description and "
+                    + "image. The request body is multipart/form-data.")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Cancha registrada",
+            @ApiResponse(responseCode = "201", description = "Court registered",
                     content = @Content(schema = @Schema(implementation = CourtResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Sección de cancha inválida o imagen inválida", content = @Content)
+            @ApiResponse(responseCode = "400", description = "Invalid court section or invalid image", content = @Content)
     })
     @PostMapping(value = "/{tournamentId}/courts", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CourtResponse> registerCourt(
-            @Parameter(description = "ID del torneo", example = "abc123") @PathVariable String tournamentId,
-            @Parameter(description = "Sección de la cancha en el mapa del campus") @RequestParam("section") String section,
-            @Parameter(description = "Descripción de la cancha") @RequestParam(value = "description", required = false) String description,
-            @Parameter(description = "Imagen de la cancha") @RequestParam(value = "image", required = false) MultipartFile image) throws IOException {
+            @Parameter(description = "Tournament ID", example = "abc123") @PathVariable String tournamentId,
+            @Parameter(description = "Campus map section for the court: CANCHA_1, CANCHA_2, CANCHA_3 or CANCHA_4",
+                    example = "CANCHA_1") @RequestParam("section") String section,
+            @Parameter(description = "Court description", example = "Synthetic grass court, north side of campus")
+            @RequestParam(value = "description", required = false) String description,
+            @Parameter(description = "Court image file") @RequestParam(value = "image", required = false) MultipartFile image) throws IOException {
 
         CourtSection courtSection;
         try {
             courtSection = CourtSection.valueOf(section);
         } catch (IllegalArgumentException e) {
-            throw new InvalidCourtDataException("Sección de cancha inválida: " + section);
+            throw new InvalidCourtDataException("Invalid court section: " + section);
         }
 
         Court court = registerCourtUseCase.register(new RegisterCourtCommand(
@@ -457,20 +485,22 @@ public class TournamentController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(new CourtResponse(
                 court.getId(), court.getTournamentId(), court.getSection().name(),
-                court.getDescription(), court.getImageId(), "Cancha registrada correctamente"
+                court.getDescription(), court.getImageId(), "Court registered successfully"
         ));
     }
 
-    @Operation(summary = "Editar torneo", description = "Permite modificar cualquier campo definido en la creación del torneo.")
+    @Operation(summary = "Edit tournament",
+            description = "Updates any field defined at tournament creation. Every field in the request body is "
+                    + "optional — omitted (null) fields keep their current value. Blocked once the tournament is FINISHED.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Torneo editado",
+            @ApiResponse(responseCode = "200", description = "Tournament edited",
                     content = @Content(schema = @Schema(implementation = TournamentResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos", content = @Content),
-            @ApiResponse(responseCode = "404", description = "El torneo no existe", content = @Content)
+            @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content),
+            @ApiResponse(responseCode = "404", description = "The tournament doesn't exist", content = @Content)
     })
     @PatchMapping("/{id}")
     public ResponseEntity<TournamentResponse> edit(
-            @Parameter(description = "ID del torneo", example = "abc123") @PathVariable String id,
+            @Parameter(description = "Tournament ID", example = "abc123") @PathVariable String id,
             @Valid @RequestBody EditTournamentRequest request) {
         Tournament updated = editTournamentUseCase.edit(new EditTournamentCommand(
                 id,
@@ -489,85 +519,91 @@ public class TournamentController {
         return ResponseEntity.ok(mapper.toResponse(updated));
     }
 
-    @Operation(summary = "Pausar o reanudar torneo",
-            description = "Pausar suspende el registro de eventos, pero todos los datos siguen siendo consultables.")
-    @ApiResponse(responseCode = "200", description = "Torneo pausado o reanudado",
+    @Operation(summary = "Pause or resume tournament",
+            description = "Pausing suspends new event registration but keeps all existing data queryable; "
+                    + "resuming lifts that suspension.")
+    @ApiResponse(responseCode = "200", description = "Tournament paused or resumed",
             content = @Content(schema = @Schema(implementation = PauseTournamentResponse.class)))
     @PatchMapping("/{id}/pause")
     public ResponseEntity<PauseTournamentResponse> pause(
-            @Parameter(description = "ID del torneo", example = "abc123") @PathVariable String id,
+            @Parameter(description = "Tournament ID", example = "abc123") @PathVariable String id,
             @Valid @RequestBody PauseTournamentRequest request) {
         Tournament updated = pauseTournamentUseCase.execute(new PauseTournamentCommand(id, request.action()));
 
         String message = updated.isPaused()
-                ? "El torneo fue pausado correctamente"
-                : "El torneo fue reanudado correctamente";
+                ? "The tournament was successfully paused"
+                : "The tournament was successfully resumed";
 
         return ResponseEntity.ok(new PauseTournamentResponse(
                 updated.getId(), updated.getStatus(), updated.isPaused(), message));
     }
 
-    @Operation(summary = "Inactivar o reactivar torneo",
-            description = "Inactivar bloquea TODAS las funcionalidades del torneo, incluidas las consultas.")
-    @ApiResponse(responseCode = "200", description = "Torneo inactivado o reactivado",
+    @Operation(summary = "Inactivate or reactivate tournament",
+            description = "Inactivating blocks ALL functionality of the tournament, including read queries — "
+                    + "not just writes (unlike pause).")
+    @ApiResponse(responseCode = "200", description = "Tournament inactivated or reactivated",
             content = @Content(schema = @Schema(implementation = InactivateTournamentResponse.class)))
     @PatchMapping("/{id}/inactivate")
     public ResponseEntity<InactivateTournamentResponse> inactivate(
-            @Parameter(description = "ID del torneo", example = "abc123") @PathVariable String id,
+            @Parameter(description = "Tournament ID", example = "abc123") @PathVariable String id,
             @Valid @RequestBody InactivateTournamentRequest request) {
         Tournament updated = inactivateTournamentUseCase.execute(new InactivateTournamentCommand(id, request.action()));
 
         String message = updated.isActive()
-                ? "El torneo fue reactivado correctamente"
-                : "El torneo fue inactivado correctamente";
+                ? "The tournament was successfully reactivated"
+                : "The tournament was successfully inactivated";
 
         return ResponseEntity.ok(new InactivateTournamentResponse(
                 updated.getId(), updated.getStatus(), updated.isActive(), message));
     }
 
-    @Operation(summary = "Descalificar equipo")
-    @ApiResponse(responseCode = "200", description = "Equipo descalificado",
+    @Operation(summary = "Disqualify team",
+            description = "Marks the team as disqualified. It stays in the records with its past results, but is "
+                    + "excluded from any future matchups.")
+    @ApiResponse(responseCode = "200", description = "Team disqualified",
             content = @Content(schema = @Schema(implementation = DisqualifyTeamResponse.class)))
     @PatchMapping("/{tournamentId}/teams/{teamId}/disqualify")
     public ResponseEntity<DisqualifyTeamResponse> disqualifyTeam(
-            @Parameter(description = "ID del torneo", example = "abc123") @PathVariable String tournamentId,
-            @Parameter(description = "ID del equipo", example = "team_xyz789") @PathVariable String teamId,
+            @Parameter(description = "Tournament ID", example = "abc123") @PathVariable String tournamentId,
+            @Parameter(description = "Team ID", example = "team_xyz789") @PathVariable String teamId,
             @Valid @RequestBody DisqualifyTeamRequest request) {
         disqualifyTeamUseCase.disqualify(tournamentId, teamId, request.reason());
 
         return ResponseEntity.ok(new DisqualifyTeamResponse(
                 tournamentId, teamId, RegistrationStatus.DISQUALIFIED,
-                "El equipo fue descalificado correctamente"));
+                "The team was successfully disqualified"));
     }
 
-    @Operation(summary = "Inactivar equipo en torneo",
-            description = "El equipo inactivado no recibe programación ni puntos; es una medida administrativa temporal.")
-    @ApiResponse(responseCode = "200", description = "Equipo inactivado",
+    @Operation(summary = "Inactivate team in tournament",
+            description = "The inactivated team receives no scheduling or points; this is a temporary "
+                    + "administrative measure, distinct from disqualification.")
+    @ApiResponse(responseCode = "200", description = "Team inactivated",
             content = @Content(schema = @Schema(implementation = InactivateTeamResponse.class)))
     @PatchMapping("/{tournamentId}/teams/{teamId}/inactivate")
     public ResponseEntity<InactivateTeamResponse> inactivateTeam(
-            @Parameter(description = "ID del torneo", example = "abc123") @PathVariable String tournamentId,
-            @Parameter(description = "ID del equipo", example = "team_xyz789") @PathVariable String teamId) {
+            @Parameter(description = "Tournament ID", example = "abc123") @PathVariable String tournamentId,
+            @Parameter(description = "Team ID", example = "team_xyz789") @PathVariable String teamId) {
         inactivateTeamUseCase.inactivate(tournamentId, teamId);
 
         return ResponseEntity.ok(new InactivateTeamResponse(
                 tournamentId, teamId, RegistrationStatus.INACTIVE,
-                "El equipo fue inactivado correctamente"));
+                "The team was successfully inactivated"));
     }
 
-    @Operation(summary = "Inactivar usuario participante",
-            description = "El usuario inactivado no puede entrar en alineaciones ni acumular estadísticas en ese torneo.")
-    @ApiResponse(responseCode = "200", description = "Usuario inactivado",
+    @Operation(summary = "Inactivate participant user",
+            description = "The inactivated user cannot be included in lineups or accumulate statistics in that "
+                    + "tournament.")
+    @ApiResponse(responseCode = "200", description = "User inactivated",
             content = @Content(schema = @Schema(implementation = InactivateUserResponse.class)))
     @PatchMapping("/{tournamentId}/users/{userId}/inactivate")
     public ResponseEntity<InactivateUserResponse> inactivateUser(
-            @Parameter(description = "ID del torneo", example = "abc123") @PathVariable String tournamentId,
-            @Parameter(description = "ID del usuario", example = "user_123") @PathVariable String userId) {
+            @Parameter(description = "Tournament ID", example = "abc123") @PathVariable String tournamentId,
+            @Parameter(description = "User ID", example = "user_123") @PathVariable String userId) {
         inactivateUserUseCase.inactivate(tournamentId, userId);
 
         return ResponseEntity.ok(new InactivateUserResponse(
                 tournamentId, userId,
                 co.edu.escuelaing.techcup.tournament.service.ParticipantStatus.INACTIVE,
-                "El usuario fue inactivado correctamente en el torneo"));
+                "The user was successfully inactivated in the tournament"));
     }
 }

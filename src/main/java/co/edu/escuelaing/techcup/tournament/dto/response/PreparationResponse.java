@@ -4,10 +4,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
-@Schema(description = "Respuesta con el estado de preparación de un torneo")
+@Schema(description = "Readiness state of a tournament to move into the Preparation phase (fixture generation).")
 public record PreparationResponse(
-        @Schema(description = "Estado de preparación", example = "incompleto") String status,
-        @Schema(description = "Indica si el torneo ya puede pasar a preparación") boolean readyToActivate,
-        @Schema(description = "Cantidad de equipos aprobados", example = "6") long approvedTeamsCount,
-        @Schema(description = "Requisitos que faltan para poder preparar el torneo") List<String> missingRequirements
+        @Schema(description = "Human-readable readiness status.", example = "incomplete") String status,
+        @Schema(description = "Whether the tournament already meets every requirement to enter preparation.")
+        boolean readyToActivate,
+        @Schema(description = "Number of teams currently approved/enrolled.", example = "6") long approvedTeamsCount,
+        @Schema(description = "Requirements still missing before preparation can start (empty if ready).")
+        List<String> missingRequirements
 ) {}

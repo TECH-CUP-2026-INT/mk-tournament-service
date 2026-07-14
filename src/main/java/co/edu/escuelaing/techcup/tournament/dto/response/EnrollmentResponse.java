@@ -5,12 +5,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 
-@Schema(description = "Respuesta de inscripción de equipo en torneo")
+@Schema(description = "Result of enrolling a team in a tournament.")
 public record EnrollmentResponse(
-        @Schema(description = "ID único de la inscripción", example = "enr_abc123")
+        @Schema(description = "Unique enrollment ID.", example = "enr_abc123")
         String enrollmentId,
-        @Schema(description = "Estado de la inscripción", example = "RESERVED")
+        @Schema(description = "Enrollment status: RESERVED, PENDING_PAYMENT, ENROLLED, REJECTED or EXPIRED.",
+                example = "RESERVED")
         EnrollmentStatus status,
-        @Schema(description = "Fecha y hora de expiración de la reserva (si aplica)")
+        @Schema(description = "Date/time the team's slot reservation expires, if it hasn't been confirmed yet (null once ENROLLED).")
         LocalDateTime reservationExpiresAt
 ) {}

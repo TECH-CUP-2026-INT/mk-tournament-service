@@ -9,20 +9,20 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-@Schema(description = "Respuesta con el estado completo de un torneo")
+@Schema(description = "Full current state of a tournament.")
 public record TournamentResponse(
-        @Schema(description = "ID único del torneo", example = "abc123") String id,
-        @Schema(description = "Nombre del torneo", example = "TechCup Fútbol 2026") String name,
-        @Schema(description = "Tipo de torneo", example = "NORMAL") TournamentType type,
-        @Schema(description = "Formato del torneo", example = "BRACKETS") TournamentFormat format,
-        @Schema(description = "Número de equipos participantes", example = "8") int numberOfTeams,
-        @Schema(description = "Costo de inscripción en pesos colombianos", example = "50000.00") BigDecimal cost,
-        @Schema(description = "Fecha de inicio del torneo", example = "2026-08-01") LocalDate startDate,
-        @Schema(description = "Fecha de finalización del torneo", example = "2026-08-31") LocalDate endDate,
-        @Schema(description = "Fecha límite de inscripción de equipos", example = "2026-07-25") LocalDate registrationDeadline,
-        @Schema(description = "Hora de inicio de los partidos") LocalTime matchStartTime,
-        @Schema(description = "Hora de finalización de los partidos") LocalTime matchEndTime,
-        @Schema(description = "Estado del torneo", example = "ACTIVE") TournamentStatus status,
-        @Schema(description = "Indica si el torneo está pausado") boolean paused,
-        @Schema(description = "Indica si el torneo está activo") boolean active
+        @Schema(description = "Unique tournament ID.", example = "abc123") String id,
+        @Schema(description = "Tournament name.", example = "TechCup Football 2026") String name,
+        @Schema(description = "Tournament type.", example = "NORMAL") TournamentType type,
+        @Schema(description = "Bracket format.", example = "BRACKETS") TournamentFormat format,
+        @Schema(description = "Number of participating teams.", example = "8") int numberOfTeams,
+        @Schema(description = "Enrollment fee, in Colombian pesos (COP).", example = "50000.00") BigDecimal cost,
+        @Schema(description = "Tournament start date.", example = "2026-08-01") LocalDate startDate,
+        @Schema(description = "Tournament end date.", example = "2026-08-31") LocalDate endDate,
+        @Schema(description = "Enrollment deadline.", example = "2026-07-25") LocalDate registrationDeadline,
+        @Schema(description = "Match start time (LIGHTNING tournaments only).") LocalTime matchStartTime,
+        @Schema(description = "Match end time (LIGHTNING tournaments only).") LocalTime matchEndTime,
+        @Schema(description = "Current lifecycle status.", example = "ACTIVE") TournamentStatus status,
+        @Schema(description = "Whether the tournament is currently paused.") boolean paused,
+        @Schema(description = "Whether the tournament is currently active (not inactivated).") boolean active
 ) {}
