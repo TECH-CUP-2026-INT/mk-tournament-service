@@ -67,6 +67,22 @@ jobs:
           path: target/surefire-reports/
           retention-days: 7
 
+      - name: Debug secrets (temporal)
+        run: |
+          if [ -z "$SONAR_HOST_URL" ]; then
+            echo "SONAR_HOST_URL: VACIO o no seteado"
+          else
+            echo "SONAR_HOST_URL: presente, longitud=${#SONAR_HOST_URL}"
+          fi
+          if [ -z "$SONAR_TOKEN" ]; then
+            echo "SONAR_TOKEN: VACIO o no seteado"
+          else
+            echo "SONAR_TOKEN: presente, longitud=${#SONAR_TOKEN}"
+          fi
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
       - name: Análisis estático con SonarQube
         if: success()
         env:
