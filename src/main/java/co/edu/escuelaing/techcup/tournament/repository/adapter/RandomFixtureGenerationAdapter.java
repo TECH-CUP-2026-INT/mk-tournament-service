@@ -9,15 +9,18 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
 /**
- * Implementación local de {@link FixtureGenerationPort} usada mientras se
- * define el proveedor real de la API externa de generación de fixtures
- * (Technical Constraints de la historia: "External API provider is TBD").
- * Genera la estructura inicial de partidos de forma aleatoria según las
- * reglas que la historia sí especifica; se reemplaza por un cliente HTTP
- * real implementando este mismo puerto, sin tocar el dominio ni el use case.
+ * Implementación de {@link FixtureGenerationPort}: genera la estructura
+ * inicial de partidos de forma aleatoria según el formato del torneo.
+ * Decisión de negocio: la generación de emparejamientos y encuentros es
+ * siempre aleatoria, no se integra ningún proveedor externo.
+ *
+ * El {@link Random} usado para el sorteo es inyectable (con un {@link Random}
+ * sin semilla por defecto en producción) para que los tests puedan pasar uno
+ * con semilla fija y verificar un resultado determinista.
  *
  * Tamaño de grupo (4) y regla de bye para cantidad impar de equipos (el
  * último equipo tras el sorteo queda sin partido en la ronda inicial) son
@@ -28,10 +31,20 @@ public class RandomFixtureGenerationAdapter implements FixtureGenerationPort {
 
     private static final int GROUP_SIZE = 4;
 
+    private final Random random;
+
+    public RandomFixtureGenerationAdapter() {
+        this(new Random());
+    }
+
+    RandomFixtureGenerationAdapter(Random random) {
+        this.random = random;
+    }
+
     @Override
     public List<Match> generateFixture(FixtureGenerationRequest request) {
         List<String> shuffledTeams = new ArrayList<>(request.approvedTeamIds());
-        Collections.shuffle(shuffledTeams);
+        Collections.shuffle(shuffledTeams, random);
 
         return switch (request.format()) {
             case BRACKETS -> generateBracketRound(shuffledTeams);

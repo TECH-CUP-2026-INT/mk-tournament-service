@@ -138,7 +138,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(FixtureGenerationFailedException.class)
     public ResponseEntity<ErrorResponse> handleFixtureGenerationFailed(FixtureGenerationFailedException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(new ErrorResponse(ex.getMessage()));
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(ex.getMessage()));
     }
 
     @ExceptionHandler({MatchupNotFoundException.class, CourtNotFoundException.class})

@@ -224,4 +224,4 @@ GET /audit-events?from=2026-07-01&to=2026-07-31&tournamentId=t1
 | `400 Bad Request` | Datos de entrada inválidos |
 | `404 Not Found` | Recurso no existe (torneo, partido, cancha, reglamento…) |
 | `409 Conflict` | Operación no permitida en el estado actual (torneo pausado/inactivo, partido ya inactivo, etc.) |
-| `502 Bad Gateway` | Falla la generación de llaves a través del proveedor externo |
+| `500 Internal Server Error` | Falla inesperada al generar el fixture (algoritmo aleatorio interno) |

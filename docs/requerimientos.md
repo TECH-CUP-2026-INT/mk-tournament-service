@@ -14,7 +14,7 @@
 | TC-29 | Tournament creation | Form: name, type (Normal/Lightning), format (Brackets/Groups/League), minimum 3 teams, number of teams, cost, registration deadline, schedule of dates (or start/end time if Lightning). The tournament is created in Active status. |
 | TC-30 | Register tournament rulebook | Upload the official rulebook PDF (max. 10 MB); linked to the tournament. |
 | TC-31 | Register tournament courts | Name (required), image (optional), description (optional), and campus map coordinates (required). |
-| TC-32 | Generate matchups | Via external API or randomly depending on the format: Brackets (initial random, then by result), Groups (random within groups, cross by points), League (round robin). |
+| TC-32 | Generate matchups | Always randomly, depending on the format: Brackets (initial random, then by result), Groups (random within groups, cross by points), League (round robin). No external provider is integrated. |
 | TC-33 | Schedule matches | CREATE the match: assigns the matchup, the court, the referee, the date and the time. Creates a new match document in the database. |
 | TC-34 | View the internal rulebook | Any authenticated user can view or download the rulebook PDF. |
 | TC-35 | View interactive court map | Shows each court on the map with its assigned match and status (Scheduled/In Progress/Finished); status with color + icon/text. |

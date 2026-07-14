@@ -353,7 +353,7 @@ public class Tournament extends AggregateRoot {
      * Valida que el torneo pueda pasar a Preparación: debe estar Activo
      * y tener al menos {@value #MIN_APPROVED_TEAMS_TO_ACTIVATE} equipos aprobados.
      * Se expone por separado de startPreparation() para poder validar
-     * antes de invocar la API externa de generación de fixture.
+     * antes de generar el fixture.
      */
     public void validateReadyForPreparation() {
         assertActive();
@@ -369,8 +369,8 @@ public class Tournament extends AggregateRoot {
 
     /**
      * Pasa el torneo a Preparación adjuntando el fixture ya generado
-     * (ver StartTournamentPreparationService, que llama a la API externa
-     * de generación de fixtures antes de invocar este método).
+     * (ver StartTournamentPreparationService, que genera el fixture de
+     * forma aleatoria antes de invocar este método).
      */
     public void startPreparation(List<Match> generatedMatches) {
         validateReadyForPreparation();

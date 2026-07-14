@@ -101,7 +101,7 @@ class StartTournamentPreparationServiceTest {
     }
 
     @Test
-    void startPreparation_fallaApiExterna_lanzaFixtureGenerationFailedYNoGuardaNada() {
+    void startPreparation_fallaGeneracionInterna_lanzaFixtureGenerationFailedYNoGuardaNada() {
         TournamentRepositoryPort repository = mock(TournamentRepositoryPort.class);
         FixtureGenerationPort fixturePort = mock(FixtureGenerationPort.class);
         Tournament tournament = buildTournament(TournamentStatus.ACTIVE, 3);

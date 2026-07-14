@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -69,5 +70,20 @@ class RandomFixtureGenerationAdapterTest {
         // grupo de 4 -> 6 partidos (round robin), grupo de 1 -> 0 partidos
         assertEquals(6, matches.size());
         assertTrue(approved.containsAll(teamsInMatches(matches)));
+    }
+
+    @Test
+    void brackets_conRngConSemillaFija_esDeterminista() {
+        FixtureGenerationPort seededAdapter = new RandomFixtureGenerationAdapter(new Random(42));
+        List<String> approved = List.of("e1", "e2", "e3", "e4");
+
+        List<Match> matches = seededAdapter.generateFixture(
+                new FixtureGenerationRequest("t1", approved, TournamentFormat.BRACKETS));
+
+        assertEquals(2, matches.size());
+        assertEquals("e4", matches.get(0).getHomeTeamId());
+        assertEquals("e2", matches.get(0).getAwayTeamId());
+        assertEquals("e1", matches.get(1).getHomeTeamId());
+        assertEquals("e3", matches.get(1).getAwayTeamId());
     }
 }
