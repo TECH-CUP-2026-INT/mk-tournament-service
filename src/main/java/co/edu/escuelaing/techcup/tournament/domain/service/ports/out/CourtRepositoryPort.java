@@ -1,0 +1,10 @@
+package co.edu.escuelaing.techcup.tournament.domain.service.ports.out;
+
+import co.edu.escuelaing.techcup.tournament.domain.model.Court;
+import java.util.Optional;
+
+public interface CourtRepositoryPort {
+    Court save(Court court);
+    Optional<Court> findById(String id);
+    Optional<Court> findByMatchId(String matchId);
+}
