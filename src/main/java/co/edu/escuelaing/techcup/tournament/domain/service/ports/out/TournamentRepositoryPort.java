@@ -6,6 +6,9 @@ import co.edu.escuelaing.techcup.tournament.domain.model.TournamentStatus;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Puerto de persistencia para el agregado {@link co.edu.escuelaing.techcup.tournament.domain.model.Tournament}.
+ */
 public interface TournamentRepositoryPort {
     Tournament save(Tournament tournament);
     Optional<Tournament> findById(String id);

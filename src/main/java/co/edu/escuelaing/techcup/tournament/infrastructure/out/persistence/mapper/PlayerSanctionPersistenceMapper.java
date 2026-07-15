@@ -6,6 +6,10 @@ import co.edu.escuelaing.techcup.tournament.domain.model.SanctionType;
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")
+/**
+ * Mapper MapStruct: {@link co.edu.escuelaing.techcup.tournament.domain.model.PlayerSanction}
+ * ↔ documento de Mongo.
+ */
 public interface PlayerSanctionPersistenceMapper {
 
     default PlayerSanction toDomain(PlayerSanctionDocument document) {

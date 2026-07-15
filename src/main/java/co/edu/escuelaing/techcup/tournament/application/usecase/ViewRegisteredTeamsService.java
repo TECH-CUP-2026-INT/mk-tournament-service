@@ -1,5 +1,7 @@
 package co.edu.escuelaing.techcup.tournament.application.usecase;
 
+import lombok.RequiredArgsConstructor;
+
 import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentNotFoundException;
 import co.edu.escuelaing.techcup.tournament.domain.model.TeamRegistration;
 import co.edu.escuelaing.techcup.tournament.domain.model.Tournament;
@@ -10,13 +12,11 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class ViewRegisteredTeamsService implements ViewRegisteredTeamsUseCase {
 
     private final TournamentRepositoryPort tournamentRepository;
 
-    public ViewRegisteredTeamsService(TournamentRepositoryPort tournamentRepository) {
-        this.tournamentRepository = tournamentRepository;
-    }
 
     @Override
     public List<TeamRegistration> getTeams(String tournamentId) {

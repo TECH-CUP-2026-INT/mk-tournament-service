@@ -1,7 +1,5 @@
 package co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.controller;
 
-import co.edu.escuelaing.techcup.tournament.domain.model.Match;
-
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.ApplySanctionRequest;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.SanctionResponse;
 import co.edu.escuelaing.techcup.tournament.application.mapper.SanctionRestMapper;
@@ -10,14 +8,9 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ApplySanctio
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ApplySanctionUseCase.ApplySanctionCommand;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.RecordMatchFinishedForSanctionsUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ViewPlayerSanctionUseCase;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.controller.swagger.SanctionControllerSwagger;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,32 +24,15 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/sanctions")
-@Tag(name = "Sanctions", description = "Applying and querying player sanctions")
-public class SanctionController {
+@RequiredArgsConstructor
+public class SanctionController implements SanctionControllerSwagger {
 
     private final ApplySanctionUseCase applySanctionUseCase;
     private final ViewPlayerSanctionUseCase viewPlayerSanctionUseCase;
     private final RecordMatchFinishedForSanctionsUseCase recordMatchFinishedUseCase;
     private final SanctionRestMapper mapper;
 
-    public SanctionController(ApplySanctionUseCase applySanctionUseCase,
-                               ViewPlayerSanctionUseCase viewPlayerSanctionUseCase,
-                               RecordMatchFinishedForSanctionsUseCase recordMatchFinishedUseCase,
-                               SanctionRestMapper mapper) {
-        this.applySanctionUseCase = applySanctionUseCase;
-        this.viewPlayerSanctionUseCase = viewPlayerSanctionUseCase;
-        this.recordMatchFinishedUseCase = recordMatchFinishedUseCase;
-        this.mapper = mapper;
-    }
-
-    @Operation(summary = "Apply sanction to player",
-            description = "Red card = 1 match; 2 yellow cards in different matches = 1 match; 2 yellow cards in the "
-                    + "same match = red card; for conduct sanctions, the Organizer defines the number of matches suspended.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Sanction applied",
-                    content = @Content(schema = @Schema(implementation = SanctionResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content)
-    })
+    @Override
     @PostMapping
     public ResponseEntity<SanctionResponse> apply(@Valid @RequestBody ApplySanctionRequest request) {
         PlayerSanction sanction = applySanctionUseCase.apply(new ApplySanctionCommand(
@@ -65,13 +41,9 @@ public class SanctionController {
         return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toResponse(sanction));
     }
 
-    @Operation(summary = "Get a player's active sanctions",
-            description = "Returns only sanctions still in effect (matchesRemaining > 0); served ones are omitted.")
-    @ApiResponse(responseCode = "200", description = "List of the player's active sanctions",
-            content = @Content(schema = @Schema(implementation = SanctionResponse.class)))
+    @Override
     @GetMapping("/{playerId}")
-    public ResponseEntity<List<SanctionResponse>> getActiveSanctions(
-            @Parameter(description = "Player ID", example = "player_123") @PathVariable String playerId) {
+    public ResponseEntity<List<SanctionResponse>> getActiveSanctions(@PathVariable String playerId) {
         List<SanctionResponse> result = viewPlayerSanctionUseCase.getActiveSanctions(playerId)
                 .stream()
                 .map(mapper::toResponse)
@@ -79,16 +51,7 @@ public class SanctionController {
         return ResponseEntity.ok(result);
     }
 
-    /**
-     * Pending integration point: the future "Finish match" story must invoke
-     * this endpoint whenever a match finishes. Today nothing triggers it
-     * automatically.
-     */
-    @Operation(summary = "Record match finished (internal integration point)",
-            description = "Pending internal integration: no automatic trigger exists yet. The future \"Finish match\" "
-                    + "story in the Match Service must call this endpoint whenever a match finishes, so one match of "
-                    + "suspension is served for every sanctioned player with an active sanction.")
-    @ApiResponse(responseCode = "200", description = "Match-finished event recorded")
+    @Override
     @PostMapping("/match-finished")
     public ResponseEntity<Void> recordMatchFinished() {
         recordMatchFinishedUseCase.recordMatchFinished();

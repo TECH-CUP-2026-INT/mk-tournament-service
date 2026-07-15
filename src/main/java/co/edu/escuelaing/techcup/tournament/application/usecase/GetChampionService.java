@@ -1,5 +1,7 @@
 package co.edu.escuelaing.techcup.tournament.application.usecase;
 
+import lombok.RequiredArgsConstructor;
+
 import co.edu.escuelaing.techcup.tournament.domain.exception.ChampionAssignmentNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentNotFoundException;
 import co.edu.escuelaing.techcup.tournament.domain.model.ChampionAssignment;
@@ -9,13 +11,11 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentR
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class GetChampionService implements GetChampionUseCase {
 
     private final TournamentRepositoryPort repository;
 
-    public GetChampionService(TournamentRepositoryPort repository) {
-        this.repository = repository;
-    }
 
     @Override
     public ChampionAssignment getChampion(String tournamentId) {

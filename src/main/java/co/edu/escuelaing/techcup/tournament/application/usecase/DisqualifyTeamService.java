@@ -1,5 +1,7 @@
 package co.edu.escuelaing.techcup.tournament.application.usecase;
 
+import lombok.RequiredArgsConstructor;
+
 import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentNotFoundException;
 import co.edu.escuelaing.techcup.tournament.domain.model.DisqualificationReason;
 import co.edu.escuelaing.techcup.tournament.domain.model.Tournament;
@@ -8,13 +10,11 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentR
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class DisqualifyTeamService implements DisqualifyTeamUseCase {
 
     private final TournamentRepositoryPort repository;
 
-    public DisqualifyTeamService(TournamentRepositoryPort repository) {
-        this.repository = repository;
-    }
 
     @Override
     public Tournament disqualify(String tournamentId, String teamId, DisqualificationReason reason) {
