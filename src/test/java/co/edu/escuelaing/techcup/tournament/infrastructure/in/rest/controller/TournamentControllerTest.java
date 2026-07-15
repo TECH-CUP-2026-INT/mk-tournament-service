@@ -166,6 +166,23 @@ class TournamentControllerTest {
     }
 
     @Test
+    void create_conVariosCamposInvalidos_devuelveTodosLosErroresNoSoloElPrimero() throws Exception {
+        String body = """
+                {"name":"","type":"NORMAL","format":"BRACKETS","numberOfTeams":1,
+                "cost":50000,"startDate":"2026-08-01","registrationDeadline":"2026-07-25"}
+                """;
+
+        mockMvc.perform(post("/tournaments").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Datos de entrada inválidos"))
+                .andExpect(jsonPath("$.details", org.hamcrest.Matchers.hasSize(2)))
+                .andExpect(jsonPath("$.details", org.hamcrest.Matchers.hasItem(
+                        org.hamcrest.Matchers.containsString("name"))))
+                .andExpect(jsonPath("$.details", org.hamcrest.Matchers.hasItem(
+                        org.hamcrest.Matchers.containsString("numberOfTeams"))));
+    }
+
+    @Test
     void edit_devuelve200() throws Exception {
         when(editTournamentUseCase.edit(any())).thenReturn(sampleTournament("t1"));
         when(mapper.toResponse(any())).thenReturn(sampleResponse("t1"));
