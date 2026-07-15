@@ -1,76 +1,76 @@
-# Equipo
+# Team
 
-## Equipo MK — mk-tournament-service
+## Team MK — mk-tournament-service
 
-El equipo **MK** es responsable de los servicios del dominio **D2 — Torneo y Competencia**: Servicio de Torneos, Servicio de Inscripción del torneo y Servicio de Pagos.
+Team **MK** is responsible for the services in domain **D2 — Tournament and Competition**: the Tournament Service, the Tournament Enrollment Service and the Payment Service.
 
-| Nombre | Rol |
+| Name | Role |
 |---|---|
-| Chimi | Líder |
+| Chimi | Lead |
 | Hernán | Back-end |
 | Mabel | Back-end |
 | Nicolás | Front-end |
 
 ---
 
-## Organización del trabajo
+## Work organization
 
-El equipo usa **Scrum con sprints de una semana** y Jira como herramienta de seguimiento.
+The team uses **Scrum with one-week sprints** and Jira as the tracking tool.
 
-**Ceremonia mínima:**
+**Minimum ceremonies:**
 
-- Daily corta (15 min) para sincronizar avances y bloqueos.
-- Sprint Review al final de cada semana con el profesor.
-- Retrospectiva rápida después del review.
+- Short daily standup (15 min) to sync progress and blockers.
+- Sprint Review at the end of each week with the professor.
+- Quick retrospective after the review.
 
-**Convenciones de ramas:**
+**Branch conventions:**
 
 ```
-main            ← producción (protegida, solo merge por PR aprobado)
-develop         ← integración
-feature/<nombre>  ← funcionalidades
-fix/<nombre>    ← correcciones
+main            ← production (protected, merge only via approved PR)
+develop         ← integration
+feature/<name>  ← features
+fix/<name>      ← fixes
 ```
 
 ---
 
-## Organización global TechCup
+## Global TechCup organization
 
-La plataforma completa está distribuida en 14 microservicios agrupados en 4 dominios.
+The full platform is split into 14 microservices grouped into 4 domains.
 
-### D1 — Identidad y Personas
+### D1 — Identity and People
 
-- Servicio de Identidad
-- Servicio de Usuarios y Jugadores
-- Servicio de Equipos
+- Identity Service
+- Users and Players Service
+- Teams Service
 
-### D2 — Torneo y Competencia
+### D2 — Tournament and Competition
 
-- **Servicio de Torneos** ← este repositorio (`mk-tournament-service`), a cargo del equipo MK
-- Servicio de Pagos ← equipo MK
-- Servicio de Inscripción del torneo ← equipo MK
+- **Tournament Service** ← this repository (`mk-tournament-service`), owned by team MK
+- Payment Service ← team MK
+- Tournament Enrollment Service ← team MK
 
-### D3 — Operaciones y Comunicación
+### D3 — Operations and Communication
 
-- Servicio de Partidos
-- Servicio de Logística
-- Servicio de Comunicaciones
-- Servicio de Notificaciones
+- Matches Service
+- Logistics Service
+- Communications Service
+- Notifications Service
 
-### D4 — Estadísticas
+### D4 — Statistics
 
-- Servicio de Estadísticas de Torneo
-- Servicio de Estadísticas de Jugador
-- Servicio de Estadísticas de Equipo
-- Servicio de Estadísticas de Partido
+- Tournament Statistics Service
+- Player Statistics Service
+- Team Statistics Service
+- Match Statistics Service
 
-Repositorio de la organización: [https://github.com/TECH-CUP-2026-INT](https://github.com/TECH-CUP-2026-INT)
+Organization repository: [https://github.com/TECH-CUP-2026-INT](https://github.com/TECH-CUP-2026-INT)
 
 ---
 
-## Contacto y recursos
+## Contact and resources
 
 - **Jira:** [https://teamdosw.atlassian.net/jira/software/projects/TCF/summary](https://teamdosw.atlassian.net/jira/software/projects/TCF/summary?atlOrigin=eyJpIjoiMjFiMTk4ODkyNzU2NGQxOGFhZTA4ZmJmNWUzNzE4NjUiLCJwIjoiaiJ9)
 - **GitHub Org:** [https://github.com/TECH-CUP-2026-INT](https://github.com/TECH-CUP-2026-INT)
-- **Repositorio:** [https://github.com/TECH-CUP-2026-INT/mk-tournament-service](https://github.com/TECH-CUP-2026-INT/mk-tournament-service)
-- **Profesor:** Andrés Martín Cantor — Escuela Colombiana de Ingeniería Julio Garavito, DOSW
+- **Repository:** [https://github.com/TECH-CUP-2026-INT/mk-tournament-service](https://github.com/TECH-CUP-2026-INT/mk-tournament-service)
+- **Professor:** Andrés Martín Cantor — Escuela Colombiana de Ingeniería Julio Garavito, DOSW

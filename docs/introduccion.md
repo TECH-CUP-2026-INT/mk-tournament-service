@@ -1,75 +1,75 @@
-# Introducción
+# Introduction
 
-## Contexto del proyecto
+## Project context
 
-Los programas de Ingeniería de Sistemas, Inteligencia Artificial, Ciberseguridad e Ingeniería Estadística de la **Escuela Colombiana de Ingeniería Julio Garavito** realizan cada semestre un torneo interno de fútbol. Hasta ahora su organización dependía de procesos manuales: mensajes de WhatsApp, formularios de Google y hojas de cálculo, lo que generaba desorden, retrasos y confusión tanto en participantes como en organizadores.
+Every semester, the Systems Engineering, Artificial Intelligence, Cybersecurity and Statistical Engineering programs at **Escuela Colombiana de Ingeniería Julio Garavito** run an internal football tournament. Until now its organization relied on manual processes: WhatsApp messages, Google Forms and spreadsheets, which caused disorder, delays and confusion for both participants and organizers.
 
-**TECHCUP FÚTBOL** es la respuesta a ese problema: una plataforma web que centraliza toda la gestión del torneo en un único sistema organizado, transparente y accesible.
+**TECHCUP FÚTBOL** is the answer to that problem: a web platform that centralizes the entire tournament management in a single organized, transparent and accessible system.
 
 ---
 
-## El problema
+## The problem
 
-| Problema | Impacto |
+| Problem | Impact |
 |---|---|
-| Proceso de inscripción no claro | Los estudiantes no saben cómo ni cuándo inscribirse |
-| Completar equipos es difícil | Los capitanes no tienen forma de encontrar jugadores libres |
-| Verificación manual de pagos | Retrasos y errores administrativos |
-| Resultados actualizados a mano | Tabla de posiciones siempre desactualizada |
-| Llaves organizadas en papel | Errores y conflictos en el bracket |
-| Información dispersa | Sin canal oficial: WhatsApp, hojas de cálculo, email |
-| Árbitros sin herramienta digital | Gestión en vivo imposible |
+| Unclear enrollment process | Students don't know how or when to enroll |
+| Completing a team's roster is hard | Captains have no way to find free players |
+| Manual payment verification | Administrative delays and errors |
+| Manually updated results | Standings table is always out of date |
+| Brackets organized on paper | Errors and conflicts in the bracket |
+| Scattered information | No official channel: WhatsApp, spreadsheets, email |
+| Referees without a digital tool | Live management is impossible |
 
 ---
 
-## La solución: ecosistema de microservicios
+## The solution: a microservices ecosystem
 
-TechCup está construido como un sistema distribuido de **14 microservicios** agrupados en 4 dominios:
+TechCup is built as a distributed system of **14 microservices** grouped into 4 domains:
 
-| Dominio | Servicios |
+| Domain | Services |
 |---|---|
-| D1 — Identidad y Personas | Servicio de Identidad, Servicio de Usuarios y Jugadores, Servicio de Equipos |
-| **D2 — Torneo y Competencia** | **Servicio de Torneos** ← este servicio, Servicio de Pagos, Servicio de Inscripción del torneo |
-| D3 — Operaciones y Comunicación | Servicio de Partidos, Servicio de Logística, Servicio de Comunicaciones, Servicio de Notificaciones |
-| D4 — Estadísticas | Servicio de Estadísticas de Torneo, de Jugador, de Equipo, de Partido |
+| D1 — Identity and People | Identity Service, Users and Players Service, Teams Service |
+| **D2 — Tournament and Competition** | **Tournament Service** ← this service, Payment Service, Tournament Enrollment Service |
+| D3 — Operations and Communication | Matches Service, Logistics Service, Communications Service, Notifications Service |
+| D4 — Statistics | Tournament, Player, Team and Match Statistics Services |
 
-El equipo **MK** es dueño del Servicio de Torneos, el Servicio de Pagos y el Servicio de Inscripción del torneo, dentro del dominio D2. Ver [Equipo](equipo.md) para el detalle completo de la organización.
-
----
-
-## Responsabilidades de `mk-tournament-service`
-
-Este servicio es el **núcleo administrativo** del torneo. Gestiona:
-
-- **Ciclo de vida del torneo**: borrador → activo → en progreso → finalizado.
-- **Inscripciones y pagos**: los capitanes cargan comprobantes; el organizador aprueba o rechaza.
-- **Calendario de encuentros**: fechas, horas, canchas y equipos.
-- **Mapa del campus**: vista interactiva de canchas con estado en tiempo real.
-- **Llaves eliminatorias**: generación automática de bracket al cerrar inscripciones.
-- **Visibilidad pública**: información del torneo accesible para todos los usuarios.
-- **Histórico**: consulta de torneos finalizados con toda su información.
+The **MK** team owns the Tournament Service, the Payment Service and the Tournament Enrollment Service, within domain D2. See [Team](equipo.md) for the full organizational breakdown.
 
 ---
 
-## Actores del sistema (perspectiva de este servicio)
+## Responsibilities of `mk-tournament-service`
 
-| Actor | Acciones principales |
+This service is the tournament's **administrative core**. It manages:
+
+- **Tournament lifecycle**: draft → active → in progress → finished.
+- **Enrollments and payments**: captains upload proof of payment; the organizer approves or rejects.
+- **Match schedule**: dates, times, courts and teams.
+- **Campus map**: interactive view of courts with real-time status.
+- **Elimination brackets**: automatic bracket generation once enrollment closes.
+- **Public visibility**: tournament information accessible to all users.
+- **History**: browsing finished tournaments with all their information.
+
+---
+
+## System actors (from this service's perspective)
+
+| Actor | Main actions |
 |---|---|
-| **Organizador** | Crear, activar, iniciar y finalizar torneos; aprobar/rechazar inscripciones; gestionar canchas y calendario |
-| **Capitán** | Inscribir equipo, cargar comprobante, cancelar inscripción, consultar estado |
-| **Jugador / Estudiante** | Consultar torneos, calendario, llaves y estadísticas públicas |
+| **Organizer** | Create, activate, start and finalize tournaments; approve/reject enrollments; manage courts and schedule |
+| **Captain** | Enroll team, upload proof of payment, cancel enrollment, check status |
+| **Player / Student** | View tournaments, schedule, brackets and public statistics |
 
 ---
 
-## Tecnología
+## Technology
 
-El servicio está construido sobre:
+The service is built on:
 
-- **Java 21** con **Spring Boot 3.5.6**
-- **Arquitectura hexagonal** (puertos y adaptadores)
-- **Spring Data MongoDB** para persistencia de documentos
-- **Spring Security** para autenticación y autorización por JWT
-- **Lombok** para reducción de boilerplate
-- **Maven** como gestor de dependencias
+- **Java 21** with **Spring Boot 3.5.6**
+- **Hexagonal architecture** (ports and adapters)
+- **Spring Data MongoDB** for document persistence
+- **Spring Security** for JWT-based authentication and authorization
+- **Lombok** to reduce boilerplate
+- **Maven** as the dependency manager
 
-La imagen se distribuye en **Docker** y puede desplegarse en AWS (ECS + Fargate) o Azure (Container Apps).
+The image is distributed as a **Docker** image and can be deployed on AWS (ECS + Fargate) or Azure (Container Apps).

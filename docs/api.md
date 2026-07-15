@@ -1,28 +1,28 @@
-# API REST
+# REST API
 
 Base URL: `http://localhost:8080`
 
-!!! warning "Control de acceso"
-    Todos los endpoints están actualmente **abiertos** (`permitAll()` en `SecurityConfig`). No existe todavía un Servicio de Identidad con JWT/roles en la plataforma. La columna **Rol previsto** describe la intención de negocio, no una restricción real. Ningún endpoint debería quedar público así en producción.
+!!! warning "Access control"
+    All endpoints are currently **open** (`permitAll()` in `SecurityConfig`). There is no Identity Service with JWT/roles in the platform yet. The **Intended role** column describes the business intent, not an actual restriction. No endpoint should be left public like this in production.
 
 ---
 
-## Gestión de torneos — `/tournaments`
+## Tournament management — `/tournaments`
 
-Controlador: `TournamentController`.
+Controller: `TournamentController`.
 
-| Método | Endpoint | Descripción | Rol previsto |
+| Method | Endpoint | Description | Intended role |
 |---|---|---|---|
-| `POST` | `/tournaments` | Crear torneo | Organizador |
-| `PATCH` | `/tournaments/{id}` | Editar cualquier campo del torneo | Organizador |
-| `PATCH` | `/tournaments/{id}/finalize` | Finalizar torneo (pasa a histórico) | Organizador |
-| `PATCH` | `/tournaments/{id}/prepare` | Iniciar preparación del torneo (genera emparejamientos) | Organizador |
-| `PATCH` | `/tournaments/{id}/pause` | Pausar / reanudar torneo (`action: PAUSE \| RESUME`) | Organizador |
-| `PATCH` | `/tournaments/{id}/inactivate` | Inactivar / reactivar torneo (`action: INACTIVATE \| REACTIVATE`) | Organizador |
-| `DELETE` | `/tournaments/{id}` | Eliminar torneo (solo si está Finalizado) | Organizador |
-| `GET` | `/tournaments/{tournamentId}/preparation` | Consultar estado de preparación | Autenticado |
+| `POST` | `/tournaments` | Create tournament | Organizer |
+| `PATCH` | `/tournaments/{id}` | Edit any tournament field | Organizer |
+| `PATCH` | `/tournaments/{id}/finalize` | Finalize tournament (moves to history) | Organizer |
+| `PATCH` | `/tournaments/{id}/prepare` | Start tournament preparation (generates matchups) | Organizer |
+| `PATCH` | `/tournaments/{id}/pause` | Pause / resume tournament (`action: PAUSE \| RESUME`) | Organizer |
+| `PATCH` | `/tournaments/{id}/inactivate` | Inactivate / reactivate tournament (`action: INACTIVATE \| REACTIVATE`) | Organizer |
+| `DELETE` | `/tournaments/{id}` | Delete tournament (only if Finished) | Organizer |
+| `GET` | `/tournaments/{tournamentId}/preparation` | Check preparation readiness | Authenticated |
 
-### Crear torneo
+### Create tournament
 
 ```http
 POST /tournaments
@@ -44,9 +44,9 @@ Content-Type: application/json
 }
 ```
 
-**Respuesta 201:** `TournamentResponse` con el torneo creado en estado `ACTIVE`.
+**201 response:** `TournamentResponse` with the tournament created in `ACTIVE` status.
 
-### Pausar / reanudar torneo
+### Pause / resume tournament
 
 ```http
 PATCH /tournaments/{id}/pause
@@ -57,7 +57,7 @@ Content-Type: application/json
 { "action": "PAUSE" }
 ```
 
-### Inactivar / reactivar torneo
+### Inactivate / reactivate tournament
 
 ```http
 PATCH /tournaments/{id}/inactivate
@@ -70,14 +70,14 @@ Content-Type: application/json
 
 ---
 
-## Inscripciones — `/tournaments/{tournamentId}/enrollments`
+## Enrollments — `/tournaments/{tournamentId}/enrollments`
 
-| Método | Endpoint | Descripción | Rol previsto |
+| Method | Endpoint | Description | Intended role |
 |---|---|---|---|
-| `POST` | `/tournaments/{tournamentId}/enrollments` | Inscribir equipo | Capitán |
-| `GET` | `/tournaments/{tournamentId}/enrollments` | Consultar equipos inscritos y reservados | Autenticado |
+| `POST` | `/tournaments/{tournamentId}/enrollments` | Enroll team | Captain |
+| `GET` | `/tournaments/{tournamentId}/enrollments` | View enrolled and reserved teams | Authenticated |
 
-### Inscribir equipo
+### Enroll team
 
 ```http
 POST /tournaments/{tournamentId}/enrollments
@@ -88,42 +88,42 @@ Content-Type: application/json
 { "teamId": "team_xyz789" }
 ```
 
-**Respuesta 201:** `EnrollmentResponse` — `enrollmentId`, `status` (`PENDING_PAYMENT`, …), `reservationExpiresAt`.
+**201 response:** `EnrollmentResponse` — `enrollmentId`, `status` (`PENDING_PAYMENT`, …), `reservationExpiresAt`.
 
 ---
 
-## Equipos y usuarios en un torneo
+## Teams and users in a tournament
 
-| Método | Endpoint | Descripción | Rol previsto |
+| Method | Endpoint | Description | Intended role |
 |---|---|---|---|
-| `GET` | `/tournaments/{tournamentId}/teams` | Listar equipos registrados | Autenticado |
-| `PATCH` | `/tournaments/{tournamentId}/teams/{teamId}/disqualify` | Descalificar equipo | Organizador |
-| `PATCH` | `/tournaments/{tournamentId}/teams/{teamId}/inactivate` | Inactivar equipo en el torneo | Organizador |
-| `PATCH` | `/tournaments/{tournamentId}/users/{userId}/inactivate` | Inactivar usuario en el torneo | Organizador |
+| `GET` | `/tournaments/{tournamentId}/teams` | List registered teams | Authenticated |
+| `PATCH` | `/tournaments/{tournamentId}/teams/{teamId}/disqualify` | Disqualify team | Organizer |
+| `PATCH` | `/tournaments/{tournamentId}/teams/{teamId}/inactivate` | Inactivate team in the tournament | Organizer |
+| `PATCH` | `/tournaments/{tournamentId}/users/{userId}/inactivate` | Inactivate user in the tournament | Organizer |
 
 ---
 
-## Llaves y partidos
+## Brackets and matches
 
-| Método | Endpoint | Descripción | Rol previsto |
+| Method | Endpoint | Description | Intended role |
 |---|---|---|---|
-| `GET` | `/tournaments/{tournamentId}/matchups` | Ver llaves / emparejamientos con resultados | Público |
-| `GET` | `/tournaments/matches/{matchId}/court` | Ver cancha asignada a un partido | Autenticado |
-| `POST` | `/tournaments/{tournamentId}/matches/{matchId}/champion` | Asignar campeón (partido final finalizado) | Organizador |
-| `GET` | `/tournaments/{tournamentId}/champion` | Consultar campeón del torneo | Público |
+| `GET` | `/tournaments/{tournamentId}/matchups` | View bracket / matchups with results | Public |
+| `GET` | `/tournaments/matches/{matchId}/court` | View the court assigned to a match | Authenticated |
+| `POST` | `/tournaments/{tournamentId}/matches/{matchId}/champion` | Assign champion (final match finished) | Organizer |
+| `GET` | `/tournaments/{tournamentId}/champion` | Get the tournament champion | Public |
 
 ---
 
-## Partidos — `/matches`
+## Matches — `/matches`
 
-Controlador: `MatchController`.
+Controller: `MatchController`.
 
-| Método | Endpoint | Descripción | Rol previsto |
+| Method | Endpoint | Description | Intended role |
 |---|---|---|---|
-| `POST` | `/matches` | Programar partido (emparejamiento + cancha + árbitro + fecha/hora) | Organizador |
-| `PATCH` | `/matches/{matchId}/activation` | Inactivar / reactivar un partido (`action: INACTIVATE \| REACTIVATE`) | Organizador |
+| `POST` | `/matches` | Schedule match (matchup + court + referee + date/time) | Organizer |
+| `PATCH` | `/matches/{matchId}/activation` | Inactivate / reactivate a match (`action: INACTIVATE \| REACTIVATE`) | Organizer |
 
-### Programar partido
+### Schedule match
 
 ```http
 POST /matches
@@ -140,7 +140,7 @@ Content-Type: application/json
 }
 ```
 
-### Inactivar / reactivar partido
+### Inactivate / reactivate match
 
 ```http
 PATCH /matches/{matchId}/activation
@@ -151,65 +151,65 @@ Content-Type: application/json
 { "action": "INACTIVATE" }
 ```
 
-**Respuesta 200:**
+**200 response:**
 
 ```json
 {
   "matchId": "m01",
   "active": false,
-  "message": "El partido fue inactivado correctamente"
+  "message": "The match was successfully inactivated"
 }
 ```
 
-Un partido inactivo **conserva los datos ya registrados** (marcador, estado) pero bloquea `finish()`, el registro del ganador de penales y la marca de no-show. Tarjetas, sustituciones y manejo del reloj no se implementan en este servicio — son responsabilidad del futuro **Servicio de Partidos**, que debe consultar este estado antes de aceptar esos eventos.
+An inactive match **keeps the data already recorded** (score, status) but blocks `finish()`, recording the penalty shootout winner, and marking a no-show. Cards, substitutions and clock management are not implemented in this service — they are the responsibility of the future **Match Service**, which must check this status before accepting those events.
 
 ---
 
-## Canchas
+## Courts
 
-| Método | Endpoint | Descripción | Rol previsto |
+| Method | Endpoint | Description | Intended role |
 |---|---|---|---|
-| `POST` | `/tournaments/{tournamentId}/courts` | Registrar cancha (multipart: `section`, `description`, `image`) | Organizador |
+| `POST` | `/tournaments/{tournamentId}/courts` | Register court (multipart: `section`, `description`, `image`) | Organizer |
 
 ---
 
-## Reglamento
+## Rulebook
 
-| Método | Endpoint | Descripción | Rol previsto |
+| Method | Endpoint | Description | Intended role |
 |---|---|---|---|
-| `POST` | `/tournaments/{tournamentId}/rulebook` | Adjuntar reglamento (PDF, multipart `file`) | Organizador |
-| `GET` | `/tournaments/{tournamentId}/rulebook` | Consultar / descargar reglamento | Público |
+| `POST` | `/tournaments/{tournamentId}/rulebook` | Attach rulebook (PDF, multipart `file`) | Organizer |
+| `GET` | `/tournaments/{tournamentId}/rulebook` | View / download rulebook | Public |
 
 ---
 
-## Histórico de torneos
+## Tournament history
 
-| Método | Endpoint | Descripción | Rol previsto |
+| Method | Endpoint | Description | Intended role |
 |---|---|---|---|
-| `GET` | `/tournaments/history` | Listar todos los torneos finalizados | Público |
-| `GET` | `/tournaments/history/{tournamentId}` | Detalle de un torneo histórico | Público |
+| `GET` | `/tournaments/history` | List all finished tournaments | Public |
+| `GET` | `/tournaments/history/{tournamentId}` | Detail of a historical tournament | Public |
 
 ---
 
-## Sanciones — `/sanctions`
+## Sanctions — `/sanctions`
 
-Controlador: `SanctionController`.
+Controller: `SanctionController`.
 
-| Método | Endpoint | Descripción | Rol previsto |
+| Method | Endpoint | Description | Intended role |
 |---|---|---|---|
-| `POST` | `/sanctions` | Aplicar sanción a un jugador | Árbitro / Organizador |
-| `GET` | `/sanctions/{playerId}` | Ver sanciones activas de un jugador | Autenticado |
-| `POST` | `/sanctions/match-finished` | Punto de integración: descuenta partidos de suspensión cuando un partido finaliza | *(pendiente — sin disparador automático aún)* |
+| `POST` | `/sanctions` | Apply sanction to a player | Referee / Organizer |
+| `GET` | `/sanctions/{playerId}` | View a player's active sanctions | Authenticated |
+| `POST` | `/sanctions/match-finished` | Integration point: serves one match of suspension when a match finishes | *(pending — no automatic trigger yet)* |
 
 ---
 
-## Auditoría — `/audit-events`
+## Audit — `/audit-events`
 
-Controlador: `AuditEventController`. Todas las acciones exitosas de los servicios de aplicación quedan registradas automáticamente vía un aspecto AOP (`AuditEventAspect`).
+Controller: `AuditEventController`. Every successful action in the application services is captured automatically via an AOP aspect (`AuditEventAspect`).
 
-| Método | Endpoint | Descripción | Rol previsto |
+| Method | Endpoint | Description | Intended role |
 |---|---|---|---|
-| `GET` | `/audit-events` | Consultar eventos, con filtros opcionales combinados por AND: `from`, `to`, `eventType`, `tournamentId` | Admin / Organizador |
+| `GET` | `/audit-events` | Query events, with optional filters combined with AND: `from`, `to`, `eventType`, `tournamentId` | Admin / Organizer |
 
 ```http
 GET /audit-events?from=2026-07-01&to=2026-07-31&tournamentId=t1
@@ -217,11 +217,11 @@ GET /audit-events?from=2026-07-01&to=2026-07-31&tournamentId=t1
 
 ---
 
-## Códigos de error comunes
+## Common error codes
 
-| Código HTTP | Significado |
+| HTTP code | Meaning |
 |---|---|
-| `400 Bad Request` | Datos de entrada inválidos |
-| `404 Not Found` | Recurso no existe (torneo, partido, cancha, reglamento…) |
-| `409 Conflict` | Operación no permitida en el estado actual (torneo pausado/inactivo, partido ya inactivo, etc.) |
-| `500 Internal Server Error` | Falla inesperada al generar el fixture (algoritmo aleatorio interno) |
+| `400 Bad Request` | Invalid input data |
+| `404 Not Found` | Resource doesn't exist (tournament, match, court, rulebook…) |
+| `409 Conflict` | Operation not allowed in the current state (tournament paused/inactive, match already inactive, etc.) |
+| `500 Internal Server Error` | Unexpected failure generating the fixture (internal random algorithm) |

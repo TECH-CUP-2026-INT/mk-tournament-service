@@ -1,26 +1,20 @@
-# Arquitectura
+# Architecture
 
-## Posición en el ecosistema TechCup
+## Position within the TechCup ecosystem
 
-El `mk-tournament-service` es uno de los 14 microservicios que componen la plataforma (ver [Equipo](equipo.md) para el detalle por dominio). Todos se comunican a través del **API Gateway** (`cc-gateway`), que valida el JWT antes de enrutar cada solicitud.
-
-<!-- TODO: subir imagen del diagrama a docs/assets/diagrams/ecosystem-diagram.png -->
-![Diagrama del ecosistema TechCup](assets/diagrams/ecosystem-diagram.png)
+`mk-tournament-service` is one of the 14 microservices that make up the platform (see [Team](equipo.md) for the breakdown by domain). All of them communicate through the **API Gateway** (`cc-gateway`), which validates the JWT before routing each request.
 
 ---
 
-## Arquitectura hexagonal
+## Hexagonal architecture
 
-El servicio implementa la **arquitectura hexagonal** (puertos y adaptadores). El dominio — las reglas del torneo — está en el centro y no depende de ningún framework externo. La base de datos y la API REST son adaptadores intercambiables.
+The service implements **hexagonal architecture** (ports and adapters). The domain — the tournament rules — sits at the center and does not depend on any external framework. The database and the REST API are interchangeable adapters.
 
-<!-- TODO: subir imagen del diagrama a docs/assets/diagrams/hexagonal-architecture.png -->
-![Arquitectura hexagonal](assets/diagrams/hexagonal-architecture.png)
-
-**Regla de oro:** las flechas de dependencia siempre apuntan hacia el centro. `infrastructure → application → domain`. El dominio no importa nada de los otros paquetes.
+**Golden rule:** dependency arrows always point toward the center. `infrastructure → application → domain`. The domain imports nothing from the other packages.
 
 ---
 
-## Estructura de paquetes
+## Package structure
 
 ```
 mk-tournament-service/
@@ -28,29 +22,29 @@ mk-tournament-service/
 │   ├── main/
 │   │   ├── java/co/edu/escuelaing/techcup/tournament/
 │   │   │   ├── aspect/
-│   │   │   │   └── AuditEventAspect.java         # AOP: registra auditoría automáticamente
+│   │   │   │   └── AuditEventAspect.java         # AOP: captures audit events automatically
 │   │   │   ├── config/
 │   │   │   │   └── SecurityConfig.java            # Spring Security + JWT
 │   │   │   ├── controller/
-│   │   │   │   ├── api/                           # Interfaces de los controladores
+│   │   │   │   ├── api/                           # Controller interfaces
 │   │   │   │   └── impl/
-│   │   │   │       ├── TournamentController.java  # Controlador principal (todos los endpoints)
-│   │   │   │       ├── MatchController.java       # Endpoints de partidos
-│   │   │   │       ├── SanctionController.java    # Endpoints de sanciones
-│   │   │   │       └── AuditEventController.java  # Endpoints de auditoría
+│   │   │   │       ├── TournamentController.java  # Main controller (most endpoints)
+│   │   │   │       ├── MatchController.java       # Match endpoints
+│   │   │   │       ├── SanctionController.java    # Sanction endpoints
+│   │   │   │       └── AuditEventController.java  # Audit endpoints
 │   │   │   ├── dto/
-│   │   │   │   ├── request/                       # DTOs de entrada
+│   │   │   │   ├── request/                       # Inbound DTOs
 │   │   │   │   │   ├── CreateTournamentRequest.java
 │   │   │   │   │   ├── EnrollTeamRequest.java
 │   │   │   │   │   ├── ScheduleMatchRequest.java
 │   │   │   │   │   └── ...
-│   │   │   │   └── response/                      # DTOs de salida
+│   │   │   │   └── response/                      # Outbound DTOs
 │   │   │   │       ├── TournamentResponse.java
 │   │   │   │       ├── EnrollmentResponse.java
 │   │   │   │       ├── MatchupResponse.java
 │   │   │   │       └── ...
 │   │   │   ├── entity/
-│   │   │   │   └── document/                      # Documentos MongoDB
+│   │   │   │   └── document/                      # MongoDB documents
 │   │   │   │       ├── TournamentDocument.java
 │   │   │   │       ├── EnrollmentDocument.java
 │   │   │   │       ├── MatchDocument.java
@@ -61,16 +55,16 @@ mk-tournament-service/
 │   │   │   │       ├── TournamentParticipantDocument.java
 │   │   │   │       └── AuditEventDocument.java
 │   │   │   ├── exception/
-│   │   │   │   ├── GlobalExceptionHandler.java    # Manejo centralizado de errores
-│   │   │   │   └── *.java                         # Excepciones de negocio
-│   │   │   ├── mapper/                            # Conversión entre capas
-│   │   │   ├── repository/                        # Repositorios MongoDB
-│   │   │   └── service/                           # Lógica de negocio y casos de uso
-│   │   │       ├── Tournament.java                # Modelo de dominio (reglas del torneo)
+│   │   │   │   ├── GlobalExceptionHandler.java    # Centralized error handling
+│   │   │   │   └── *.java                         # Business exceptions
+│   │   │   ├── mapper/                            # Conversion between layers
+│   │   │   ├── repository/                        # MongoDB repositories
+│   │   │   └── service/                           # Business logic and use cases
+│   │   │       ├── Tournament.java                # Domain model (tournament rules)
 │   │   │       ├── TournamentParticipant.java
-│   │   │       ├── TournamentStatus.java           # Enum de estados
+│   │   │       ├── TournamentStatus.java           # Status enum
 │   │   │       ├── TournamentFormat.java
-│   │   │       └── impl/                          # Implementaciones de casos de uso
+│   │   │       └── impl/                          # Use case implementations
 │   │   │           ├── CreateTournamentService.java
 │   │   │           ├── EnrollTeamInTournamentService.java
 │   │   │           ├── FinalizeTournamentService.java
@@ -81,12 +75,12 @@ mk-tournament-service/
 │   │       └── application.properties
 │   └── test/
 │       ├── java/.../tournament/
-│       │   ├── service/                   # Pruebas del dominio (TournamentTest, CourtTest…)
-│       │   ├── service/impl/              # Pruebas de servicios (con Mockito)
-│       │   ├── bdd/                       # Pruebas BDD con Cucumber
-│       │   ├── mapper/                    # Pruebas de mappers
-│       │   └── repository/adapter/        # Pruebas de adaptadores
-│       └── resources/features/            # Archivos .feature (Gherkin)
+│       │   ├── service/                   # Domain tests (TournamentTest, CourtTest…)
+│       │   ├── service/impl/              # Service tests (with Mockito)
+│       │   ├── bdd/                       # BDD tests with Cucumber
+│       │   ├── mapper/                    # Mapper tests
+│       │   └── repository/adapter/        # Adapter tests
+│       └── resources/features/            # .feature files (Gherkin)
 │           ├── delete_tournament.feature
 │           └── enroll_team_in_tournament.feature
 ├── Dockerfile
@@ -96,24 +90,10 @@ mk-tournament-service/
 
 ---
 
-## Modelo de dominio
+## Security
 
-<!-- TODO: subir imagen del diagrama a docs/assets/diagrams/domain-model.png -->
-![Modelo de dominio](assets/diagrams/domain-model.png)
-
----
-
-## Flujo de una inscripción
-
-<!-- TODO: subir imagen del diagrama a docs/assets/diagrams/enrollment-sequence.png -->
-![Flujo de una inscripción](assets/diagrams/enrollment-sequence.png)
-
----
-
-## Seguridad
-
-!!! warning "Estado actual"
-    Todavía no existe un Servicio de Identidad con JWT/roles en la plataforma. Hoy **todos** los endpoints del servicio están abiertos (`permitAll()`). El diseño por rol (Organizador, Capitán, Árbitro, Admin) es la intención de negocio documentada en [API REST](api.md), pero no está forzada en código.
+!!! warning "Current state"
+    There is no Identity Service with JWT/roles in the platform yet. Today **every** endpoint in the service is open (`permitAll()`). The role-based design (Organizer, Captain, Referee, Admin) is the documented business intent, described in [REST API](api.md), but it isn't enforced in code.
 
 ```java
 // config/SecurityConfig.java
@@ -124,7 +104,7 @@ public class SecurityConfig {
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // Pendiente del futuro Servicio de Identidad (JWT + roles)
+                        // Pending the future Identity Service (JWT + roles)
                         .requestMatchers("/tournaments/**", "/matches/**", "/sanctions/**",
                                 "/audit-events/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated()
