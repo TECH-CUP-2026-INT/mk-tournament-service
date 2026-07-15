@@ -1,26 +1,26 @@
-# Pruebas
+# Tests
 
-## Estrategia
+## Strategy
 
-Las pruebas siguen la pirámide estándar, con más peso en el dominio y los casos de uso (rápidas y sin infraestructura) y menos en los controladores (integración).
+Tests follow the standard pyramid, weighted toward the domain and use cases (fast, no infrastructure) and lighter on controllers (integration).
 
 ```
           /\
          /  \
-        / E2E \      ← Mínimas (smoke tests del API Gateway)
+        / E2E \      ← Minimal (API Gateway smoke tests)
        /--------\
-      / Integración\  ← Controllers + repositorio real (Embedded MongoDB)
+      / Integration\  ← Controllers + real repository (Embedded MongoDB)
      /--------------\
-    /    Dominio      \  ← Reglas de negocio puras, sin mocks
-   /   + Casos de uso  \  ← Casos de uso con repositorio simulado
+    /     Domain      \  ← Pure business rules, no mocks
+   /   + Use cases     \  ← Use cases with a simulated repository
   /____________________\
 ```
 
 ---
 
-## Pruebas del dominio (sin mocks)
+## Domain tests (no mocks)
 
-Las reglas de negocio son lógica pura. No necesitan Spring ni MongoDB.
+Business rules are pure logic. They don't need Spring or MongoDB.
 
 ```java
 // src/test/java/.../domain/TournamentTest.java
@@ -30,7 +30,7 @@ class TournamentTest {
     void activate_whenDraft_changesStatusToActive() {
         Tournament tournament = new Tournament("TechCup 2026", /* ... */);
         tournament.activate();
-        assertEquals(TournamentStatus.ACTIVO, tournament.getStatus());
+        assertEquals(TournamentStatus.ACTIVE, tournament.getStatus());
     }
 
     @Test
@@ -55,9 +55,9 @@ class TournamentTest {
 
 ---
 
-## Pruebas de casos de uso (con mocks)
+## Use case tests (with mocks)
 
-Los casos de uso dependen del puerto de repositorio. Se simula con Mockito.
+Use cases depend on the repository port. It's simulated with Mockito.
 
 ```java
 // src/test/java/.../application/RegisterTeamServiceTest.java
@@ -88,7 +88,7 @@ class RegisterTeamServiceTest {
         Registration result = service.register(command);
 
         // Assert
-        assertEquals(RegistrationStatus.EN_REVISION, result.getStatus());
+        assertEquals(RegistrationStatus.UNDER_REVIEW, result.getStatus());
         verify(tournamentRepo).saveRegistration(any(Registration.class));
     }
 
@@ -117,7 +117,7 @@ class RegisterTeamServiceTest {
 
 ---
 
-## Pruebas del bracket (lógica de generación)
+## Bracket tests (generation logic)
 
 ```java
 // src/test/java/.../domain/BracketTest.java
@@ -139,7 +139,7 @@ class BracketTest {
 
     @Test
     void generate_initialMatchesAreRandom() {
-        // Ejecutar 10 veces y verificar que al menos una ordenación difiere
+        // Run 10 times and check that at least one ordering differs
         List<String> teamIds = IntStream.rangeClosed(1, 8)
             .mapToObj(i -> "t" + i).toList();
         Set<String> firstMatches = new HashSet<>();
@@ -147,41 +147,34 @@ class BracketTest {
             Bracket b = Bracket.generate(teamIds);
             firstMatches.add(b.getInitialMatches().get(0).getTeamAId());
         }
-        assertTrue(firstMatches.size() > 1, "La generación no parece aleatoria");
+        assertTrue(firstMatches.size() > 1, "Generation doesn't look random");
     }
 }
 ```
 
 ---
 
-## Ejecutar las pruebas
+## Running the tests
 
 ```bash
-# Ejecutar todas las pruebas
+# Run all tests
 ./mvnw test
 
-# Ejecutar solo las pruebas del dominio
+# Run only domain tests
 ./mvnw test -Dtest="**/domain/**"
 
-# Ejecutar con reporte de cobertura (JaCoCo)
+# Run with coverage report (JaCoCo)
 ./mvnw verify
 
-# Ver el reporte HTML
+# View the HTML report
 open target/site/jacoco/index.html
 ```
 
 ---
 
-## Cobertura y análisis JaCoCo
+## CI: tests in the pipeline
 
-<!-- TODO: subir imagen del reporte de cobertura a docs/assets/img/jacoco-coverage.png -->
-![Cobertura de pruebas (JaCoCo)](assets/img/jacoco-coverage.png)
-
----
-
-## CI: las pruebas en el pipeline
-
-El workflow de GitHub Actions ejecuta `mvn clean verify` en cada push y PR. Si alguna prueba falla, el pipeline se pone rojo y **no se puede mergear** a `main`.
+The GitHub Actions workflow runs `mvn clean verify` on every push and PR. If any test fails, the pipeline turns red and **merging to `main` is blocked**.
 
 ```yaml
 # .github/workflows/ci.yml
@@ -201,6 +194,6 @@ jobs:
         with:
           java-version: '21'
           distribution: temurin
-      - name: Compilar y probar
+      - name: Build and test
         run: ./mvnw clean verify
 ```

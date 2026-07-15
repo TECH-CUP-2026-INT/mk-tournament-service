@@ -1,13 +1,13 @@
-# Requerimientos
+# Requirements
 
-## Contexto
+## Context
 
-**Dominio:** D2 — Torneo y Competencia
-**Servicio:** Servicio de Torneos (`mk-tournament-service`)
+**Domain:** D2 — Tournament and Competition
+**Service:** Tournament Service (`mk-tournament-service`)
 
-## Requerimientos Funcionales
+## Functional Requirements
 
-25 requerimientos funcionales (TC-29 a TC-54, sin TC-52 — pertenece al Servicio de Inscripción del torneo).
+25 functional requirements (TC-29 to TC-54, excluding TC-52 — which belongs to the Tournament Enrollment Service).
 
 | ID | Requirement | Description |
 |---|---|---|
@@ -91,15 +91,3 @@ Acceptance criteria:
 | RNF-07 | Portability | The service runs in Docker in any environment with Java 21 | Test in a clean environment with `docker compose up` |
 | RNF-08 | Scalability | The service can be deployed with multiple instances without shared in-memory state | Stateless server design; session in JWT |
 | RNF-09 | Traceability | Every action on a tournament (create, activate, enroll, approve) generates an audit record | Log review + audit collection in MongoDB |
-
----
-
-## Estados del Torneo
-
-<!-- TODO: subir imagen del diagrama a docs/assets/diagrams/tournament-states.png -->
-![Estados del torneo](assets/diagrams/tournament-states.png)
-
-## Estados de la Inscripción
-
-<!-- TODO: subir imagen del diagrama a docs/assets/diagrams/enrollment-states.png -->
-![Estados de la inscripción](assets/diagrams/enrollment-states.png)

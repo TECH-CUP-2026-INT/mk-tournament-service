@@ -1,46 +1,46 @@
-# Anexos
+# Appendices
 
-## A. Glosario
+## A. Glossary
 
-| Término | Definición |
+| Term | Definition |
 |---|---|
-| **Torneo** | Evento deportivo configurado por el organizador con fechas, cupo, costo y canchas. |
-| **Inscripción** | Solicitud de un capitán para que su equipo participe en un torneo. Incluye comprobante de pago. |
-| **Bracket / Llave** | Diagrama de enfrentamientos eliminatorios generado automáticamente al iniciar el torneo. |
-| **Cancha** | Espacio físico del campus donde se juegan los partidos, con nombre, imagen y ubicación georreferenciada. |
-| **Estado del torneo** | Fase en que se encuentra: `BORRADOR → ACTIVO → EN_PROGRESO → FINALIZADO`. |
-| **Estado de inscripción** | Fase de la solicitud: `EN_REVISION → APROBADO / RECHAZADO / CANCELADO`. |
-| **OTP** | One-Time Password. Código de uso único para verificar acciones sensibles (registro, primer ingreso). |
-| **JWT** | JSON Web Token. Ficha firmada emitida por `cc-identity-service` al autenticarse. |
-| **Arquitectura hexagonal** | Patrón donde el dominio (reglas del negocio) está en el centro y no depende de frameworks externos. |
-| **Puerto** | Interfaz que define lo que el dominio puede recibir (puerto de entrada) o necesita (puerto de salida). |
-| **Adaptador** | Implementación concreta de un puerto: el controlador REST (entrada) o el repositorio MongoDB (salida). |
-| **MapStruct** | Librería que genera código de conversión entre DTOs y objetos de dominio en tiempo de compilación. |
-| **WCAG 2.1 AA** | Estándar de accesibilidad web (Web Content Accessibility Guidelines) al que debe ajustarse el frontend. |
-| **MoSCoW** | Técnica de priorización: Must / Should / Could / Won't. |
+| **Tournament** | Sporting event configured by the organizer with dates, capacity, cost and courts. |
+| **Enrollment** | A captain's request for their team to participate in a tournament. Includes proof of payment. |
+| **Bracket** | Diagram of elimination matchups automatically generated when the tournament starts. |
+| **Court** | Physical space on campus where matches are played, with name, image and geo-referenced location. |
+| **Tournament status** | Phase the tournament is in: `DRAFT → ACTIVE → IN_PROGRESS → FINISHED`. |
+| **Enrollment status** | Phase of the request: `UNDER_REVIEW → APPROVED / REJECTED / CANCELLED`. |
+| **OTP** | One-Time Password. Single-use code to verify sensitive actions (registration, first login). |
+| **JWT** | JSON Web Token. Signed token issued by `cc-identity-service` upon authentication. |
+| **Hexagonal architecture** | Pattern where the domain (business rules) sits at the center and does not depend on external frameworks. |
+| **Port** | Interface defining what the domain can receive (inbound port) or needs (outbound port). |
+| **Adapter** | Concrete implementation of a port: the REST controller (inbound) or the MongoDB repository (outbound). |
+| **MapStruct** | Library that generates conversion code between DTOs and domain objects at compile time. |
+| **WCAG 2.1 AA** | Web accessibility standard (Web Content Accessibility Guidelines) the frontend must comply with. |
+| **MoSCoW** | Prioritization technique: Must / Should / Could / Won't. |
 
 ---
 
-## B. Stack tecnológico completo
+## B. Full technology stack
 
-| Capa | Tecnología | Versión |
+| Layer | Technology | Version |
 |---|---|---|
-| Lenguaje | Java | 21 |
+| Language | Java | 21 |
 | Framework | Spring Boot | 3.5.6 |
-| Seguridad | Spring Security + JWT | — |
-| Persistencia | Spring Data MongoDB | — |
-| Base de datos | MongoDB | 7 |
-| Reducción de boilerplate | Lombok | — |
-| Gestión de proyecto | Maven | 3.9+ |
-| Contenedores | Docker + Docker Compose | 24+ |
+| Security | Spring Security + JWT | — |
+| Persistence | Spring Data MongoDB | — |
+| Database | MongoDB | 7 |
+| Boilerplate reduction | Lombok | — |
+| Project management | Maven | 3.9+ |
+| Containers | Docker + Docker Compose | 24+ |
 | CI/CD | GitHub Actions | — |
-| Frontend (otro equipo) | React + TypeScript | — |
-| Gestión de tareas | Jira (Scrum) | — |
-| Documentación | MkDocs Material | — |
+| Frontend (other team) | React + TypeScript | — |
+| Task management | Jira (Scrum) | — |
+| Documentation | MkDocs Material | — |
 
 ---
 
-## C. Dependencias del `pom.xml`
+## C. `pom.xml` dependencies
 
 ```xml
 <!-- Spring Boot starters -->
@@ -61,14 +61,14 @@
     <artifactId>spring-boot-starter-data-mongodb</artifactId>
 </dependency>
 
-<!-- Utilidades -->
+<!-- Utilities -->
 <dependency>
     <groupId>org.projectlombok</groupId>
     <artifactId>lombok</artifactId>
     <optional>true</optional>
 </dependency>
 
-<!-- Pruebas -->
+<!-- Tests -->
 <dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-test</artifactId>
@@ -83,22 +83,22 @@
 
 ---
 
-## D. Flujo completo: de requerimiento a producción
+## D. Full flow: from requirement to production
 
 ```
-Requerimiento (TC-46)
-  → Especificación con plantilla (actor, flujo, criterios)
-  → Historia de usuario en Jira + subtareas [back] [front] [test]
-  → Back: endpoint → caso de uso → dominio → repositorio MongoDB
-  → Cada regla de negocio tiene su prueba unitaria
-  → El servicio se dockeriza con Dockerfile multi-stage
-  → CI: mvn verify (pruebas en verde = merge permitido)
-  → CD: construye imagen → sube a registro de contenedores → despliega
+Requirement (TC-46)
+  → Specification using a template (actor, flow, criteria)
+  → User story in Jira + subtasks [back] [front] [test]
+  → Back-end: endpoint → use case → domain → MongoDB repository
+  → Every business rule has its own unit test
+  → The service is dockerized with a multi-stage Dockerfile
+  → CI: mvn verify (green tests = merge allowed)
+  → CD: builds the image → pushes to the container registry → deploys
 ```
 
 ---
 
-## E. Referencias
+## E. References
 
 - [Spring Boot 3.5 Reference](https://docs.spring.io/spring-boot/docs/current/reference/html/)
 - [Spring Data MongoDB](https://docs.spring.io/spring-data/mongodb/reference/)
