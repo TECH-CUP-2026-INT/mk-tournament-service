@@ -1,11 +1,11 @@
 package co.edu.escuelaing.techcup.tournament.bdd.steps;
 
-import co.edu.escuelaing.techcup.tournament.service.impl.DeleteTournamentService;
-import co.edu.escuelaing.techcup.tournament.exception.TournamentNotFoundException;
-import co.edu.escuelaing.techcup.tournament.exception.TournamentCannotBeDeletedException;
-import co.edu.escuelaing.techcup.tournament.service.Tournament;
-import co.edu.escuelaing.techcup.tournament.service.TournamentStatus;
-import co.edu.escuelaing.techcup.tournament.service.ports.TournamentRepositoryPort;
+import co.edu.escuelaing.techcup.tournament.application.usecase.DeleteTournamentService;
+import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentNotFoundException;
+import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentCannotBeDeletedException;
+import co.edu.escuelaing.techcup.tournament.domain.model.Tournament;
+import co.edu.escuelaing.techcup.tournament.domain.model.TournamentStatus;
+import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentRepositoryPort;
 import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;

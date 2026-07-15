@@ -7,57 +7,57 @@ hide:
 
 <div class="grid cards" markdown>
 
--   **Servicio de Torneos**
+-   **Tournament Service**
 
-    Microservicio responsable de la gestión completa del ciclo de vida de los torneos: creación, inscripciones, calendario de encuentros, llaves eliminatorias y visibilidad pública.
+    Microservice responsible for the full tournament lifecycle: creation, enrollments, match scheduling, elimination brackets and public visibility.
 
 -   **Spring Boot 3.5.6 + MongoDB**
 
-    Construido con Java 21, arquitectura hexagonal y persistencia en MongoDB. Se integra con los demás microservicios de TechCup a través del API Gateway.
+    Built with Java 21, hexagonal architecture and MongoDB persistence. Integrates with the rest of the TechCup microservices through the API Gateway.
 
--   **Seguridad con JWT (planeada)**
+-   **JWT security (planned)**
 
-    El control de acceso por rol (organizador, capitán, jugador) vía JWT del `cc-identity-service` es la intención de negocio. Hoy los endpoints están abiertos — ver [Arquitectura](arquitectura.md#seguridad).
+    Role-based access control (Organizer, Captain, Player) via JWT from `cc-identity-service` is the documented business intent. Endpoints are currently open — see [Architecture](arquitectura.md#security).
 
--   **Parte del ecosistema TechCup**
+-   **Part of the TechCup ecosystem**
 
-    Un microservicio dentro de la plataforma DOSW que digitaliza el torneo semestral de fútbol de la Escuela Colombiana de Ingeniería Julio Garavito.
+    A microservice within the DOSW platform that digitizes the semester football tournament at Escuela Colombiana de Ingeniería Julio Garavito.
 
 </div>
 
 ---
 
-## ¿Qué hace este servicio?
+## What does this service do?
 
-El `mk-tournament-service` centraliza toda la lógica del torneo:
+`mk-tournament-service` centralizes all tournament logic:
 
-- El **organizador** crea y gestiona torneos (borrador → activo → en progreso → finalizado).
-- Los **capitanes** inscriben equipos cargando el comprobante de pago.
-- El **organizador** aprueba o rechaza inscripciones.
-- El sistema genera **llaves eliminatorias** automáticamente al cerrar inscripciones.
-- Todos los usuarios consultan el **calendario**, el **mapa de canchas** y las **llaves** en tiempo real.
+- The **organizer** creates and manages tournaments (draft → active → in progress → finished).
+- **Captains** enroll teams by uploading proof of payment.
+- The **organizer** approves or rejects enrollments.
+- The system automatically generates **elimination brackets** once enrollment closes.
+- All users can view the **schedule**, the **court map** and the **brackets** in real time.
 
 ---
 
-## Repositorio
+## Repository
 
 ```
 https://github.com/TECH-CUP-2026-INT/mk-tournament-service
 ```
 
-## Cómo empezar rápido
+## Quick start
 
 ```bash
-# 1. Clonar
+# 1. Clone
 git clone https://github.com/TECH-CUP-2026-INT/mk-tournament-service.git
 cd mk-tournament-service
 
-# 2. Levantar con Docker Compose (MongoDB incluido)
+# 2. Start with Docker Compose (MongoDB included)
 docker compose up --build
 
-# 3. El servicio queda disponible en
+# 3. The service is available at
 http://localhost:8080
 ```
 
-[Ver configuración completa](configuracion.md){ .md-button .md-button--primary }
-[Ver API REST](api.md){ .md-button }
+[See full configuration](configuracion.md){ .md-button .md-button--primary }
+[See REST API](api.md){ .md-button }
