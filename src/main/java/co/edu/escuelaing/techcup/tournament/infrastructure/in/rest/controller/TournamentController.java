@@ -4,7 +4,9 @@ import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidCourtDataExc
 import co.edu.escuelaing.techcup.tournament.domain.model.ChampionAssignment;
 import co.edu.escuelaing.techcup.tournament.domain.model.Court;
 import co.edu.escuelaing.techcup.tournament.domain.model.CourtSection;
+import co.edu.escuelaing.techcup.tournament.domain.model.Match;
 import co.edu.escuelaing.techcup.tournament.domain.model.PreparationResult;
+import co.edu.escuelaing.techcup.tournament.domain.model.ScheduledMatch;
 import co.edu.escuelaing.techcup.tournament.domain.model.RegistrationStatus;
 import co.edu.escuelaing.techcup.tournament.domain.model.Tournament;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ConsultHistoricalTournamentsUseCase;
@@ -13,6 +15,7 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.GetEnrolledT
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ViewRegisteredTeamsUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ViewMatchupsUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ViewMatchCourtUseCase;
+import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ViewCourtMapUseCase;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.controller.swagger.TournamentControllerSwagger;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.EnrolledTeamResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.HistoricalTournamentResponse;
@@ -50,6 +53,7 @@ import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.I
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.DisqualifyTeamRequest;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.EnrollTeamRequest;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.ChampionResponse;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.CourtMapEntryResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.CourtResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.DeleteTournamentResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.PauseTournamentResponse;
@@ -94,6 +98,7 @@ public class TournamentController implements TournamentControllerSwagger {
     private final AttachRulebookUseCase attachRulebook;
     private final ConsultRulebookUseCase consultRulebook;
     private final RegisterCourtUseCase registerCourtUseCase;
+    private final ViewCourtMapUseCase viewCourtMapUseCase;
     private final ConsultHistoricalTournamentsUseCase consultHistorical;
     private final GetEnrolledTeamsUseCase getEnrolledTeams;
     private final ViewRegisteredTeamsUseCase viewRegisteredTeams;
@@ -337,6 +342,57 @@ public class TournamentController implements TournamentControllerSwagger {
                 court.getId(), court.getTournamentId(), court.getSection().name(),
                 court.getDescription(), court.getImageId(), "Court registered successfully"
         ));
+    }
+
+    @Override
+    @GetMapping("/{tournamentId}/courts")
+    public ResponseEntity<List<CourtMapEntryResponse>> getCourtMap(@PathVariable String tournamentId) {
+        List<CourtMapEntryResponse> result = viewCourtMapUseCase.getCourtMap(tournamentId).stream()
+                .map(this::toCourtMapEntryResponse)
+                .toList();
+        return ResponseEntity.ok(result);
+    }
+
+    private CourtMapEntryResponse toCourtMapEntryResponse(ViewCourtMapUseCase.CourtMapEntry entry) {
+        Court court = entry.court();
+        Match match = entry.match();
+        ScheduledMatch scheduledMatch = entry.scheduledMatch();
+
+        CourtMapEntryResponse.CourtMapStatus status;
+        String statusLabel;
+        if (match == null) {
+            status = CourtMapEntryResponse.CourtMapStatus.AVAILABLE;
+            statusLabel = "Available";
+        } else {
+            switch (match.getStatus()) {
+                case IN_PROGRESS -> {
+                    status = CourtMapEntryResponse.CourtMapStatus.IN_PROGRESS;
+                    statusLabel = "In Progress";
+                }
+                case FINISHED, FINISHED_NO_SHOW -> {
+                    status = CourtMapEntryResponse.CourtMapStatus.FINISHED;
+                    statusLabel = "Finished";
+                }
+                default -> {
+                    status = CourtMapEntryResponse.CourtMapStatus.SCHEDULED;
+                    statusLabel = "Scheduled";
+                }
+            }
+        }
+
+        return new CourtMapEntryResponse(
+                court.getId(),
+                court.getSection(),
+                court.getDescription(),
+                court.getImageId(),
+                status,
+                statusLabel,
+                match != null ? match.getMatchId() : null,
+                match != null ? match.getHomeTeamId() : null,
+                match != null ? match.getAwayTeamId() : null,
+                scheduledMatch != null ? scheduledMatch.getMatchDate() : null,
+                scheduledMatch != null ? scheduledMatch.getMatchTime() : null
+        );
     }
 
     @Override

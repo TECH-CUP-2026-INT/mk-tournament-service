@@ -20,6 +20,7 @@ import co.edu.escuelaing.techcup.tournament.domain.model.Enrollment;
 import co.edu.escuelaing.techcup.tournament.domain.model.EnrollmentStatus;
 import co.edu.escuelaing.techcup.tournament.domain.model.Match;
 import co.edu.escuelaing.techcup.tournament.domain.model.MatchStatus;
+import co.edu.escuelaing.techcup.tournament.domain.model.ScheduledMatch;
 import co.edu.escuelaing.techcup.tournament.domain.model.ParticipantStatus;
 import co.edu.escuelaing.techcup.tournament.domain.model.PaymentOrderStatus;
 import co.edu.escuelaing.techcup.tournament.domain.model.PreparationResult;
@@ -49,6 +50,7 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.InactivateTo
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.InactivateUserUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.PauseTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.RegisterCourtUseCase;
+import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ViewCourtMapUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.StartTournamentPreparationUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ViewMatchCourtUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ViewMatchupsUseCase;
@@ -104,6 +106,7 @@ class TournamentControllerTest {
     @MockitoBean private AttachRulebookUseCase attachRulebook;
     @MockitoBean private ConsultRulebookUseCase consultRulebook;
     @MockitoBean private RegisterCourtUseCase registerCourtUseCase;
+    @MockitoBean private ViewCourtMapUseCase viewCourtMapUseCase;
     @MockitoBean private ConsultHistoricalTournamentsUseCase consultHistorical;
     @MockitoBean private GetEnrolledTeamsUseCase getEnrolledTeams;
     @MockitoBean private ViewRegisteredTeamsUseCase viewRegisteredTeams;
@@ -288,6 +291,31 @@ class TournamentControllerTest {
         mockMvc.perform(get("/tournaments/matches/m2/court"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
+    void getCourtMap_devuelve200ConCanchaDisponibleYConPartido() throws Exception {
+        Court available = Court.reconstruct("c1", "t1", CourtSection.CANCHA_1, "Court A", null, null);
+        Court withMatch = Court.reconstruct("c2", "t1", CourtSection.CANCHA_2, "Court B", null, "m1");
+        Match match = new Match("m1", "home", "away", MatchStatus.IN_PROGRESS);
+        ScheduledMatch scheduledMatch = ScheduledMatch.reconstruct(
+                "sm1", "m1", "c2", "ref-1", LocalDate.of(2026, 8, 5), java.time.LocalTime.of(9, 0));
+
+        when(viewCourtMapUseCase.getCourtMap("t1")).thenReturn(List.of(
+                new ViewCourtMapUseCase.CourtMapEntry(available, null, null),
+                new ViewCourtMapUseCase.CourtMapEntry(withMatch, match, scheduledMatch)
+        ));
+
+        mockMvc.perform(get("/tournaments/t1/courts"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].courtId").value("c1"))
+                .andExpect(jsonPath("$[0].status").value("AVAILABLE"))
+                .andExpect(jsonPath("$[0].statusLabel").value("Available"))
+                .andExpect(jsonPath("$[1].courtId").value("c2"))
+                .andExpect(jsonPath("$[1].status").value("IN_PROGRESS"))
+                .andExpect(jsonPath("$[1].statusLabel").value("In Progress"))
+                .andExpect(jsonPath("$[1].matchId").value("m1"))
+                .andExpect(jsonPath("$[1].matchDate").value("2026-08-05"));
     }
 
     @Test
