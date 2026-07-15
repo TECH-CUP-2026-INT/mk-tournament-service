@@ -1,7 +1,12 @@
 package co.edu.escuelaing.techcup.tournament.domain.model;
 
 import java.time.Instant;
+import java.util.UUID;
 
+/**
+ * Registro inmutable de una acción exitosa, capturado automáticamente por el aspecto
+ * de auditoría (AOP) sobre los casos de uso de {@code application.usecase}.
+ */
 public class AuditEvent extends AggregateRoot {
 
     /**
@@ -26,7 +31,7 @@ public class AuditEvent extends AggregateRoot {
     }
 
     public static AuditEvent create(String actor, String actionType, String affectedEntityId) {
-        return new AuditEvent(null, Instant.now(), actor, actionType, affectedEntityId);
+        return new AuditEvent(UUID.randomUUID().toString(), Instant.now(), actor, actionType, affectedEntityId);
     }
 
     public static AuditEvent reconstruct(String id, Instant timestamp, String actor,

@@ -5,6 +5,9 @@ import co.edu.escuelaing.techcup.tournament.domain.model.ScheduledMatch;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+/**
+ * Puerto de persistencia para partidos programados (fecha, cancha, árbitro).
+ */
 public interface ScheduledMatchRepositoryPort {
     ScheduledMatch save(ScheduledMatch scheduledMatch);
 

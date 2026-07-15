@@ -2,6 +2,12 @@ package co.edu.escuelaing.techcup.tournament.domain.model;
 
 import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidCourtDataException;
 
+import java.util.UUID;
+
+/**
+ * Cancha física del campus donde se juegan los partidos, con su sección del mapa,
+ * imagen y el partido que tenga asignado.
+ */
 public class Court extends AggregateRoot {
 
     private static final int MAX_DESCRIPTION_LENGTH = 300;
@@ -25,7 +31,7 @@ public class Court extends AggregateRoot {
         validateTournamentId(tournamentId);
         validateSection(section);
         validateDescription(description);
-        return new Court(null, tournamentId, section, description, null, null);
+        return new Court(UUID.randomUUID().toString(), tournamentId, section, description, null, null);
     }
 
     public static Court reconstruct(String id, String tournamentId, CourtSection section, String description, String imageId) {

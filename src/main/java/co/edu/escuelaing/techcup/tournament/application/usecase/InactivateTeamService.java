@@ -1,5 +1,7 @@
 package co.edu.escuelaing.techcup.tournament.application.usecase;
 
+import lombok.RequiredArgsConstructor;
+
 import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentNotFoundException;
 import co.edu.escuelaing.techcup.tournament.domain.model.Tournament;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.InactivateTeamUseCase;
@@ -7,13 +9,11 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentR
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class InactivateTeamService implements InactivateTeamUseCase {
 
     private final TournamentRepositoryPort repository;
 
-    public InactivateTeamService(TournamentRepositoryPort repository) {
-        this.repository = repository;
-    }
 
     @Override
     public Tournament inactivate(String tournamentId, String teamId) {

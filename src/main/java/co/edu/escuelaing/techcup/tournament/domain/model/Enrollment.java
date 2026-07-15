@@ -5,6 +5,10 @@ import co.edu.escuelaing.techcup.tournament.application.usecase.SyncEnrollmentSt
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * Inscripción de un equipo a un torneo, con su estado de reserva/pago. Se crea
+ * con un slot reservado hasta que el Payment Service confirma el pago.
+ */
 public class Enrollment {
 
     private String enrollmentId;

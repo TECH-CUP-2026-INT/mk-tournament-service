@@ -4,7 +4,12 @@ import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidScheduledMat
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.UUID;
 
+/**
+ * Programación real de un partido: fecha, hora, cancha y árbitro asignados a un
+ * enfrentamiento ({@link Match}) ya generado en el fixture.
+ */
 public class ScheduledMatch extends AggregateRoot {
 
     private final String matchupId;
@@ -32,7 +37,7 @@ public class ScheduledMatch extends AggregateRoot {
             throw new InvalidScheduledMatchDataException("La fecha del partido es obligatoria");
         if (matchTime == null)
             throw new InvalidScheduledMatchDataException("La hora del partido es obligatoria");
-        return new ScheduledMatch(null, matchupId, courtId, refereeId, matchDate, matchTime);
+        return new ScheduledMatch(UUID.randomUUID().toString(), matchupId, courtId, refereeId, matchDate, matchTime);
     }
 
     public static ScheduledMatch reconstruct(String id, String matchupId, String courtId, String refereeId,

@@ -7,6 +7,12 @@ import co.edu.escuelaing.techcup.tournament.domain.model.PaymentOrderStatus;
 
 import java.math.BigDecimal;
 
+/**
+ * Puerto hacia el Payment Service. Nótese la asimetría entre sus dos
+ * métodos: uno degrada a {@link co.edu.escuelaing.techcup.tournament.domain.model.PaymentOrderStatus#UNKNOWN}
+ * si el servicio externo falla, el otro propaga la falla — ver el
+ * javadoc de cada método.
+ */
 public interface PaymentServiceClientPort {
 
     /**

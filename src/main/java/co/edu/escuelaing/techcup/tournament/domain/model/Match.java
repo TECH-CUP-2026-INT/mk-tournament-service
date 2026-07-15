@@ -4,6 +4,11 @@ import co.edu.escuelaing.techcup.tournament.domain.exception.ChampionAssignmentN
 import co.edu.escuelaing.techcup.tournament.domain.exception.MatchActivationNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.MatchInactiveException;
 
+/**
+ * Enfrentamiento generado en el fixture del torneo (quién juega contra quién),
+ * con su resultado y estado. No incluye fecha/cancha/árbitro — eso lo modela
+ * {@link ScheduledMatch}.
+ */
 public class Match {
 
     private String matchId;

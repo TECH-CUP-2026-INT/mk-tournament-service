@@ -1,5 +1,11 @@
 package co.edu.escuelaing.techcup.tournament.domain.model;
 
+import java.util.UUID;
+
+/**
+ * Participante (jugador) dentro de un torneo, independiente del equipo al que
+ * pertenece.
+ */
 public class TournamentParticipant extends AggregateRoot {
 
     private final String tournamentId;
@@ -14,7 +20,7 @@ public class TournamentParticipant extends AggregateRoot {
     }
 
     public static TournamentParticipant create(String tournamentId, String userId) {
-        return new TournamentParticipant(null, tournamentId, userId, ParticipantStatus.ACTIVE);
+        return new TournamentParticipant(UUID.randomUUID().toString(), tournamentId, userId, ParticipantStatus.ACTIVE);
     }
 
     public static TournamentParticipant reconstruct(String id, String tournamentId, String userId, ParticipantStatus status) {

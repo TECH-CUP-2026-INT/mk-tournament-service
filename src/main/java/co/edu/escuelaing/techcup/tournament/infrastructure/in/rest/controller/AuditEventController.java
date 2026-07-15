@@ -1,18 +1,11 @@
 package co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.controller;
 
-import co.edu.escuelaing.techcup.tournament.application.usecase.CreateTournamentService;
-import co.edu.escuelaing.techcup.tournament.infrastructure.config.SecurityConfig;
-
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.AuditEventResponse;
 import co.edu.escuelaing.techcup.tournament.application.mapper.AuditEventRestMapper;
 import co.edu.escuelaing.techcup.tournament.domain.model.AuditEventFilter;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ConsultAuditEventsUseCase;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.controller.swagger.AuditEventControllerSwagger;
+import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,32 +22,18 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/audit-events")
-@Tag(name = "Audit", description = "Querying the tournament service's audit log (TC-40)")
-public class AuditEventController {
+@RequiredArgsConstructor
+public class AuditEventController implements AuditEventControllerSwagger {
 
     private final ConsultAuditEventsUseCase consultAuditEventsUseCase;
     private final AuditEventRestMapper mapper;
 
-    public AuditEventController(ConsultAuditEventsUseCase consultAuditEventsUseCase, AuditEventRestMapper mapper) {
-        this.consultAuditEventsUseCase = consultAuditEventsUseCase;
-        this.mapper = mapper;
-    }
-
-    @Operation(summary = "Query audit events with optional filters (date, event type, tournament)",
-            description = "Every action performed through the application services is captured automatically via an "
-                    + "AOP aspect. All filters are optional and combined with AND when several are present.")
-    @ApiResponse(responseCode = "200", description = "List of audit events matching the filters",
-            content = @Content(schema = @Schema(implementation = AuditEventResponse.class)))
+    @Override
     @GetMapping
     public ResponseEntity<List<AuditEventResponse>> consult(
-            @Parameter(description = "Start of the date range (ISO 8601)", example = "2026-01-01", required = false)
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @Parameter(description = "End of the date range (ISO 8601)", example = "2026-01-31", required = false)
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
-            @Parameter(description = "Type of audited action, as \"<ServiceClass>.<method>\"",
-                    example = "CreateTournamentService.create", required = false)
             @RequestParam(required = false) String eventType,
-            @Parameter(description = "ID of the tournament to filter by", example = "abc123", required = false)
             @RequestParam(required = false) String tournamentId) {
 
         List<AuditEventResponse> result = consultAuditEventsUseCase
