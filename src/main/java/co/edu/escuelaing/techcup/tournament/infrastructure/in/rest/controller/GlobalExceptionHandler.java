@@ -44,7 +44,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.Map;
+import java.util.List;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -66,21 +67,21 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException ex) {
-        return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
+        return ResponseEntity.badRequest().body(new ErrorResponse(ex.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException ex) {
-        String message = ex.getBindingResult().getFieldErrors().stream()
+    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
+        List<String> details = ex.getBindingResult().getFieldErrors().stream()
                 .map(e -> e.getField() + ": " + e.getDefaultMessage())
-                .findFirst().orElse("Datos inválidos");
-        return ResponseEntity.badRequest().body(Map.of("error", message));
+                .toList();
+        return ResponseEntity.badRequest().body(new ErrorResponse("Datos de entrada inválidos", details));
     }
 
     @ExceptionHandler(TeamRemovalNotAllowedException.class)
-    public ResponseEntity<Map<String, String>> handleRemovalNotAllowed(TeamRemovalNotAllowedException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", ex.getMessage()));
+    public ResponseEntity<ErrorResponse> handleRemovalNotAllowed(TeamRemovalNotAllowedException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
     }
 
     @ExceptionHandler(TournamentCannotBeFinalizedException.class)
@@ -109,14 +110,9 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(RulebookNotAttachedException.class)
-    public ResponseEntity<co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.RulebookErrorResponse> handleRulebookNotAttached(RulebookNotAttachedException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                new co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.RulebookErrorResponse(
-                        "RULEBOOK_NOT_FOUND",
-                        ex.getMessage(),
-                        "El organizador debe subir el reglamento del torneo antes de que pueda ser consultado"
-                )
-        );
+    public ResponseEntity<ErrorResponse> handleRulebookNotAttached(RulebookNotAttachedException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(ex.getMessage(),
+                List.of("El organizador debe subir el reglamento del torneo antes de que pueda ser consultado")));
     }
 
     @ExceptionHandler({InvalidCourtDataException.class, InvalidCourtImageException.class})
