@@ -15,7 +15,19 @@ public class CreateTournamentService implements CreateTournamentUseCase {
     }
 
     @Override
-    public Tournament create(Tournament newTournament) {
+    public Tournament create(CreateTournamentCommand command) {
+        Tournament newTournament = Tournament.create(
+                command.name(),
+                command.type(),
+                command.format(),
+                command.numberOfTeams(),
+                command.cost(),
+                command.startDate(),
+                command.endDate(),
+                command.registrationDeadline(),
+                command.matchStartTime(),
+                command.matchEndTime()
+        );
         return repository.save(newTournament);
     }
 }

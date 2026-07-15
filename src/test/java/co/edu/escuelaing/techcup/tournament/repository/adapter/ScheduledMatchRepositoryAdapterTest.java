@@ -4,6 +4,7 @@ import co.edu.escuelaing.techcup.tournament.entity.document.ScheduledMatchDocume
 import co.edu.escuelaing.techcup.tournament.repository.mongo.ScheduledMatchMongoRepository;
 import co.edu.escuelaing.techcup.tournament.service.ScheduledMatch;
 import org.junit.jupiter.api.Test;
+import org.mapstruct.factory.Mappers;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -17,6 +18,8 @@ import static org.mockito.Mockito.when;
 
 class ScheduledMatchRepositoryAdapterTest {
 
+    private final co.edu.escuelaing.techcup.tournament.mapper.ScheduledMatchPersistenceMapper mapper = Mappers.getMapper(co.edu.escuelaing.techcup.tournament.mapper.ScheduledMatchPersistenceMapper.class);
+
     @Test
     void save_delegaAlMongoRepositoryYMapeaDeVuelta() {
         ScheduledMatchMongoRepository mongoRepository = mock(ScheduledMatchMongoRepository.class);
@@ -26,7 +29,7 @@ class ScheduledMatchRepositoryAdapterTest {
                 LocalDate.of(2026, 8, 5), LocalTime.of(9, 0));
         when(mongoRepository.save(any())).thenReturn(saved);
 
-        ScheduledMatchRepositoryAdapter adapter = new ScheduledMatchRepositoryAdapter(mongoRepository);
+        ScheduledMatchRepositoryAdapter adapter = new ScheduledMatchRepositoryAdapter(mongoRepository, mapper);
         ScheduledMatch result = adapter.save(scheduledMatch);
 
         assertEquals("sm1", result.getId());
@@ -40,7 +43,7 @@ class ScheduledMatchRepositoryAdapterTest {
         when(mongoRepository.existsByCourtIdAndMatchDateAndMatchTimeOrRefereeIdAndMatchDateAndMatchTime(
                 "court-1", date, time, "ref-1", date, time)).thenReturn(true);
 
-        ScheduledMatchRepositoryAdapter adapter = new ScheduledMatchRepositoryAdapter(mongoRepository);
+        ScheduledMatchRepositoryAdapter adapter = new ScheduledMatchRepositoryAdapter(mongoRepository, mapper);
 
         assertTrue(adapter.existsConflict("court-1", "ref-1", date, time));
     }
@@ -53,7 +56,7 @@ class ScheduledMatchRepositoryAdapterTest {
         when(mongoRepository.existsByCourtIdAndMatchDateAndMatchTimeOrRefereeIdAndMatchDateAndMatchTime(
                 "court-1", date, time, "ref-1", date, time)).thenReturn(false);
 
-        ScheduledMatchRepositoryAdapter adapter = new ScheduledMatchRepositoryAdapter(mongoRepository);
+        ScheduledMatchRepositoryAdapter adapter = new ScheduledMatchRepositoryAdapter(mongoRepository, mapper);
 
         assertFalse(adapter.existsConflict("court-1", "ref-1", date, time));
     }

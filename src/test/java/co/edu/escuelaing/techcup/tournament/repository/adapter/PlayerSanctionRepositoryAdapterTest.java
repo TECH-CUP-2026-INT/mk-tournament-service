@@ -5,6 +5,7 @@ import co.edu.escuelaing.techcup.tournament.repository.mongo.PlayerSanctionMongo
 import co.edu.escuelaing.techcup.tournament.service.PlayerSanction;
 import co.edu.escuelaing.techcup.tournament.service.SanctionType;
 import org.junit.jupiter.api.Test;
+import org.mapstruct.factory.Mappers;
 
 import java.util.List;
 
@@ -15,6 +16,8 @@ import static org.mockito.Mockito.when;
 
 class PlayerSanctionRepositoryAdapterTest {
 
+    private final co.edu.escuelaing.techcup.tournament.mapper.PlayerSanctionPersistenceMapper mapper = Mappers.getMapper(co.edu.escuelaing.techcup.tournament.mapper.PlayerSanctionPersistenceMapper.class);
+
     @Test
     void save_delegaAlMongoRepositoryYMapeaDeVuelta() {
         PlayerSanctionMongoRepository mongoRepository = mock(PlayerSanctionMongoRepository.class);
@@ -22,7 +25,7 @@ class PlayerSanctionRepositoryAdapterTest {
         PlayerSanctionDocument saved = new PlayerSanctionDocument("s1", "player1", "RED_CARD", 1);
         when(mongoRepository.save(any())).thenReturn(saved);
 
-        PlayerSanctionRepositoryAdapter adapter = new PlayerSanctionRepositoryAdapter(mongoRepository);
+        PlayerSanctionRepositoryAdapter adapter = new PlayerSanctionRepositoryAdapter(mongoRepository, mapper);
         PlayerSanction result = adapter.save(sanction);
 
         assertEquals("s1", result.getId());
@@ -35,7 +38,7 @@ class PlayerSanctionRepositoryAdapterTest {
         when(mongoRepository.findByPlayerIdAndMatchesRemainingGreaterThan("player1", 0))
                 .thenReturn(List.of(document));
 
-        PlayerSanctionRepositoryAdapter adapter = new PlayerSanctionRepositoryAdapter(mongoRepository);
+        PlayerSanctionRepositoryAdapter adapter = new PlayerSanctionRepositoryAdapter(mongoRepository, mapper);
         List<PlayerSanction> result = adapter.findActiveByPlayerId("player1");
 
         assertEquals(1, result.size());
@@ -48,7 +51,7 @@ class PlayerSanctionRepositoryAdapterTest {
         PlayerSanctionDocument document = new PlayerSanctionDocument("s1", "player1", "YELLOW_CARD_ACCUMULATION", 1);
         when(mongoRepository.findByMatchesRemainingGreaterThan(0)).thenReturn(List.of(document));
 
-        PlayerSanctionRepositoryAdapter adapter = new PlayerSanctionRepositoryAdapter(mongoRepository);
+        PlayerSanctionRepositoryAdapter adapter = new PlayerSanctionRepositoryAdapter(mongoRepository, mapper);
         List<PlayerSanction> result = adapter.findAllActive();
 
         assertEquals(1, result.size());

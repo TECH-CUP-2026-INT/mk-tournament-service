@@ -4,16 +4,19 @@ import co.edu.escuelaing.techcup.tournament.entity.document.PlayerSanctionDocume
 import co.edu.escuelaing.techcup.tournament.service.PlayerSanction;
 import co.edu.escuelaing.techcup.tournament.service.SanctionType;
 import org.junit.jupiter.api.Test;
+import org.mapstruct.factory.Mappers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class PlayerSanctionPersistenceMapperTest {
 
+    private final PlayerSanctionPersistenceMapper mapper = Mappers.getMapper(PlayerSanctionPersistenceMapper.class);
+
     @Test
     void toDomain_convierteTodosLosCampos() {
         PlayerSanctionDocument document = new PlayerSanctionDocument("s1", "player1", "RED_CARD", 1);
 
-        PlayerSanction sanction = PlayerSanctionPersistenceMapper.toDomain(document);
+        PlayerSanction sanction = mapper.toDomain(document);
 
         assertEquals("s1", sanction.getId());
         assertEquals("player1", sanction.getPlayerId());
@@ -25,7 +28,7 @@ class PlayerSanctionPersistenceMapperTest {
     void toDocument_convierteTodosLosCampos() {
         PlayerSanction sanction = PlayerSanction.reconstruct("s1", "player1", SanctionType.CONDUCT, 3);
 
-        PlayerSanctionDocument document = PlayerSanctionPersistenceMapper.toDocument(sanction);
+        PlayerSanctionDocument document = mapper.toDocument(sanction);
 
         assertEquals("s1", document.getId());
         assertEquals("player1", document.getPlayerId());

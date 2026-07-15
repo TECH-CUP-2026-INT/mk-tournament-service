@@ -16,20 +16,22 @@ import java.util.Optional;
 public class TournamentRepositoryAdapter implements TournamentRepositoryPort {
 
     private final TournamentMongoRepository mongoRepository;
+    private final TournamentPersistenceMapper mapper;
 
-    public TournamentRepositoryAdapter(TournamentMongoRepository mongoRepository) {
+    public TournamentRepositoryAdapter(TournamentMongoRepository mongoRepository, TournamentPersistenceMapper mapper) {
         this.mongoRepository = mongoRepository;
+        this.mapper = mapper;
     }
 
     @Override
     public Tournament save(Tournament tournament) {
-        TournamentDocument saved = mongoRepository.save(TournamentPersistenceMapper.toDocument(tournament));
-        return TournamentPersistenceMapper.toDomain(saved);
+        TournamentDocument saved = mongoRepository.save(mapper.toDocument(tournament));
+        return mapper.toDomain(saved);
     }
 
     @Override
     public Optional<Tournament> findById(String id) {
-        return mongoRepository.findById(id).map(TournamentPersistenceMapper::toDomain);
+        return mongoRepository.findById(id).map(mapper::toDomain);
     }
 
     @Override
@@ -40,26 +42,26 @@ public class TournamentRepositoryAdapter implements TournamentRepositoryPort {
     @Override
     public List<Tournament> findAllByStatus(TournamentStatus status) {
         return mongoRepository.findAllByStatus(status.name()).stream()
-                .map(TournamentPersistenceMapper::toDomain)
+                .map(mapper::toDomain)
                 .toList();
     }
 
     @Override
     public Optional<Tournament> findByIdAndStatus(String id, TournamentStatus status) {
         return mongoRepository.findByIdAndStatus(id, status.name())
-                .map(TournamentPersistenceMapper::toDomain);
+                .map(mapper::toDomain);
     }
 
     @Override
     public Optional<Tournament> findByMatchId(String matchId) {
         return mongoRepository.findByMatchesMatchId(matchId)
-                .map(TournamentPersistenceMapper::toDomain);
+                .map(mapper::toDomain);
     }
 
     @Override
     public List<Tournament> findAllWithReservedEnrollments() {
         return mongoRepository.findByEnrollments_Status(EnrollmentStatus.RESERVED.name()).stream()
-                .map(TournamentPersistenceMapper::toDomain)
+                .map(mapper::toDomain)
                 .toList();
     }
 }

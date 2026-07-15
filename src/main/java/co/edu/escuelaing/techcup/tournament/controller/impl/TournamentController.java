@@ -58,6 +58,8 @@ import co.edu.escuelaing.techcup.tournament.dto.response.EnrollmentResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.PreparationResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.RulebookResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.TournamentResponse;
+import co.edu.escuelaing.techcup.tournament.mapper.EnrollmentRestMapper;
+import co.edu.escuelaing.techcup.tournament.mapper.MatchupRestMapper;
 import co.edu.escuelaing.techcup.tournament.mapper.TournamentRestMapper;
 import co.edu.escuelaing.techcup.tournament.service.ports.StartTournamentPreparationUseCase;
 import io.swagger.v3.oas.annotations.Operation;
@@ -104,6 +106,8 @@ public class TournamentController {
     private final ViewMatchupsUseCase viewMatchups;
     private final ViewMatchCourtUseCase viewMatchCourt;
     private final TournamentRestMapper mapper;
+    private final MatchupRestMapper matchupRestMapper;
+    private final EnrollmentRestMapper enrollmentRestMapper;
 
     public TournamentController(CreateTournamentUseCase createTournamentUseCase,
                                  FinalizeTournamentUseCase finalizeTournamentUseCase,
@@ -127,7 +131,9 @@ public class TournamentController {
                                  StartTournamentPreparationUseCase startTournamentPreparation,
                                  ViewMatchupsUseCase viewMatchups,
                                  ViewMatchCourtUseCase viewMatchCourt,
-                                 TournamentRestMapper mapper) {
+                                 TournamentRestMapper mapper,
+                                 MatchupRestMapper matchupRestMapper,
+                                 EnrollmentRestMapper enrollmentRestMapper) {
         this.createTournamentUseCase = createTournamentUseCase;
         this.finalizeTournamentUseCase = finalizeTournamentUseCase;
         this.checkPreparation = checkPreparation;
@@ -151,6 +157,8 @@ public class TournamentController {
         this.viewMatchups = viewMatchups;
         this.viewMatchCourt = viewMatchCourt;
         this.mapper = mapper;
+        this.matchupRestMapper = matchupRestMapper;
+        this.enrollmentRestMapper = enrollmentRestMapper;
     }
 
     @Operation(summary = "Create tournament",
@@ -163,7 +171,7 @@ public class TournamentController {
     })
     @PostMapping
     public ResponseEntity<TournamentResponse> create(@Valid @RequestBody CreateTournamentRequest request) {
-        Tournament newTournament = Tournament.create(
+        Tournament created = createTournamentUseCase.create(new CreateTournamentUseCase.CreateTournamentCommand(
                 request.name(),
                 request.type(),
                 request.format(),
@@ -174,8 +182,8 @@ public class TournamentController {
                 request.registrationDeadline(),
                 request.matchStartTime(),
                 request.matchEndTime()
-        );
-        return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toResponse(createTournamentUseCase.create(newTournament)));
+        ));
+        return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toResponse(created));
     }
 
     @Operation(summary = "Finalize tournament",
@@ -274,15 +282,7 @@ public class TournamentController {
             @Parameter(description = "Tournament ID", example = "abc123") @PathVariable String tournamentId) {
         java.util.List<MatchupResponse> result = viewMatchups.getMatchups(tournamentId)
                 .stream()
-                .map(m -> new MatchupResponse(
-                        m.getMatchId(),
-                        m.getHomeTeamId(),
-                        m.getAwayTeamId(),
-                        m.getStatus(),
-                        m.getHomeScore(),
-                        m.getAwayScore(),
-                        m.isFinalMatch()
-                ))
+                .map(matchupRestMapper::toResponse)
                 .toList();
         return ResponseEntity.ok(result);
     }
@@ -371,8 +371,7 @@ public class TournamentController {
             @Parameter(description = "Tournament ID", example = "abc123") @PathVariable String tournamentId,
             @Valid @RequestBody EnrollTeamRequest request) {
         Enrollment enrollment = enrollTeamInTournamentUseCase.enrollTeam(tournamentId, request.teamId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(new EnrollmentResponse(
-                enrollment.getEnrollmentId(), enrollment.getStatus(), enrollment.getReservationExpiresAt()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(enrollmentRestMapper.toResponse(enrollment));
     }
 
     @Operation(summary = "List historical tournaments",
@@ -383,7 +382,7 @@ public class TournamentController {
     public ResponseEntity<java.util.List<co.edu.escuelaing.techcup.tournament.dto.response.HistoricalTournamentResponse>> getHistory() {
         java.util.List<co.edu.escuelaing.techcup.tournament.dto.response.HistoricalTournamentResponse> result =
                 consultHistorical.findAll().stream()
-                        .map(this::toHistoricalResponse)
+                        .map(mapper::toHistoricalResponse)
                         .toList();
         return ResponseEntity.ok(result);
     }
@@ -397,16 +396,7 @@ public class TournamentController {
     @GetMapping("/history/{tournamentId}")
     public ResponseEntity<co.edu.escuelaing.techcup.tournament.dto.response.HistoricalTournamentResponse> getHistoricalById(
             @Parameter(description = "Tournament ID", example = "abc123") @PathVariable String tournamentId) {
-        return ResponseEntity.ok(toHistoricalResponse(consultHistorical.findById(tournamentId)));
-    }
-
-    private co.edu.escuelaing.techcup.tournament.dto.response.HistoricalTournamentResponse toHistoricalResponse(
-            co.edu.escuelaing.techcup.tournament.service.Tournament t) {
-        return new co.edu.escuelaing.techcup.tournament.dto.response.HistoricalTournamentResponse(
-                t.getId(), t.getName(), t.getNumberOfTeams(), t.getCost(),
-                t.getStartDate(), t.getEndDate(), t.getRegistrationDeadline(),
-                t.getStatus(), t.getChampionTeamId()
-        );
+        return ResponseEntity.ok(mapper.toHistoricalResponse(consultHistorical.findById(tournamentId)));
     }
 
     @Operation(summary = "Download rulebook (PDF)",

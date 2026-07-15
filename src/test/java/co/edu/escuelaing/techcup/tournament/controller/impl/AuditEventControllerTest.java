@@ -1,6 +1,8 @@
 package co.edu.escuelaing.techcup.tournament.controller.impl;
 
 import co.edu.escuelaing.techcup.tournament.config.SecurityConfig;
+import co.edu.escuelaing.techcup.tournament.dto.response.AuditEventResponse;
+import co.edu.escuelaing.techcup.tournament.mapper.AuditEventRestMapper;
 import co.edu.escuelaing.techcup.tournament.service.AuditEvent;
 import co.edu.escuelaing.techcup.tournament.service.AuditEventFilter;
 import co.edu.escuelaing.techcup.tournament.service.ports.ConsultAuditEventsUseCase;
@@ -30,12 +32,15 @@ class AuditEventControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean private ConsultAuditEventsUseCase consultAuditEventsUseCase;
+    @MockitoBean private AuditEventRestMapper mapper;
 
     @Test
     void consult_sinFiltros_devuelve200() throws Exception {
         AuditEvent event = AuditEvent.reconstruct("ev1", Instant.parse("2026-07-01T00:00:00Z"),
                 "system", "CreateTournamentService.create", "t1");
         when(consultAuditEventsUseCase.consult(any())).thenReturn(List.of(event));
+        when(mapper.toResponse(any())).thenReturn(new AuditEventResponse(
+                Instant.parse("2026-07-01T00:00:00Z"), "system", "CreateTournamentService.create", "t1"));
 
         mockMvc.perform(get("/audit-events"))
                 .andExpect(status().isOk())

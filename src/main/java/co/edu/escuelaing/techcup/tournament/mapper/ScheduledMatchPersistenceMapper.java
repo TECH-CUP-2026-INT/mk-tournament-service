@@ -2,12 +2,12 @@ package co.edu.escuelaing.techcup.tournament.mapper;
 
 import co.edu.escuelaing.techcup.tournament.entity.document.ScheduledMatchDocument;
 import co.edu.escuelaing.techcup.tournament.service.ScheduledMatch;
+import org.mapstruct.Mapper;
 
-public class ScheduledMatchPersistenceMapper {
+@Mapper(componentModel = "spring")
+public interface ScheduledMatchPersistenceMapper {
 
-    private ScheduledMatchPersistenceMapper() {}
-
-    public static ScheduledMatch toDomain(ScheduledMatchDocument document) {
+    default ScheduledMatch toDomain(ScheduledMatchDocument document) {
         return ScheduledMatch.reconstruct(
                 document.getId(),
                 document.getMatchupId(),
@@ -18,7 +18,7 @@ public class ScheduledMatchPersistenceMapper {
         );
     }
 
-    public static ScheduledMatchDocument toDocument(ScheduledMatch domain) {
+    default ScheduledMatchDocument toDocument(ScheduledMatch domain) {
         return new ScheduledMatchDocument(
                 domain.getId(),
                 domain.getMatchupId(),

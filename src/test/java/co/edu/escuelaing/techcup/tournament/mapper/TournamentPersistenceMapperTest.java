@@ -10,6 +10,7 @@ import co.edu.escuelaing.techcup.tournament.service.TournamentFormat;
 import co.edu.escuelaing.techcup.tournament.service.TournamentStatus;
 import co.edu.escuelaing.techcup.tournament.service.TournamentType;
 import org.junit.jupiter.api.Test;
+import org.mapstruct.factory.Mappers;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -19,6 +20,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class TournamentPersistenceMapperTest {
+
+    private final TournamentPersistenceMapper mapper = Mappers.getMapper(TournamentPersistenceMapper.class);
 
     @Test
     void toDocumentYToDomain_conservanTeamsYMatches() {
@@ -31,8 +34,8 @@ class TournamentPersistenceMapperTest {
                 null, null
         );
 
-        TournamentDocument document = TournamentPersistenceMapper.toDocument(tournament);
-        Tournament reconstructed = TournamentPersistenceMapper.toDomain(document);
+        TournamentDocument document = mapper.toDocument(tournament);
+        Tournament reconstructed = mapper.toDomain(document);
 
         assertFalse(reconstructed.getTeams().isEmpty());
         assertFalse(reconstructed.getMatches().isEmpty());
@@ -50,7 +53,7 @@ class TournamentPersistenceMapperTest {
                 null, null, "ACTIVE", null, null, null, null, null, null, false, null, null
         );
 
-        Tournament reconstructed = TournamentPersistenceMapper.toDomain(document);
+        Tournament reconstructed = mapper.toDomain(document);
 
         assertEquals(0, reconstructed.getTeams().size());
         assertEquals(0, reconstructed.getMatches().size());

@@ -4,7 +4,9 @@ import co.edu.escuelaing.techcup.tournament.entity.document.TournamentParticipan
 import co.edu.escuelaing.techcup.tournament.repository.mongo.TournamentParticipantMongoRepository;
 import co.edu.escuelaing.techcup.tournament.service.ParticipantStatus;
 import co.edu.escuelaing.techcup.tournament.service.TournamentParticipant;
+import co.edu.escuelaing.techcup.tournament.mapper.TournamentParticipantPersistenceMapper;
 import org.junit.jupiter.api.Test;
+import org.mapstruct.factory.Mappers;
 
 import java.util.Optional;
 
@@ -17,6 +19,9 @@ import static org.mockito.Mockito.when;
 
 class TournamentParticipantRepositoryAdapterTest {
 
+    private final TournamentParticipantPersistenceMapper mapper =
+            Mappers.getMapper(TournamentParticipantPersistenceMapper.class);
+
     @Test
     void save_delegaAlMongoRepositoryYMapeaDeVuelta() {
         TournamentParticipantMongoRepository mongoRepository = mock(TournamentParticipantMongoRepository.class);
@@ -24,7 +29,7 @@ class TournamentParticipantRepositoryAdapterTest {
         TournamentParticipantDocument saved = new TournamentParticipantDocument("p1", "t1", "user1", "ACTIVE");
         when(mongoRepository.save(any())).thenReturn(saved);
 
-        TournamentParticipantRepositoryAdapter adapter = new TournamentParticipantRepositoryAdapter(mongoRepository);
+        TournamentParticipantRepositoryAdapter adapter = new TournamentParticipantRepositoryAdapter(mongoRepository, mapper);
         TournamentParticipant result = adapter.save(participant);
 
         assertEquals("p1", result.getId());
@@ -37,7 +42,7 @@ class TournamentParticipantRepositoryAdapterTest {
         TournamentParticipantDocument document = new TournamentParticipantDocument("p1", "t1", "user1", "INACTIVE");
         when(mongoRepository.findByTournamentIdAndUserId("t1", "user1")).thenReturn(Optional.of(document));
 
-        TournamentParticipantRepositoryAdapter adapter = new TournamentParticipantRepositoryAdapter(mongoRepository);
+        TournamentParticipantRepositoryAdapter adapter = new TournamentParticipantRepositoryAdapter(mongoRepository, mapper);
         Optional<TournamentParticipant> result = adapter.findByTournamentIdAndUserId("t1", "user1");
 
         assertTrue(result.isPresent());
@@ -49,7 +54,7 @@ class TournamentParticipantRepositoryAdapterTest {
         TournamentParticipantMongoRepository mongoRepository = mock(TournamentParticipantMongoRepository.class);
         when(mongoRepository.findByTournamentIdAndUserId("t1", "missing")).thenReturn(Optional.empty());
 
-        TournamentParticipantRepositoryAdapter adapter = new TournamentParticipantRepositoryAdapter(mongoRepository);
+        TournamentParticipantRepositoryAdapter adapter = new TournamentParticipantRepositoryAdapter(mongoRepository, mapper);
 
         assertFalse(adapter.findByTournamentIdAndUserId("t1", "missing").isPresent());
     }
