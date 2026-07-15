@@ -1,5 +1,7 @@
 package co.edu.escuelaing.techcup.tournament.application.usecase;
 
+import lombok.RequiredArgsConstructor;
+
 import co.edu.escuelaing.techcup.tournament.domain.model.Enrollment;
 import co.edu.escuelaing.techcup.tournament.domain.model.EnrollmentStatus;
 import co.edu.escuelaing.techcup.tournament.domain.model.PaymentOrderStatus;
@@ -19,16 +21,12 @@ import java.time.LocalDateTime;
  * el que efectivamente transiciona RESERVED -> ENROLLED/REJECTED con el tiempo.
  */
 @Service
+@RequiredArgsConstructor
 public class SyncEnrollmentStatusService implements SyncEnrollmentStatusUseCase {
 
     private final TournamentRepositoryPort tournamentRepository;
     private final PaymentServiceClientPort paymentServiceClient;
 
-    public SyncEnrollmentStatusService(TournamentRepositoryPort tournamentRepository,
-                                        PaymentServiceClientPort paymentServiceClient) {
-        this.tournamentRepository = tournamentRepository;
-        this.paymentServiceClient = paymentServiceClient;
-    }
 
     @Override
     @Scheduled(fixedRate = 300_000)

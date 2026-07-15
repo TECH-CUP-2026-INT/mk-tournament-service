@@ -6,6 +6,10 @@ import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")
+/**
+ * Mapper MapStruct: {@link co.edu.escuelaing.techcup.tournament.domain.model.Tournament}
+ * a sus DTOs de respuesta REST (vista normal e histórica).
+ */
 public interface TournamentRestMapper {
     TournamentResponse toResponse(Tournament tournament);
 

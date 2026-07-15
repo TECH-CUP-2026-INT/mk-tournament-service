@@ -1,5 +1,7 @@
 package co.edu.escuelaing.techcup.tournament.application.usecase;
 
+import lombok.RequiredArgsConstructor;
+
 import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidCourtImageException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentNotFoundException;
 import co.edu.escuelaing.techcup.tournament.domain.model.Court;
@@ -11,19 +13,13 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentR
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class RegisterCourtService implements RegisterCourtUseCase {
 
     private final TournamentRepositoryPort tournamentRepository;
     private final CourtRepositoryPort courtRepository;
     private final CourtImageStoragePort imageStorage;
 
-    public RegisterCourtService(TournamentRepositoryPort tournamentRepository,
-                                 CourtRepositoryPort courtRepository,
-                                 CourtImageStoragePort imageStorage) {
-        this.tournamentRepository = tournamentRepository;
-        this.courtRepository = courtRepository;
-        this.imageStorage = imageStorage;
-    }
 
     @Override
     public Court register(RegisterCourtCommand command) {

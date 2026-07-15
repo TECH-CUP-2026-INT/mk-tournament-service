@@ -2,6 +2,12 @@ package co.edu.escuelaing.techcup.tournament.domain.model;
 
 import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidSanctionDataException;
 
+import java.util.UUID;
+
+/**
+ * Sanción aplicada a un jugador (tarjeta roja, amarillas acumuladas o conducta),
+ * con los partidos de suspensión restantes.
+ */
 public class PlayerSanction extends AggregateRoot {
 
     private static final int AUTOMATIC_SANCTION_MATCHES = 1;
@@ -33,7 +39,7 @@ public class PlayerSanction extends AggregateRoot {
             }
         };
 
-        return new PlayerSanction(null, playerId, type, matches);
+        return new PlayerSanction(UUID.randomUUID().toString(), playerId, type, matches);
     }
 
     public static PlayerSanction reconstruct(String id, String playerId, SanctionType type, int matchesRemaining) {

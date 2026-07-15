@@ -28,7 +28,13 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
+/**
+ * Agregado raíz del dominio: el torneo con su ciclo de vida completo (borrador →
+ * activo → en progreso → finalizado), equipos, inscripciones, partidos y reglas
+ * de negocio asociadas.
+ */
 public class Tournament extends AggregateRoot {
 
     private static final int MAX_NAME_LENGTH = 100;
@@ -110,7 +116,7 @@ public class Tournament extends AggregateRoot {
 
         LocalDate effectiveEndDate = type == TournamentType.LIGHTNING ? startDate : endDate;
 
-        return new Tournament(null, name, type, format, numberOfTeams, cost, startDate,
+        return new Tournament(UUID.randomUUID().toString(), name, type, format, numberOfTeams, cost, startDate,
                 effectiveEndDate, registrationDeadline, matchStartTime, matchEndTime,
                 TournamentStatus.ACTIVE);
     }

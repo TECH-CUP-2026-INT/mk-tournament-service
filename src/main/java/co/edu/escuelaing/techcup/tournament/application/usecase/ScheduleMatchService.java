@@ -1,5 +1,7 @@
 package co.edu.escuelaing.techcup.tournament.application.usecase;
 
+import lombok.RequiredArgsConstructor;
+
 import co.edu.escuelaing.techcup.tournament.domain.exception.CourtNotFoundException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.MatchupNotFoundException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.ScheduleConflictException;
@@ -12,19 +14,13 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentR
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class ScheduleMatchService implements ScheduleMatchUseCase {
 
     private final TournamentRepositoryPort tournamentRepository;
     private final CourtRepositoryPort courtRepository;
     private final ScheduledMatchRepositoryPort scheduledMatchRepository;
 
-    public ScheduleMatchService(TournamentRepositoryPort tournamentRepository,
-                                 CourtRepositoryPort courtRepository,
-                                 ScheduledMatchRepositoryPort scheduledMatchRepository) {
-        this.tournamentRepository = tournamentRepository;
-        this.courtRepository = courtRepository;
-        this.scheduledMatchRepository = scheduledMatchRepository;
-    }
 
     @Override
     public ScheduledMatch schedule(ScheduleMatchCommand command) {

@@ -1,5 +1,7 @@
 package co.edu.escuelaing.techcup.tournament.application.usecase;
 
+import lombok.RequiredArgsConstructor;
+
 import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentNotFoundException;
 import co.edu.escuelaing.techcup.tournament.domain.model.Tournament;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.FinalizeTournamentUseCase;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 
 @Service
+@RequiredArgsConstructor
 public class FinalizeTournamentService implements FinalizeTournamentUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(FinalizeTournamentService.class);
@@ -19,11 +22,6 @@ public class FinalizeTournamentService implements FinalizeTournamentUseCase {
     private final TournamentRepositoryPort repository;
     private final RecognitionAwardPort recognitionAwardPort;
 
-    public FinalizeTournamentService(TournamentRepositoryPort repository,
-                                      RecognitionAwardPort recognitionAwardPort) {
-        this.repository = repository;
-        this.recognitionAwardPort = recognitionAwardPort;
-    }
 
     @Override
     public Tournament finalizeTournament(String tournamentId) {
