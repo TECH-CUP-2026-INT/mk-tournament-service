@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Optional;
 
 @Component
 public class ScheduledMatchRepositoryAdapter implements ScheduledMatchRepositoryPort {
@@ -31,5 +32,10 @@ public class ScheduledMatchRepositoryAdapter implements ScheduledMatchRepository
     public boolean existsConflict(String courtId, String refereeId, LocalDate matchDate, LocalTime matchTime) {
         return mongoRepository.existsByCourtIdAndMatchDateAndMatchTimeOrRefereeIdAndMatchDateAndMatchTime(
                 courtId, matchDate, matchTime, refereeId, matchDate, matchTime);
+    }
+
+    @Override
+    public Optional<ScheduledMatch> findByMatchupId(String matchupId) {
+        return mongoRepository.findByMatchupId(matchupId).map(mapper::toDomain);
     }
 }

@@ -6,7 +6,9 @@ import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.E
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.EnrollTeamRequest;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.InactivateTournamentRequest;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.PauseTournamentRequest;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.RecordPenaltyShootoutWinnerRequest;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.ChampionResponse;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.CourtMapEntryResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.CourtResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.DeleteTournamentResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.DisqualifyTeamResponse;
@@ -89,6 +91,19 @@ public interface TournamentControllerSwagger {
     ResponseEntity<ChampionResponse> assignChampion(
             @Parameter(description = "Tournament ID", example = "abc123") String tournamentId,
             @Parameter(description = "ID of the final match", example = "m01") String matchId);
+
+    @Operation(summary = "Record penalty shootout winner",
+            description = "Records the winner of the penalty shootout for a match tied in regulation time. "
+                    + "Required before the champion can be assigned for that match.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Penalty shootout winner recorded"),
+            @ApiResponse(responseCode = "400", description = "Invalid input data, or the match isn't tied in regulation time", content = @Content),
+            @ApiResponse(responseCode = "404", description = "The tournament or the match doesn't exist", content = @Content)
+    })
+    ResponseEntity<Void> recordPenaltyShootoutWinner(
+            @Parameter(description = "Tournament ID", example = "abc123") String tournamentId,
+            @Parameter(description = "Match ID", example = "m01") String matchId,
+            RecordPenaltyShootoutWinnerRequest request);
 
     @Operation(summary = "Get tournament champion")
     @ApiResponse(responseCode = "200", description = "Tournament champion",
@@ -200,6 +215,16 @@ public interface TournamentControllerSwagger {
             @Parameter(description = "Court description", example = "Synthetic grass court, north side of campus")
             String description,
             @Parameter(description = "Court image file") MultipartFile image) throws IOException;
+
+    @Operation(summary = "Consult interactive court map",
+            description = "Returns every court registered for the tournament, with its assigned match (if any), "
+                    + "schedule and status. Courts without a match assigned are shown as available. Status is always "
+                    + "returned as both a machine-readable code and a human-readable label — never color alone "
+                    + "(WCAG 2.1 AA).")
+    @ApiResponse(responseCode = "200", description = "Campus court map",
+            content = @Content(schema = @Schema(implementation = CourtMapEntryResponse.class)))
+    ResponseEntity<List<CourtMapEntryResponse>> getCourtMap(
+            @Parameter(description = "Tournament ID", example = "abc123") String tournamentId);
 
     @Operation(summary = "Edit tournament",
             description = "Updates any field defined at tournament creation. Every field in the request body is "
