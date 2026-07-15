@@ -6,6 +6,7 @@ import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.E
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.EnrollTeamRequest;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.InactivateTournamentRequest;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.PauseTournamentRequest;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.RecordPenaltyShootoutWinnerRequest;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.ChampionResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.CourtResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.DeleteTournamentResponse;
@@ -89,6 +90,19 @@ public interface TournamentControllerSwagger {
     ResponseEntity<ChampionResponse> assignChampion(
             @Parameter(description = "Tournament ID", example = "abc123") String tournamentId,
             @Parameter(description = "ID of the final match", example = "m01") String matchId);
+
+    @Operation(summary = "Record penalty shootout winner",
+            description = "Records the winner of the penalty shootout for a match tied in regulation time. "
+                    + "Required before the champion can be assigned for that match.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Penalty shootout winner recorded"),
+            @ApiResponse(responseCode = "400", description = "Invalid input data, or the match isn't tied in regulation time", content = @Content),
+            @ApiResponse(responseCode = "404", description = "The tournament or the match doesn't exist", content = @Content)
+    })
+    ResponseEntity<Void> recordPenaltyShootoutWinner(
+            @Parameter(description = "Tournament ID", example = "abc123") String tournamentId,
+            @Parameter(description = "Match ID", example = "m01") String matchId,
+            RecordPenaltyShootoutWinnerRequest request);
 
     @Operation(summary = "Get tournament champion")
     @ApiResponse(responseCode = "200", description = "Tournament champion",

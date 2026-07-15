@@ -31,6 +31,7 @@ import co.edu.escuelaing.techcup.tournament.domain.model.TournamentParticipant;
 import co.edu.escuelaing.techcup.tournament.domain.model.TournamentStatus;
 import co.edu.escuelaing.techcup.tournament.domain.model.TournamentType;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.AssignChampionUseCase;
+import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.RecordPenaltyShootoutWinnerUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.AttachRulebookUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.CheckTournamentPreparationUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ConsultHistoricalTournamentsUseCase;
@@ -71,6 +72,7 @@ import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -97,6 +99,7 @@ class TournamentControllerTest {
     @MockitoBean private CheckTournamentPreparationUseCase checkPreparation;
     @MockitoBean private DeleteTournamentUseCase deleteTournamentUseCase;
     @MockitoBean private AssignChampionUseCase assignChampionUseCase;
+    @MockitoBean private RecordPenaltyShootoutWinnerUseCase recordPenaltyShootoutWinnerUseCase;
     @MockitoBean private GetChampionUseCase getChampionUseCase;
     @MockitoBean private AttachRulebookUseCase attachRulebook;
     @MockitoBean private ConsultRulebookUseCase consultRulebook;
@@ -432,6 +435,37 @@ class TournamentControllerTest {
 
         mockMvc.perform(post("/tournaments/t1/matches/m1/champion"))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    void recordPenaltyShootoutWinner_devuelve200() throws Exception {
+        mockMvc.perform(post("/tournaments/t1/matches/m1/penalty-shootout")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"winnerTeamId\":\"team1\"}"))
+                .andExpect(status().isOk());
+
+        verify(recordPenaltyShootoutWinnerUseCase).recordWinner(
+                new RecordPenaltyShootoutWinnerUseCase.RecordPenaltyShootoutWinnerCommand("t1", "m1", "team1"));
+    }
+
+    @Test
+    void recordPenaltyShootoutWinner_cuandoNoEmpatado_devuelve409() throws Exception {
+        org.mockito.Mockito.doThrow(new ChampionAssignmentNotAllowedException(
+                        "La tanda de penales solo aplica cuando hay empate en tiempo reglamentario"))
+                .when(recordPenaltyShootoutWinnerUseCase).recordWinner(org.mockito.ArgumentMatchers.any());
+
+        mockMvc.perform(post("/tournaments/t1/matches/m1/penalty-shootout")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"winnerTeamId\":\"team1\"}"))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void recordPenaltyShootoutWinner_datosInvalidos_devuelve400() throws Exception {
+        mockMvc.perform(post("/tournaments/t1/matches/m1/penalty-shootout")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"winnerTeamId\":\"\"}"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

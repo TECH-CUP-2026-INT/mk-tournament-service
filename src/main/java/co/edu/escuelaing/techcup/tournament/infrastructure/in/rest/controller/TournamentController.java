@@ -64,7 +64,9 @@ import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.
 import co.edu.escuelaing.techcup.tournament.application.mapper.EnrollmentRestMapper;
 import co.edu.escuelaing.techcup.tournament.application.mapper.MatchupRestMapper;
 import co.edu.escuelaing.techcup.tournament.application.mapper.TournamentRestMapper;
+import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.RecordPenaltyShootoutWinnerUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.StartTournamentPreparationUseCase;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.RecordPenaltyShootoutWinnerRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
@@ -87,6 +89,7 @@ public class TournamentController implements TournamentControllerSwagger {
     private final CheckTournamentPreparationUseCase checkPreparation;
     private final DeleteTournamentUseCase deleteTournamentUseCase;
     private final AssignChampionUseCase assignChampionUseCase;
+    private final RecordPenaltyShootoutWinnerUseCase recordPenaltyShootoutWinnerUseCase;
     private final GetChampionUseCase getChampionUseCase;
     private final AttachRulebookUseCase attachRulebook;
     private final ConsultRulebookUseCase consultRulebook;
@@ -157,6 +160,16 @@ public class TournamentController implements TournamentControllerSwagger {
         ChampionAssignment assignment = assignChampionUseCase.assignChampion(tournamentId, matchId);
         return ResponseEntity.ok(new ChampionResponse(
                 tournamentId, assignment.championTeamId(), assignment.resolution()));
+    }
+
+    @Override
+    @PostMapping("/{tournamentId}/matches/{matchId}/penalty-shootout")
+    public ResponseEntity<Void> recordPenaltyShootoutWinner(
+            @PathVariable String tournamentId, @PathVariable String matchId,
+            @Valid @RequestBody RecordPenaltyShootoutWinnerRequest request) {
+        recordPenaltyShootoutWinnerUseCase.recordWinner(new RecordPenaltyShootoutWinnerUseCase.RecordPenaltyShootoutWinnerCommand(
+                tournamentId, matchId, request.winnerTeamId()));
+        return ResponseEntity.ok().build();
     }
 
     @Override
