@@ -3,7 +3,7 @@ spring:
     name: service-tournament
   data:
     mongodb:
-      uri: mongodb://localhost:27017/techcup_tournaments
+      uri: ${SPRING_DATA_MONGODB_URI}
 
 # TC-109: URL del Payment Service (aun no desplegado en este entorno); las
 # llamadas a GET /payment-orders/{enrollmentId} caen a UNKNOWN por timeout hasta que exista.
