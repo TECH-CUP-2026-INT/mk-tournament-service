@@ -59,7 +59,7 @@ public interface TournamentControllerSwagger {
                     content = @Content(schema = @Schema(implementation = TournamentResponse.class))),
             @ApiResponse(responseCode = "409", description = "The tournament cannot be finalized in its current state", content = @Content)
     })
-    ResponseEntity<TournamentResponse> finalize(
+    ResponseEntity<TournamentResponse> finalizeTournament(
             @Parameter(description = "Tournament ID", example = "abc123") String id);
 
     @Operation(summary = "Start preparation phase",

@@ -128,7 +128,7 @@ public class TournamentController implements TournamentControllerSwagger {
 
     @Override
     @PatchMapping("/{id}/finalize")
-    public ResponseEntity<TournamentResponse> finalize(@PathVariable String id) {
+    public ResponseEntity<TournamentResponse> finalizeTournament(@PathVariable String id) {
         Tournament finalized = finalizeTournamentUseCase.finalizeTournament(id);
 
         return ResponseEntity.ok(mapper.toResponse(finalized));
