@@ -566,6 +566,18 @@ public class Tournament extends AggregateRoot {
         return new ChampionAssignment(championTeamId, championResolution);
     }
 
+    /**
+     * TC-50: registra el ganador de la tanda de penales de un partido, previo
+     * a poder asignar campeón cuando ese partido terminó empatado en tiempo
+     * reglamentario (ver {@link #assignChampionWhenFinalMatchFinished}, que
+     * exige este dato ya cargado para resolver al campeón en ese caso).
+     */
+    public void recordPenaltyShootoutWinner(String matchId, String winnerTeamId) {
+        assertActive();
+        Match match = findMatch(matchId);
+        match.recordPenaltyShootoutWinner(winnerTeamId);
+    }
+
     private Match findMatch(String matchId) {
         return matches.stream()
                 .filter(m -> m.getMatchId().equals(matchId))
