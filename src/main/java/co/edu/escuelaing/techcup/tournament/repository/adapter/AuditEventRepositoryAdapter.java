@@ -26,15 +26,17 @@ import java.util.List;
 public class AuditEventRepositoryAdapter implements AuditEventRepositoryPort {
 
     private final MongoTemplate mongoTemplate;
+    private final AuditEventPersistenceMapper mapper;
 
-    public AuditEventRepositoryAdapter(MongoTemplate mongoTemplate) {
+    public AuditEventRepositoryAdapter(MongoTemplate mongoTemplate, AuditEventPersistenceMapper mapper) {
         this.mongoTemplate = mongoTemplate;
+        this.mapper = mapper;
     }
 
     @Override
     public AuditEvent save(AuditEvent event) {
-        AuditEventDocument saved = mongoTemplate.save(AuditEventPersistenceMapper.toDocument(event));
-        return AuditEventPersistenceMapper.toDomain(saved);
+        AuditEventDocument saved = mongoTemplate.save(mapper.toDocument(event));
+        return mapper.toDomain(saved);
     }
 
     @Override
@@ -62,7 +64,7 @@ public class AuditEventRepositoryAdapter implements AuditEventRepositoryPort {
         }
 
         return mongoTemplate.find(query, AuditEventDocument.class).stream()
-                .map(AuditEventPersistenceMapper::toDomain)
+                .map(mapper::toDomain)
                 .toList();
     }
 }

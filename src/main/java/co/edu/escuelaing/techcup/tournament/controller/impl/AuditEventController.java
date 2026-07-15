@@ -1,6 +1,7 @@
 package co.edu.escuelaing.techcup.tournament.controller.impl;
 
 import co.edu.escuelaing.techcup.tournament.dto.response.AuditEventResponse;
+import co.edu.escuelaing.techcup.tournament.mapper.AuditEventRestMapper;
 import co.edu.escuelaing.techcup.tournament.service.AuditEventFilter;
 import co.edu.escuelaing.techcup.tournament.service.ports.ConsultAuditEventsUseCase;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,9 +30,11 @@ import java.util.List;
 public class AuditEventController {
 
     private final ConsultAuditEventsUseCase consultAuditEventsUseCase;
+    private final AuditEventRestMapper mapper;
 
-    public AuditEventController(ConsultAuditEventsUseCase consultAuditEventsUseCase) {
+    public AuditEventController(ConsultAuditEventsUseCase consultAuditEventsUseCase, AuditEventRestMapper mapper) {
         this.consultAuditEventsUseCase = consultAuditEventsUseCase;
+        this.mapper = mapper;
     }
 
     @Operation(summary = "Query audit events with optional filters (date, event type, tournament)",
@@ -54,7 +57,7 @@ public class AuditEventController {
         List<AuditEventResponse> result = consultAuditEventsUseCase
                 .consult(new AuditEventFilter(from, to, eventType, tournamentId))
                 .stream()
-                .map(e -> new AuditEventResponse(e.getTimestamp(), e.getActor(), e.getActionType(), e.getAffectedEntityId()))
+                .map(mapper::toResponse)
                 .toList();
 
         return ResponseEntity.ok(result);

@@ -3,12 +3,12 @@ package co.edu.escuelaing.techcup.tournament.mapper;
 import co.edu.escuelaing.techcup.tournament.entity.document.CourtDocument;
 import co.edu.escuelaing.techcup.tournament.service.Court;
 import co.edu.escuelaing.techcup.tournament.service.CourtSection;
+import org.mapstruct.Mapper;
 
-public class CourtPersistenceMapper {
+@Mapper(componentModel = "spring")
+public interface CourtPersistenceMapper {
 
-    private CourtPersistenceMapper() {}
-
-    public static Court toDomain(CourtDocument document) {
+    default Court toDomain(CourtDocument document) {
         return Court.reconstruct(
                 document.getId(),
                 document.getTournamentId(),
@@ -19,7 +19,7 @@ public class CourtPersistenceMapper {
         );
     }
 
-    public static CourtDocument toDocument(Court domain) {
+    default CourtDocument toDocument(Court domain) {
         return new CourtDocument(
                 domain.getId(),
                 domain.getTournamentId(),

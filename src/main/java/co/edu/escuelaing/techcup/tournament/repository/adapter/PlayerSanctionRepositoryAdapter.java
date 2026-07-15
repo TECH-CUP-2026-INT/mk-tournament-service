@@ -12,28 +12,31 @@ import java.util.List;
 public class PlayerSanctionRepositoryAdapter implements PlayerSanctionRepositoryPort {
 
     private final PlayerSanctionMongoRepository mongoRepository;
+    private final PlayerSanctionPersistenceMapper mapper;
 
-    public PlayerSanctionRepositoryAdapter(PlayerSanctionMongoRepository mongoRepository) {
+    public PlayerSanctionRepositoryAdapter(PlayerSanctionMongoRepository mongoRepository,
+                                            PlayerSanctionPersistenceMapper mapper) {
         this.mongoRepository = mongoRepository;
+        this.mapper = mapper;
     }
 
     @Override
     public PlayerSanction save(PlayerSanction sanction) {
-        var saved = mongoRepository.save(PlayerSanctionPersistenceMapper.toDocument(sanction));
-        return PlayerSanctionPersistenceMapper.toDomain(saved);
+        var saved = mongoRepository.save(mapper.toDocument(sanction));
+        return mapper.toDomain(saved);
     }
 
     @Override
     public List<PlayerSanction> findActiveByPlayerId(String playerId) {
         return mongoRepository.findByPlayerIdAndMatchesRemainingGreaterThan(playerId, 0).stream()
-                .map(PlayerSanctionPersistenceMapper::toDomain)
+                .map(mapper::toDomain)
                 .toList();
     }
 
     @Override
     public List<PlayerSanction> findAllActive() {
         return mongoRepository.findByMatchesRemainingGreaterThan(0).stream()
-                .map(PlayerSanctionPersistenceMapper::toDomain)
+                .map(mapper::toDomain)
                 .toList();
     }
 }
