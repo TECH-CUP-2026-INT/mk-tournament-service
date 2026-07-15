@@ -18,7 +18,7 @@ public class SecurityConfig {
                         // ningún sistema de autenticación/roles en el proyecto todavía. Queda
                         // sin control de acceso real, pendiente del futuro Servicio de Identidad
                         // (JWT + roles). NO debería quedar público en producción.
-                        .requestMatchers("/tournaments/**", "/matches/**", "/sanctions/**", "/audit-events/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/tournaments/**", "/matches/**", "/sanctions/**", "/audit-events/**", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated()
                 );
         return http.build();
