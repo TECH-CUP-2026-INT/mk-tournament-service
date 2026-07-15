@@ -5,6 +5,11 @@ import co.edu.escuelaing.techcup.tournament.exception.ChampionAssignmentNotAllow
 import co.edu.escuelaing.techcup.tournament.exception.HistoricalTournamentNotFoundException;
 import co.edu.escuelaing.techcup.tournament.exception.MatchNotFoundException;
 import co.edu.escuelaing.techcup.tournament.exception.TournamentNotFoundException;
+import co.edu.escuelaing.techcup.tournament.dto.response.EnrollmentResponse;
+import co.edu.escuelaing.techcup.tournament.dto.response.HistoricalTournamentResponse;
+import co.edu.escuelaing.techcup.tournament.dto.response.MatchupResponse;
+import co.edu.escuelaing.techcup.tournament.mapper.EnrollmentRestMapper;
+import co.edu.escuelaing.techcup.tournament.mapper.MatchupRestMapper;
 import co.edu.escuelaing.techcup.tournament.mapper.TournamentRestMapper;
 import co.edu.escuelaing.techcup.tournament.service.ChampionAssignment;
 import co.edu.escuelaing.techcup.tournament.service.ChampionResolution;
@@ -110,6 +115,8 @@ class TournamentControllerTest {
     @MockitoBean private ViewMatchupsUseCase viewMatchups;
     @MockitoBean private ViewMatchCourtUseCase viewMatchCourt;
     @MockitoBean private TournamentRestMapper mapper;
+    @MockitoBean private MatchupRestMapper matchupRestMapper;
+    @MockitoBean private EnrollmentRestMapper enrollmentRestMapper;
 
     private Tournament sampleTournament(String id) {
         return Tournament.reconstruct(id, "TechCup Fútbol 2026", TournamentType.NORMAL, TournamentFormat.BRACKETS,
@@ -123,6 +130,13 @@ class TournamentControllerTest {
                 id, "TechCup Fútbol 2026", TournamentType.NORMAL, TournamentFormat.BRACKETS, 8,
                 BigDecimal.valueOf(50000), LocalDate.now().plusDays(10), LocalDate.now().plusDays(20),
                 LocalDate.now().plusDays(5), null, null, TournamentStatus.ACTIVE, false, true);
+    }
+
+    private HistoricalTournamentResponse sampleHistoricalResponse(String id) {
+        return new HistoricalTournamentResponse(
+                id, "TechCup Fútbol 2026", 8, BigDecimal.valueOf(50000),
+                LocalDate.now().plusDays(10), LocalDate.now().plusDays(20),
+                LocalDate.now().plusDays(5), TournamentStatus.ACTIVE, null);
     }
 
     @Test
@@ -229,6 +243,8 @@ class TournamentControllerTest {
     void getMatchups_devuelve200ConLista() throws Exception {
         when(viewMatchups.getMatchups("t1")).thenReturn(List.of(
                 new Match("m1", "home", "away", MatchStatus.PENDING)));
+        when(matchupRestMapper.toResponse(any())).thenReturn(new MatchupResponse(
+                "m1", "home", "away", MatchStatus.PENDING, 0, 0, false));
 
         mockMvc.perform(get("/tournaments/t1/matchups"))
                 .andExpect(status().isOk())
@@ -280,6 +296,8 @@ class TournamentControllerTest {
     void enrollTeam_devuelve201() throws Exception {
         Enrollment enrollment = new Enrollment("e1", "team1", "Los Compiladores", EnrollmentStatus.PENDING_PAYMENT, null, null);
         when(enrollTeamInTournamentUseCase.enrollTeam("t1", "team1")).thenReturn(enrollment);
+        when(enrollmentRestMapper.toResponse(any())).thenReturn(new EnrollmentResponse(
+                "e1", EnrollmentStatus.PENDING_PAYMENT, null));
 
         mockMvc.perform(post("/tournaments/t1/enrollments")
                         .contentType(MediaType.APPLICATION_JSON).content("{\"teamId\":\"team1\"}"))
@@ -290,6 +308,7 @@ class TournamentControllerTest {
     @Test
     void getHistory_devuelve200() throws Exception {
         when(consultHistorical.findAll()).thenReturn(List.of(sampleTournament("t1")));
+        when(mapper.toHistoricalResponse(any())).thenReturn(sampleHistoricalResponse("t1"));
 
         mockMvc.perform(get("/tournaments/history"))
                 .andExpect(status().isOk())
@@ -299,6 +318,7 @@ class TournamentControllerTest {
     @Test
     void getHistoricalById_devuelve200() throws Exception {
         when(consultHistorical.findById("t1")).thenReturn(sampleTournament("t1"));
+        when(mapper.toHistoricalResponse(any())).thenReturn(sampleHistoricalResponse("t1"));
 
         mockMvc.perform(get("/tournaments/history/t1"))
                 .andExpect(status().isOk())

@@ -12,24 +12,26 @@ import java.util.Optional;
 public class CourtRepositoryAdapter implements CourtRepositoryPort {
 
     private final CourtMongoRepository mongoRepository;
+    private final CourtPersistenceMapper mapper;
 
-    public CourtRepositoryAdapter(CourtMongoRepository mongoRepository) {
+    public CourtRepositoryAdapter(CourtMongoRepository mongoRepository, CourtPersistenceMapper mapper) {
         this.mongoRepository = mongoRepository;
+        this.mapper = mapper;
     }
 
     @Override
     public Court save(Court court) {
-        CourtDocument saved = mongoRepository.save(CourtPersistenceMapper.toDocument(court));
-        return CourtPersistenceMapper.toDomain(saved);
+        CourtDocument saved = mongoRepository.save(mapper.toDocument(court));
+        return mapper.toDomain(saved);
     }
 
     @Override
     public Optional<Court> findById(String id) {
-        return mongoRepository.findById(id).map(CourtPersistenceMapper::toDomain);
+        return mongoRepository.findById(id).map(mapper::toDomain);
     }
 
     @Override
     public Optional<Court> findByMatchId(String matchId) {
-        return mongoRepository.findByMatchId(matchId).map(CourtPersistenceMapper::toDomain);
+        return mongoRepository.findByMatchId(matchId).map(mapper::toDomain);
     }
 }

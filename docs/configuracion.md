@@ -1,70 +1,70 @@
-# Configuración
+# Configuration
 
-## Prerrequisitos
+## Prerequisites
 
-| Herramienta | Versión mínima | Notas |
+| Tool | Minimum version | Notes |
 |---|---|---|
-| Java (JDK) | 21 | Temurin/Eclipse recomendado |
-| Maven | 3.9+ | O usar el wrapper `./mvnw` incluido |
-| Docker | 24+ | Para levantar MongoDB y el servicio |
-| Docker Compose | 2.x | Incluido en Docker Desktop |
-| Git | cualquier | |
+| Java (JDK) | 21 | Temurin/Eclipse recommended |
+| Maven | 3.9+ | Or use the included `./mvnw` wrapper |
+| Docker | 24+ | To run MongoDB and the service |
+| Docker Compose | 2.x | Bundled with Docker Desktop |
+| Git | any | |
 
 ---
 
-## Clonar el repositorio
+## Clone the repository
 
 ```bash
 git clone https://github.com/TECH-CUP-2026-INT/mk-tournament-service.git
 cd mk-tournament-service
 ```
 
-Rama principal: `main`. Ramas de trabajo por feature: `feature/<nombre>`.
+Main branch: `main`. Feature branches: `feature/<name>`.
 
 ---
 
-## Variables de entorno
+## Environment variables
 
-El servicio usa `application.properties`. Para desarrollo local las variables clave son:
+The service uses `application.properties`. For local development, the key variables are:
 
 ```properties
-# MongoDB — base de datos del servicio
+# MongoDB — the service's database
 spring.data.mongodb.uri=mongodb://localhost:27017/techcup_tournaments
 
-# Servicios externos (deben estar corriendo o se obtiene timeout)
+# External services (must be running or calls will time out)
 payment-service.base-url=http://localhost:8081
 team-service.base-url=http://localhost:8082
 ```
 
-Para Docker, estas se sobreescriben con variables de entorno del contenedor (ver sección Docker Compose abajo).
+For Docker, these are overridden with container environment variables (see the Docker Compose section below).
 
-> **Nunca subas credenciales reales al repo.** Usa GitHub Secrets en el pipeline de CI/CD.
+> **Never commit real credentials to the repo.** Use GitHub Secrets in the CI/CD pipeline.
 
 ---
 
-## Ejecución local (sin Docker)
+## Running locally (without Docker)
 
 ```bash
-# Asegúrate de tener MongoDB corriendo en localhost:27017
-# Compilar y ejecutar
+# Make sure MongoDB is running on localhost:27017
+# Build and run
 ./mvnw spring-boot:run
 
-# O construir el JAR y ejecutarlo
+# Or build the JAR and run it
 ./mvnw clean package -DskipTests
 java -jar target/service-tournament-0.0.1-SNAPSHOT.jar
 ```
 
 ---
 
-## Ejecución con Docker Compose
+## Running with Docker Compose
 
-La forma recomendada para desarrollo. Levanta el servicio y MongoDB juntos:
+The recommended way for development. Starts the service and MongoDB together:
 
 ```bash
 docker compose up --build
 ```
 
-El `docker-compose.yml` del repositorio define:
+The repository's `docker-compose.yml` defines:
 
 ```yaml
 version: '3.8'
@@ -93,21 +93,21 @@ volumes:
   mongo_data:
 ```
 
-Para detener:
+To stop it:
 
 ```bash
-docker compose down          # detiene y elimina contenedores
-docker compose down -v       # también elimina el volumen de datos
+docker compose down          # stops and removes containers
+docker compose down -v       # also removes the data volume
 ```
 
 ---
 
-## Dockerfile (build en dos etapas)
+## Dockerfile (two-stage build)
 
-El `Dockerfile` del repositorio usa la técnica de multi-stage build para producir una imagen liviana:
+The repository's `Dockerfile` uses a multi-stage build to produce a lightweight image:
 
 ```dockerfile
-# Etapa 1: compilar con Maven
+# Stage 1: build with Maven
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
 COPY pom.xml .
@@ -115,7 +115,7 @@ RUN mvn dependency:go-offline
 COPY src ./src
 RUN mvn clean package -DskipTests
 
-# Etapa 2: imagen de producción (solo JRE + JAR)
+# Stage 2: production image (JRE + JAR only)
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY --from=build /app/target/service-tournament-*.jar app.jar
@@ -125,32 +125,32 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 
 ---
 
-## Instalación de MkDocs (esta documentación)
+## Installing MkDocs (this documentation)
 
 ```bash
-# Instalar Python 3.10+ y pip
+# Install Python 3.10+ and pip
 pip install mkdocs-material
 
-# Previsualizar en local (desde la raíz del proyecto)
+# Preview locally (from the project root)
 mkdocs serve
 
-# Construir el sitio estático
+# Build the static site
 mkdocs build
 
-# Publicar en GitHub Pages
+# Publish to GitHub Pages
 mkdocs gh-deploy
 ```
 
-La documentación queda disponible en: `https://tech-cup-2026-int.github.io/mk-tournament-service/`
+The documentation is published at: `https://tech-cup-2026-int.github.io/mk-tournament-service/`
 
 ---
 
-## Verificar que el servicio responde
+## Verify the service is responding
 
 ```bash
-# Health check básico (endpoint de Spring Boot Actuator o ping propio)
+# Basic health check (Spring Boot Actuator endpoint or custom ping)
 curl http://localhost:8080/actuator/health
 
-# Listar torneos públicos (sin autenticación)
+# List public tournaments (no authentication required)
 curl http://localhost:8080/api/v1/tournaments
 ```

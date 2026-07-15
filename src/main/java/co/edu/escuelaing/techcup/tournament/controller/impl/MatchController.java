@@ -4,6 +4,7 @@ import co.edu.escuelaing.techcup.tournament.dto.request.MatchActivationRequest;
 import co.edu.escuelaing.techcup.tournament.dto.request.ScheduleMatchRequest;
 import co.edu.escuelaing.techcup.tournament.dto.response.MatchActivationResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.ScheduledMatchResponse;
+import co.edu.escuelaing.techcup.tournament.mapper.ScheduledMatchRestMapper;
 import co.edu.escuelaing.techcup.tournament.service.Match;
 import co.edu.escuelaing.techcup.tournament.service.ScheduledMatch;
 import co.edu.escuelaing.techcup.tournament.service.ports.InactivateMatchUseCase;
@@ -29,24 +30,30 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/matches")
-@Tag(name = "Partidos", description = "Programación y activación/inactivación de partidos")
+@Tag(name = "Matches", description = "Scheduling matches and activating/inactivating them")
 public class MatchController {
 
     private final ScheduleMatchUseCase scheduleMatchUseCase;
     private final InactivateMatchUseCase inactivateMatchUseCase;
+    private final ScheduledMatchRestMapper mapper;
 
     public MatchController(ScheduleMatchUseCase scheduleMatchUseCase,
-                            InactivateMatchUseCase inactivateMatchUseCase) {
+                            InactivateMatchUseCase inactivateMatchUseCase,
+                            ScheduledMatchRestMapper mapper) {
         this.scheduleMatchUseCase = scheduleMatchUseCase;
         this.inactivateMatchUseCase = inactivateMatchUseCase;
+        this.mapper = mapper;
     }
 
-    @Operation(summary = "Programar partido (asignar fecha, hora, cancha y árbitro)")
+    @Operation(summary = "Schedule match",
+            description = "Assigns a date, time, court and referee to an already generated matchup, creating a new "
+                    + "scheduled-match record. Fails with 409 if the court or referee is already booked at that "
+                    + "exact date and time.")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Partido programado",
+            @ApiResponse(responseCode = "201", description = "Match scheduled",
                     content = @Content(schema = @Schema(implementation = ScheduledMatchResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos", content = @Content),
-            @ApiResponse(responseCode = "409", description = "Conflicto de horario con la cancha o el árbitro", content = @Content)
+            @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content),
+            @ApiResponse(responseCode = "409", description = "Scheduling conflict with the court or the referee", content = @Content)
     })
     @PostMapping
     public ResponseEntity<ScheduledMatchResponse> schedule(@Valid @RequestBody ScheduleMatchRequest request) {
@@ -55,27 +62,25 @@ public class MatchController {
                 request.courtId(), request.refereeId()
         ));
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(new ScheduledMatchResponse(
-                scheduled.getId(), scheduled.getMatchupId(), scheduled.getCourtId(),
-                scheduled.getRefereeId(), scheduled.getMatchDate(), scheduled.getMatchTime()
-        ));
+        return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toResponse(scheduled));
     }
 
-    @Operation(summary = "Activar o inactivar partido",
-            description = "Un partido inactivo conserva los datos ya registrados pero bloquea el registro de marcador, "
-                    + "ganador de penales y no-show. Tarjetas, sustituciones y reloj no se implementan en este servicio: "
-                    + "son responsabilidad del futuro Servicio de Partidos.")
-    @ApiResponse(responseCode = "200", description = "Partido activado o inactivado",
+    @Operation(summary = "Activate or inactivate match",
+            description = "An inactive match keeps its previously recorded data (score, status) but blocks new "
+                    + "referee events: result, penalty shootout winner, and no-show. Cards, substitutions and clock "
+                    + "management are not implemented in this service — they are the responsibility of the future "
+                    + "Match Service.")
+    @ApiResponse(responseCode = "200", description = "Match activated or inactivated",
             content = @Content(schema = @Schema(implementation = MatchActivationResponse.class)))
     @PatchMapping("/{matchId}/activation")
     public ResponseEntity<MatchActivationResponse> activation(
-            @Parameter(description = "ID del partido", example = "m01") @PathVariable String matchId,
+            @Parameter(description = "Match ID", example = "m01") @PathVariable String matchId,
             @Valid @RequestBody MatchActivationRequest request) {
         Match match = inactivateMatchUseCase.execute(new InactivateMatchCommand(matchId, request.action()));
 
         String message = match.isActive()
-                ? "El partido fue reactivado correctamente"
-                : "El partido fue inactivado correctamente";
+                ? "The match was successfully reactivated"
+                : "The match was successfully inactivated";
 
         return ResponseEntity.ok(new MatchActivationResponse(match.getMatchId(), match.isActive(), message));
     }

@@ -13,15 +13,18 @@ import java.time.LocalTime;
 public class ScheduledMatchRepositoryAdapter implements ScheduledMatchRepositoryPort {
 
     private final ScheduledMatchMongoRepository mongoRepository;
+    private final ScheduledMatchPersistenceMapper mapper;
 
-    public ScheduledMatchRepositoryAdapter(ScheduledMatchMongoRepository mongoRepository) {
+    public ScheduledMatchRepositoryAdapter(ScheduledMatchMongoRepository mongoRepository,
+                                            ScheduledMatchPersistenceMapper mapper) {
         this.mongoRepository = mongoRepository;
+        this.mapper = mapper;
     }
 
     @Override
     public ScheduledMatch save(ScheduledMatch scheduledMatch) {
-        var saved = mongoRepository.save(ScheduledMatchPersistenceMapper.toDocument(scheduledMatch));
-        return ScheduledMatchPersistenceMapper.toDomain(saved);
+        var saved = mongoRepository.save(mapper.toDocument(scheduledMatch));
+        return mapper.toDomain(saved);
     }
 
     @Override

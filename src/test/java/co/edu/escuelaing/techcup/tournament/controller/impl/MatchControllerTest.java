@@ -1,8 +1,10 @@
 package co.edu.escuelaing.techcup.tournament.controller.impl;
 
 import co.edu.escuelaing.techcup.tournament.config.SecurityConfig;
+import co.edu.escuelaing.techcup.tournament.dto.response.ScheduledMatchResponse;
 import co.edu.escuelaing.techcup.tournament.exception.MatchActivationNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.exception.ScheduleConflictException;
+import co.edu.escuelaing.techcup.tournament.mapper.ScheduledMatchRestMapper;
 import co.edu.escuelaing.techcup.tournament.service.Match;
 import co.edu.escuelaing.techcup.tournament.service.MatchStatus;
 import co.edu.escuelaing.techcup.tournament.service.ScheduledMatch;
@@ -35,12 +37,15 @@ class MatchControllerTest {
 
     @MockitoBean private ScheduleMatchUseCase scheduleMatchUseCase;
     @MockitoBean private InactivateMatchUseCase inactivateMatchUseCase;
+    @MockitoBean private ScheduledMatchRestMapper mapper;
 
     @Test
     void schedule_devuelve201() throws Exception {
         ScheduledMatch scheduled = ScheduledMatch.reconstruct("sm1", "m01", "court-1", "ref-1",
                 LocalDate.of(2026, 8, 5), LocalTime.of(9, 0));
         when(scheduleMatchUseCase.schedule(any())).thenReturn(scheduled);
+        when(mapper.toResponse(any())).thenReturn(new ScheduledMatchResponse(
+                "sm1", "m01", "court-1", "ref-1", LocalDate.of(2026, 8, 5), LocalTime.of(9, 0)));
 
         String body = """
                 {"matchupId":"m01","matchDate":"2026-08-05","matchTime":"09:00:00","courtId":"court-1","refereeId":"ref-1"}

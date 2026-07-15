@@ -4,16 +4,19 @@ import co.edu.escuelaing.techcup.tournament.entity.document.CourtDocument;
 import co.edu.escuelaing.techcup.tournament.service.Court;
 import co.edu.escuelaing.techcup.tournament.service.CourtSection;
 import org.junit.jupiter.api.Test;
+import org.mapstruct.factory.Mappers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class CourtPersistenceMapperTest {
 
+    private final CourtPersistenceMapper mapper = Mappers.getMapper(CourtPersistenceMapper.class);
+
     @Test
     void toDomain_convierteTodosLosCampos() {
         CourtDocument document = new CourtDocument("c1", "t1", "CANCHA_1", "Descripción", "img1", "m1");
 
-        Court court = CourtPersistenceMapper.toDomain(document);
+        Court court = mapper.toDomain(document);
 
         assertEquals("c1", court.getId());
         assertEquals("t1", court.getTournamentId());
@@ -27,7 +30,7 @@ class CourtPersistenceMapperTest {
     void toDocument_convierteTodosLosCampos() {
         Court court = Court.reconstruct("c1", "t1", CourtSection.CANCHA_2, "Descripción", "img1", "m1");
 
-        CourtDocument document = CourtPersistenceMapper.toDocument(court);
+        CourtDocument document = mapper.toDocument(court);
 
         assertEquals("c1", document.getId());
         assertEquals("t1", document.getTournamentId());

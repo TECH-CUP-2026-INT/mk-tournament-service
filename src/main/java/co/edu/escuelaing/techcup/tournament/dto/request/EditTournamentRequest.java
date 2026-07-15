@@ -10,34 +10,38 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+@Schema(description = """
+        Request to edit an existing tournament. Every field is optional — send only the ones you \
+        want to change; omitted fields (null) keep their current value. Editing is blocked once the \
+        tournament is FINISHED.""")
 public record EditTournamentRequest(
-        @Schema(description = "Nombre del torneo", example = "TechCup Fútbol 2026", maxLength = 100)
+        @Schema(description = "New tournament name.", example = "TechCup Football 2026", maxLength = 100)
         @Size(max = 100) String name,
 
-        @Schema(description = "Tipo de torneo", example = "NORMAL")
+        @Schema(description = "New tournament type.", example = "NORMAL")
         TournamentType type,
 
-        @Schema(description = "Formato del torneo", example = "BRACKETS")
+        @Schema(description = "New bracket format.", example = "BRACKETS")
         TournamentFormat format,
 
-        @Schema(description = "Número de equipos participantes", example = "8")
+        @Schema(description = "New number of participating teams.", example = "8")
         Integer numberOfTeams,
 
-        @Schema(description = "Costo de inscripción en pesos colombianos", example = "50000.00")
+        @Schema(description = "New enrollment fee, in Colombian pesos (COP).", example = "50000.00", minimum = "0")
         @DecimalMin(value = "0") BigDecimal cost,
 
-        @Schema(description = "Fecha límite de inscripción de equipos", example = "2026-07-25")
+        @Schema(description = "New enrollment deadline.", example = "2026-07-25")
         LocalDate registrationDeadline,
 
-        @Schema(description = "Fecha de inicio del torneo", example = "2026-08-01")
+        @Schema(description = "New tournament start date.", example = "2026-08-01")
         LocalDate startDate,
 
-        @Schema(description = "Fecha de finalización del torneo", example = "2026-08-31")
+        @Schema(description = "New tournament end date (NORMAL tournaments only).", example = "2026-08-31")
         LocalDate endDate,
 
-        @Schema(description = "Hora de inicio de los partidos", example = "09:00")
+        @Schema(description = "New match start time (LIGHTNING tournaments only).", example = "09:00")
         LocalTime matchStartTime,
 
-        @Schema(description = "Hora de finalización de los partidos", example = "21:00")
+        @Schema(description = "New match end time (LIGHTNING tournaments only).", example = "21:00")
         LocalTime matchEndTime
 ) {}
