@@ -1,5 +1,8 @@
 package co.edu.escuelaing.techcup.tournament.domain.service.ports.out;
 
+/**
+ * Puerto hacia el Team Service.
+ */
 public interface TeamServiceClientPort {
 
     /**

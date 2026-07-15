@@ -1,5 +1,7 @@
 package co.edu.escuelaing.techcup.tournament.application.usecase;
 
+import lombok.RequiredArgsConstructor;
+
 import co.edu.escuelaing.techcup.tournament.domain.exception.FixtureGenerationFailedException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentNotFoundException;
 import co.edu.escuelaing.techcup.tournament.domain.model.EnrollmentStatus;
@@ -13,16 +15,12 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class StartTournamentPreparationService implements StartTournamentPreparationUseCase {
 
     private final TournamentRepositoryPort repository;
     private final FixtureGenerationPort fixtureGenerationPort;
 
-    public StartTournamentPreparationService(TournamentRepositoryPort repository,
-                                              FixtureGenerationPort fixtureGenerationPort) {
-        this.repository = repository;
-        this.fixtureGenerationPort = fixtureGenerationPort;
-    }
 
     @Override
     public Tournament startPreparation(String tournamentId) {

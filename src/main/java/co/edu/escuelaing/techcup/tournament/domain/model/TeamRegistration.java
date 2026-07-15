@@ -1,5 +1,9 @@
 package co.edu.escuelaing.techcup.tournament.domain.model;
 
+/**
+ * Registro de un equipo en un torneo (vista legacy de nombre y estado; para el
+ * flujo de inscripción con pago ver {@link Enrollment}).
+ */
 public class TeamRegistration {
 
     private String teamId;

@@ -1,5 +1,7 @@
 package co.edu.escuelaing.techcup.tournament.application.usecase;
 
+import lombok.RequiredArgsConstructor;
+
 import co.edu.escuelaing.techcup.tournament.domain.exception.PaymentOrderCreationFailedException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentNotFoundException;
 import co.edu.escuelaing.techcup.tournament.domain.model.Enrollment;
@@ -12,6 +14,7 @@ import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class EnrollTeamInTournamentService implements EnrollTeamInTournamentUseCase {
 
     private static final int MAX_SAVE_ATTEMPTS = 3;
@@ -20,13 +23,6 @@ public class EnrollTeamInTournamentService implements EnrollTeamInTournamentUseC
     private final TeamServiceClientPort teamServiceClient;
     private final PaymentServiceClientPort paymentServiceClient;
 
-    public EnrollTeamInTournamentService(TournamentRepositoryPort tournamentRepository,
-                                          TeamServiceClientPort teamServiceClient,
-                                          PaymentServiceClientPort paymentServiceClient) {
-        this.tournamentRepository = tournamentRepository;
-        this.teamServiceClient = teamServiceClient;
-        this.paymentServiceClient = paymentServiceClient;
-    }
 
     @Override
     public Enrollment enrollTeam(String tournamentId, String teamId) {
