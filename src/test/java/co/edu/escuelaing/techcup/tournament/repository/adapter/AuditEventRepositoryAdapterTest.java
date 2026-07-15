@@ -4,6 +4,7 @@ import co.edu.escuelaing.techcup.tournament.entity.document.AuditEventDocument;
 import co.edu.escuelaing.techcup.tournament.service.AuditEventFilter;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
+import org.mapstruct.factory.Mappers;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 
@@ -22,12 +23,14 @@ import static org.mockito.Mockito.when;
 
 class AuditEventRepositoryAdapterTest {
 
+    private final co.edu.escuelaing.techcup.tournament.mapper.AuditEventPersistenceMapper mapper = Mappers.getMapper(co.edu.escuelaing.techcup.tournament.mapper.AuditEventPersistenceMapper.class);
+
     @Test
     void search_sinFiltros_noAgregaCondicionesAlQuery() {
         MongoTemplate mongoTemplate = mock(MongoTemplate.class);
         when(mongoTemplate.find(any(), eq(AuditEventDocument.class))).thenReturn(List.of());
 
-        AuditEventRepositoryAdapter adapter = new AuditEventRepositoryAdapter(mongoTemplate);
+        AuditEventRepositoryAdapter adapter = new AuditEventRepositoryAdapter(mongoTemplate, mapper);
         adapter.search(new AuditEventFilter(null, null, null, null));
 
         var captor = forClass(Query.class);
@@ -42,7 +45,7 @@ class AuditEventRepositoryAdapterTest {
         MongoTemplate mongoTemplate = mock(MongoTemplate.class);
         when(mongoTemplate.find(any(), eq(AuditEventDocument.class))).thenReturn(List.of());
 
-        AuditEventRepositoryAdapter adapter = new AuditEventRepositoryAdapter(mongoTemplate);
+        AuditEventRepositoryAdapter adapter = new AuditEventRepositoryAdapter(mongoTemplate, mapper);
         adapter.search(new AuditEventFilter(
                 LocalDate.of(2026, 1, 1), LocalDate.of(2026, 1, 31),
                 "CreateTournamentService.create", "t1"));

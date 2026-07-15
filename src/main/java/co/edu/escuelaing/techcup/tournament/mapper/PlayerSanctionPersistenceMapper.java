@@ -3,12 +3,12 @@ package co.edu.escuelaing.techcup.tournament.mapper;
 import co.edu.escuelaing.techcup.tournament.entity.document.PlayerSanctionDocument;
 import co.edu.escuelaing.techcup.tournament.service.PlayerSanction;
 import co.edu.escuelaing.techcup.tournament.service.SanctionType;
+import org.mapstruct.Mapper;
 
-public class PlayerSanctionPersistenceMapper {
+@Mapper(componentModel = "spring")
+public interface PlayerSanctionPersistenceMapper {
 
-    private PlayerSanctionPersistenceMapper() {}
-
-    public static PlayerSanction toDomain(PlayerSanctionDocument document) {
+    default PlayerSanction toDomain(PlayerSanctionDocument document) {
         return PlayerSanction.reconstruct(
                 document.getId(),
                 document.getPlayerId(),
@@ -17,7 +17,7 @@ public class PlayerSanctionPersistenceMapper {
         );
     }
 
-    public static PlayerSanctionDocument toDocument(PlayerSanction domain) {
+    default PlayerSanctionDocument toDocument(PlayerSanction domain) {
         return new PlayerSanctionDocument(
                 domain.getId(),
                 domain.getPlayerId(),

@@ -4,6 +4,7 @@ import co.edu.escuelaing.techcup.tournament.dto.request.MatchActivationRequest;
 import co.edu.escuelaing.techcup.tournament.dto.request.ScheduleMatchRequest;
 import co.edu.escuelaing.techcup.tournament.dto.response.MatchActivationResponse;
 import co.edu.escuelaing.techcup.tournament.dto.response.ScheduledMatchResponse;
+import co.edu.escuelaing.techcup.tournament.mapper.ScheduledMatchRestMapper;
 import co.edu.escuelaing.techcup.tournament.service.Match;
 import co.edu.escuelaing.techcup.tournament.service.ScheduledMatch;
 import co.edu.escuelaing.techcup.tournament.service.ports.InactivateMatchUseCase;
@@ -34,11 +35,14 @@ public class MatchController {
 
     private final ScheduleMatchUseCase scheduleMatchUseCase;
     private final InactivateMatchUseCase inactivateMatchUseCase;
+    private final ScheduledMatchRestMapper mapper;
 
     public MatchController(ScheduleMatchUseCase scheduleMatchUseCase,
-                            InactivateMatchUseCase inactivateMatchUseCase) {
+                            InactivateMatchUseCase inactivateMatchUseCase,
+                            ScheduledMatchRestMapper mapper) {
         this.scheduleMatchUseCase = scheduleMatchUseCase;
         this.inactivateMatchUseCase = inactivateMatchUseCase;
+        this.mapper = mapper;
     }
 
     @Operation(summary = "Schedule match",
@@ -58,10 +62,7 @@ public class MatchController {
                 request.courtId(), request.refereeId()
         ));
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(new ScheduledMatchResponse(
-                scheduled.getId(), scheduled.getMatchupId(), scheduled.getCourtId(),
-                scheduled.getRefereeId(), scheduled.getMatchDate(), scheduled.getMatchTime()
-        ));
+        return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toResponse(scheduled));
     }
 
     @Operation(summary = "Activate or inactivate match",

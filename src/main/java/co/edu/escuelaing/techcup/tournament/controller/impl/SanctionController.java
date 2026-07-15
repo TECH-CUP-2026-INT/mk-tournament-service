@@ -2,6 +2,7 @@ package co.edu.escuelaing.techcup.tournament.controller.impl;
 
 import co.edu.escuelaing.techcup.tournament.dto.request.ApplySanctionRequest;
 import co.edu.escuelaing.techcup.tournament.dto.response.SanctionResponse;
+import co.edu.escuelaing.techcup.tournament.mapper.SanctionRestMapper;
 import co.edu.escuelaing.techcup.tournament.service.PlayerSanction;
 import co.edu.escuelaing.techcup.tournament.service.ports.ApplySanctionUseCase;
 import co.edu.escuelaing.techcup.tournament.service.ports.ApplySanctionUseCase.ApplySanctionCommand;
@@ -34,13 +35,16 @@ public class SanctionController {
     private final ApplySanctionUseCase applySanctionUseCase;
     private final ViewPlayerSanctionUseCase viewPlayerSanctionUseCase;
     private final RecordMatchFinishedForSanctionsUseCase recordMatchFinishedUseCase;
+    private final SanctionRestMapper mapper;
 
     public SanctionController(ApplySanctionUseCase applySanctionUseCase,
                                ViewPlayerSanctionUseCase viewPlayerSanctionUseCase,
-                               RecordMatchFinishedForSanctionsUseCase recordMatchFinishedUseCase) {
+                               RecordMatchFinishedForSanctionsUseCase recordMatchFinishedUseCase,
+                               SanctionRestMapper mapper) {
         this.applySanctionUseCase = applySanctionUseCase;
         this.viewPlayerSanctionUseCase = viewPlayerSanctionUseCase;
         this.recordMatchFinishedUseCase = recordMatchFinishedUseCase;
+        this.mapper = mapper;
     }
 
     @Operation(summary = "Apply sanction to player",
@@ -56,7 +60,7 @@ public class SanctionController {
         PlayerSanction sanction = applySanctionUseCase.apply(new ApplySanctionCommand(
                 request.playerId(), request.type(), request.matchesSuspended()));
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(sanction));
+        return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toResponse(sanction));
     }
 
     @Operation(summary = "Get a player's active sanctions",
@@ -68,7 +72,7 @@ public class SanctionController {
             @Parameter(description = "Player ID", example = "player_123") @PathVariable String playerId) {
         List<SanctionResponse> result = viewPlayerSanctionUseCase.getActiveSanctions(playerId)
                 .stream()
-                .map(this::toResponse)
+                .map(mapper::toResponse)
                 .toList();
         return ResponseEntity.ok(result);
     }
@@ -87,12 +91,5 @@ public class SanctionController {
     public ResponseEntity<Void> recordMatchFinished() {
         recordMatchFinishedUseCase.recordMatchFinished();
         return ResponseEntity.ok().build();
-    }
-
-    private SanctionResponse toResponse(PlayerSanction sanction) {
-        return new SanctionResponse(
-                sanction.getId(), sanction.getPlayerId(), sanction.getType(),
-                sanction.getMatchesRemaining(), sanction.isActive()
-        );
     }
 }

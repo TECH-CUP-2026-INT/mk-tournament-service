@@ -15,15 +15,21 @@ import co.edu.escuelaing.techcup.tournament.entity.document.EnrollmentDocument;
 import co.edu.escuelaing.techcup.tournament.entity.document.MatchDocument;
 import co.edu.escuelaing.techcup.tournament.entity.document.TeamRegistrationDocument;
 import co.edu.escuelaing.techcup.tournament.entity.document.TournamentDocument;
+import org.mapstruct.Mapper;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class TournamentPersistenceMapper {
+/**
+ * {@code Tournament} se reconstruye vía {@link Tournament#reconstruct} (fábrica estática que
+ * resguarda invariantes de agregado), por lo que MapStruct no puede generar la construcción del
+ * dominio por reflexión de campos; los métodos por defecto delegan a esa fábrica en vez de a un
+ * mapeo automático de propiedades.
+ */
+@Mapper(componentModel = "spring")
+public interface TournamentPersistenceMapper {
 
-    private TournamentPersistenceMapper() {}
-
-    public static Tournament toDomain(TournamentDocument document) {
+    default Tournament toDomain(TournamentDocument document) {
         return Tournament.reconstruct(
                 document.getId(),
                 document.getName(),
@@ -50,7 +56,7 @@ public class TournamentPersistenceMapper {
         );
     }
 
-    public static TournamentDocument toDocument(Tournament domain) {
+    default TournamentDocument toDocument(Tournament domain) {
         return new TournamentDocument(
                 domain.getId(),
                 domain.getName(),
@@ -76,7 +82,7 @@ public class TournamentPersistenceMapper {
         );
     }
 
-    private static List<TeamRegistration> toTeams(List<TeamRegistrationDocument> documents) {
+    private List<TeamRegistration> toTeams(List<TeamRegistrationDocument> documents) {
         if (documents == null) return new ArrayList<>();
         return documents.stream()
                 .map(d -> new TeamRegistration(d.getTeamId(), d.getTeamName(),
@@ -84,7 +90,7 @@ public class TournamentPersistenceMapper {
                 .toList();
     }
 
-    private static List<TeamRegistrationDocument> toTeamDocuments(List<TeamRegistration> teams) {
+    private List<TeamRegistrationDocument> toTeamDocuments(List<TeamRegistration> teams) {
         if (teams == null) return new ArrayList<>();
         return teams.stream()
                 .map(t -> new TeamRegistrationDocument(t.getTeamId(), t.getTeamName(),
@@ -92,7 +98,7 @@ public class TournamentPersistenceMapper {
                 .toList();
     }
 
-    private static List<Match> toMatches(List<MatchDocument> documents) {
+    private List<Match> toMatches(List<MatchDocument> documents) {
         if (documents == null) return new ArrayList<>();
         return documents.stream()
                 .map(d -> new Match(d.getMatchId(), d.getHomeTeamId(), d.getAwayTeamId(),
@@ -102,7 +108,7 @@ public class TournamentPersistenceMapper {
                 .toList();
     }
 
-    private static List<MatchDocument> toMatchDocuments(List<Match> matches) {
+    private List<MatchDocument> toMatchDocuments(List<Match> matches) {
         if (matches == null) return new ArrayList<>();
         return matches.stream()
                 .map(m -> new MatchDocument(m.getMatchId(), m.getHomeTeamId(), m.getAwayTeamId(),
@@ -111,7 +117,7 @@ public class TournamentPersistenceMapper {
                 .toList();
     }
 
-    private static List<Enrollment> toEnrollmentDomainList(List<EnrollmentDocument> documents) {
+    private List<Enrollment> toEnrollmentDomainList(List<EnrollmentDocument> documents) {
         if (documents == null) return new ArrayList<>();
         return documents.stream()
                 .map(d -> new Enrollment(
@@ -125,7 +131,7 @@ public class TournamentPersistenceMapper {
                 .toList();
     }
 
-    private static List<EnrollmentDocument> toEnrollmentDocumentList(List<Enrollment> enrollments) {
+    private List<EnrollmentDocument> toEnrollmentDocumentList(List<Enrollment> enrollments) {
         if (enrollments == null) return new ArrayList<>();
         return enrollments.stream()
                 .map(e -> new EnrollmentDocument(

@@ -1,6 +1,8 @@
 package co.edu.escuelaing.techcup.tournament.controller.impl;
 
 import co.edu.escuelaing.techcup.tournament.config.SecurityConfig;
+import co.edu.escuelaing.techcup.tournament.dto.response.SanctionResponse;
+import co.edu.escuelaing.techcup.tournament.mapper.SanctionRestMapper;
 import co.edu.escuelaing.techcup.tournament.service.PlayerSanction;
 import co.edu.escuelaing.techcup.tournament.service.SanctionType;
 import co.edu.escuelaing.techcup.tournament.service.ports.ApplySanctionUseCase;
@@ -34,11 +36,14 @@ class SanctionControllerTest {
     @MockitoBean private ApplySanctionUseCase applySanctionUseCase;
     @MockitoBean private ViewPlayerSanctionUseCase viewPlayerSanctionUseCase;
     @MockitoBean private RecordMatchFinishedForSanctionsUseCase recordMatchFinishedUseCase;
+    @MockitoBean private SanctionRestMapper mapper;
 
     @Test
     void apply_devuelve201() throws Exception {
         PlayerSanction sanction = PlayerSanction.reconstruct("s1", "player1", SanctionType.RED_CARD, 1);
         when(applySanctionUseCase.apply(any())).thenReturn(sanction);
+        when(mapper.toResponse(any())).thenReturn(new SanctionResponse(
+                "s1", "player1", SanctionType.RED_CARD, 1, true));
 
         String body = """
                 {"playerId":"player1","type":"RED_CARD"}
@@ -64,6 +69,8 @@ class SanctionControllerTest {
     void getActiveSanctions_devuelve200() throws Exception {
         PlayerSanction sanction = PlayerSanction.reconstruct("s1", "player1", SanctionType.YELLOW_CARD_ACCUMULATION, 1);
         when(viewPlayerSanctionUseCase.getActiveSanctions("player1")).thenReturn(List.of(sanction));
+        when(mapper.toResponse(any())).thenReturn(new SanctionResponse(
+                "s1", "player1", SanctionType.YELLOW_CARD_ACCUMULATION, 1, true));
 
         mockMvc.perform(get("/sanctions/player1"))
                 .andExpect(status().isOk())
