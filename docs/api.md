@@ -1,6 +1,6 @@
 # REST API
 
-Base URL: `http://localhost:8080`
+Base URL: `http://localhost:5623`
 
 !!! warning "Access control"
     All endpoints are currently **open** (`permitAll()` in `SecurityConfig`). There is no Identity Service with JWT/roles in the platform yet. The **Intended role** column describes the business intent, not an actual restriction. No endpoint should be left public like this in production.

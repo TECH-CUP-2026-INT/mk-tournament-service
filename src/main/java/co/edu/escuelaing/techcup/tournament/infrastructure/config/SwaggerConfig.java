@@ -46,7 +46,7 @@ public class SwaggerConfig {
                                 .name("Internal academic use")
                                 .url("https://github.com/TECH-CUP-2026-INT/mk-tournament-service")))
                 .servers(List.of(
-                        new Server().url("http://localhost:8080").description("Local development"),
+                        new Server().url("http://localhost:5623").description("Local development"),
                         new Server().url("https://api.techcup.escuelaing.edu.co").description("Production (pending)")
                 ));
     }

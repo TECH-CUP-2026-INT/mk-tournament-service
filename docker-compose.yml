@@ -6,9 +6,10 @@ services:
     build: ./
     container_name: mk-tournaments
     ports:
-      - "8080:8080"
+      - "5623:5623"
     environment:
       SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/techcup_tournaments
+      SERVER_PORT: 5623
     depends_on:
       - mongo
     restart: on-failure

@@ -74,9 +74,10 @@ services:
     build: ./
     container_name: mk-tournaments
     ports:
-      - "8080:8080"
+      - "5623:5623"
     environment:
       SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/techcup_tournaments
+      SERVER_PORT: 5623
     depends_on:
       - mongo
     restart: on-failure
@@ -119,7 +120,7 @@ RUN mvn clean package -DskipTests
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY --from=build /app/target/service-tournament-*.jar app.jar
-EXPOSE 8080
+EXPOSE 5623
 ENTRYPOINT ["java", "-jar", "app.jar"]
 ```
 
@@ -149,8 +150,8 @@ The documentation is published at: `https://tech-cup-2026-int.github.io/mk-tourn
 
 ```bash
 # Basic health check (Spring Boot Actuator endpoint or custom ping)
-curl http://localhost:8080/actuator/health
+curl http://localhost:5623/actuator/health
 
 # List public tournaments (no authentication required)
-curl http://localhost:8080/api/v1/tournaments
+curl http://localhost:5623/api/v1/tournaments
 ```
