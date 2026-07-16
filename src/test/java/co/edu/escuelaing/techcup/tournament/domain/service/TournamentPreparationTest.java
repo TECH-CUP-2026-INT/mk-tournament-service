@@ -25,14 +25,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class TournamentPreparationTest {
 
     private Tournament buildTournament(TournamentStatus status, List<TeamRegistration> teams) {
-        return Tournament.reconstruct(
-                UUID.randomUUID(), "TechCup", TournamentType.NORMAL, TournamentFormat.BRACKETS, 8, BigDecimal.ZERO,
-                LocalDate.now().plusDays(2), LocalDate.now().plusDays(10), LocalDate.now(),
-                null, null,
-                status,
-                new ArrayList<>(teams), new ArrayList<>(),
-                null, null
-        );
+        return Tournament.builder()
+                .id(UUID.randomUUID()).name("TechCup").type(TournamentType.NORMAL).format(TournamentFormat.BRACKETS)
+                .numberOfTeams(8).cost(BigDecimal.ZERO)
+                .startDate(LocalDate.now().plusDays(2)).endDate(LocalDate.now().plusDays(10))
+                .registrationDeadline(LocalDate.now())
+                .status(status).teams(new ArrayList<>(teams)).matches(new ArrayList<>())
+                .reconstruct();
     }
 
     private List<TeamRegistration> approvedTeams(int count) {

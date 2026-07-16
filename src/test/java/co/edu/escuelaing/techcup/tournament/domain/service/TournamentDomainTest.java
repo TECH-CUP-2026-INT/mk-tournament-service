@@ -23,15 +23,12 @@ import static org.junit.jupiter.api.Assertions.*;
 class TournamentDomainTest {
 
     private Tournament buildTournament(TournamentStatus status, List<TeamRegistration> teams) {
-        return Tournament.reconstruct(
-                UUID.randomUUID(), "TechCup", 4, BigDecimal.ZERO,
-                LocalDate.now().plusDays(2),
-                LocalDate.now().plusDays(10),
-                LocalDate.now(),
-                status,
-                new ArrayList<>(teams),
-                new ArrayList<>()
-        );
+        return Tournament.builder()
+                .id(UUID.randomUUID()).name("TechCup").numberOfTeams(4).cost(BigDecimal.ZERO)
+                .startDate(LocalDate.now().plusDays(2)).endDate(LocalDate.now().plusDays(10))
+                .registrationDeadline(LocalDate.now())
+                .status(status).teams(new ArrayList<>(teams)).matches(new ArrayList<>())
+                .reconstruct();
     }
 
     // --- Preparación ---
@@ -61,17 +58,16 @@ class TournamentDomainTest {
 
     @Test
     void preparation_sinFechas_retornaIncompleto() {
-        Tournament t = Tournament.reconstruct(
-                UUID.randomUUID(), "TechCup", 4, BigDecimal.ZERO,
-                null, null, null,
-                TournamentStatus.DRAFT,
-                new ArrayList<>(List.of(
+        Tournament t = Tournament.builder()
+                .id(UUID.randomUUID()).name("TechCup").numberOfTeams(4).cost(BigDecimal.ZERO)
+                .status(TournamentStatus.DRAFT)
+                .teams(new ArrayList<>(List.of(
                         new TeamRegistration(UUID.randomUUID(), "E1", RegistrationStatus.APPROVED),
                         new TeamRegistration(UUID.randomUUID(), "E2", RegistrationStatus.APPROVED),
                         new TeamRegistration(UUID.randomUUID(), "E3", RegistrationStatus.APPROVED)
-                )),
-                new ArrayList<>()
-        );
+                )))
+                .matches(new ArrayList<>())
+                .reconstruct();
         PreparationResult result = t.checkPreparation();
         assertFalse(result.isReadyToActivate());
         assertTrue(result.getMissingRequirements().stream().anyMatch(m -> m.contains("Fechas")));

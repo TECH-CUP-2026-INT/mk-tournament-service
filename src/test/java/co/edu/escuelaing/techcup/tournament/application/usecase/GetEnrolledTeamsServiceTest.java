@@ -100,16 +100,15 @@ class GetEnrolledTeamsServiceTest {
 
     @Test
     void getEnrolledTeams_calculaAvailableSlotsSobreCapacidadDelTorneo() {
-        Tournament tournament = Tournament.reconstruct(
-                tournamentId, "Copa ECI",
-                co.edu.escuelaing.techcup.tournament.domain.model.TournamentType.NORMAL,
-                co.edu.escuelaing.techcup.tournament.domain.model.TournamentFormat.BRACKETS,
-                5, java.math.BigDecimal.ZERO,
-                java.time.LocalDate.now().plusDays(2), java.time.LocalDate.now().plusDays(10),
-                java.time.LocalDate.now(), null, null, TournamentStatus.ACTIVE,
-                List.of(),
-                List.of(), null, null
-        );
+        Tournament tournament = Tournament.builder()
+                .id(tournamentId).name("Copa ECI")
+                .type(co.edu.escuelaing.techcup.tournament.domain.model.TournamentType.NORMAL)
+                .format(co.edu.escuelaing.techcup.tournament.domain.model.TournamentFormat.BRACKETS)
+                .numberOfTeams(5).cost(java.math.BigDecimal.ZERO)
+                .startDate(java.time.LocalDate.now().plusDays(2)).endDate(java.time.LocalDate.now().plusDays(10))
+                .registrationDeadline(java.time.LocalDate.now())
+                .status(TournamentStatus.ACTIVE).teams(List.of()).matches(List.of())
+                .reconstruct();
         tournament.setEnrollments(List.of(
                 new Enrollment(UUID.randomUUID(), "Los Tigres", EnrollmentStatus.ENROLLED),
                 new Enrollment(UUID.randomUUID(), "Los Leones", EnrollmentStatus.RESERVED)

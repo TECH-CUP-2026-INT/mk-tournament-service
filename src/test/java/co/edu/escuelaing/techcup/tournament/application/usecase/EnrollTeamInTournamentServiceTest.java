@@ -44,13 +44,14 @@ class EnrollTeamInTournamentServiceTest {
     }
 
     private Tournament tournamentWith(UUID tournamentId, TournamentStatus status, int numberOfTeams, List<Enrollment> enrollments) {
-        return Tournament.reconstruct(
-                tournamentId, "Copa ECI", TournamentType.NORMAL, TournamentFormat.BRACKETS,
-                numberOfTeams, BigDecimal.valueOf(50000),
-                LocalDate.now().plusDays(10), LocalDate.now().plusDays(20), LocalDate.now().plusDays(1),
-                null, null, status,
-                List.of(), List.of(), null, null, false, true, enrollments, null
-        );
+        return Tournament.builder()
+                .id(tournamentId).name("Copa ECI").type(TournamentType.NORMAL).format(TournamentFormat.BRACKETS)
+                .numberOfTeams(numberOfTeams).cost(BigDecimal.valueOf(50000))
+                .startDate(LocalDate.now().plusDays(10)).endDate(LocalDate.now().plusDays(20))
+                .registrationDeadline(LocalDate.now().plusDays(1))
+                .status(status).teams(List.of()).matches(List.of())
+                .enrollments(enrollments)
+                .reconstruct();
     }
 
     @Test

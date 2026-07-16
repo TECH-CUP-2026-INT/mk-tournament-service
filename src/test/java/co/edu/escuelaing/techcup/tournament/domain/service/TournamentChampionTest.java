@@ -26,22 +26,20 @@ class TournamentChampionTest {
     private final UUID awayTeamId = UUID.randomUUID();
 
     private Tournament buildTournamentWithMatches(List<Match> matches) {
-        return Tournament.reconstruct(
-                UUID.randomUUID(), "TechCup", 4, BigDecimal.ZERO,
-                LocalDate.now().plusDays(2),
-                LocalDate.now().plusDays(10),
-                LocalDate.now(),
-                TournamentStatus.IN_PROGRESS,
-                new ArrayList<>(),
-                new ArrayList<>(matches)
-        );
+        return Tournament.builder()
+                .id(UUID.randomUUID()).name("TechCup").numberOfTeams(4).cost(BigDecimal.ZERO)
+                .startDate(LocalDate.now().plusDays(2)).endDate(LocalDate.now().plusDays(10))
+                .registrationDeadline(LocalDate.now())
+                .status(TournamentStatus.IN_PROGRESS).teams(new ArrayList<>())
+                .matches(new ArrayList<>(matches))
+                .reconstruct();
     }
 
     @Test
     void assignChampion_whenFinalMatchFinishedWithoutTie_assignsByRegulationTime() {
         UUID matchId = UUID.randomUUID();
-        Match finalMatch = new Match(matchId, homeTeamId, awayTeamId, MatchStatus.FINISHED,
-                true, 2, 1, null);
+        Match finalMatch = Match.builder().matchId(matchId).homeTeamId(homeTeamId).awayTeamId(awayTeamId)
+                .status(MatchStatus.FINISHED).finalMatch(true).homeScore(2).awayScore(1).build();
         Tournament tournament = buildTournamentWithMatches(List.of(finalMatch));
 
         ChampionAssignment assignment = tournament.assignChampionWhenFinalMatchFinished(matchId);
@@ -55,8 +53,9 @@ class TournamentChampionTest {
     @Test
     void assignChampion_whenFinalMatchTiedWithPenalties_assignsByPenalties() {
         UUID matchId = UUID.randomUUID();
-        Match finalMatch = new Match(matchId, homeTeamId, awayTeamId, MatchStatus.FINISHED,
-                true, 1, 1, awayTeamId);
+        Match finalMatch = Match.builder().matchId(matchId).homeTeamId(homeTeamId).awayTeamId(awayTeamId)
+                .status(MatchStatus.FINISHED).finalMatch(true).homeScore(1).awayScore(1)
+                .penaltyShootoutWinnerTeamId(awayTeamId).build();
         Tournament tournament = buildTournamentWithMatches(List.of(finalMatch));
 
         ChampionAssignment assignment = tournament.assignChampionWhenFinalMatchFinished(matchId);
@@ -68,8 +67,8 @@ class TournamentChampionTest {
     @Test
     void assignChampion_whenFinalMatchTiedWithoutPenalties_throwsPendingPenalties() {
         UUID matchId = UUID.randomUUID();
-        Match finalMatch = new Match(matchId, homeTeamId, awayTeamId, MatchStatus.FINISHED,
-                true, 1, 1, null);
+        Match finalMatch = Match.builder().matchId(matchId).homeTeamId(homeTeamId).awayTeamId(awayTeamId)
+                .status(MatchStatus.FINISHED).finalMatch(true).homeScore(1).awayScore(1).build();
         Tournament tournament = buildTournamentWithMatches(List.of(finalMatch));
 
         assertThrows(ChampionPendingPenaltiesException.class,
@@ -79,8 +78,8 @@ class TournamentChampionTest {
     @Test
     void assignChampion_whenMatchIsNotFinal_throwsNotAllowed() {
         UUID matchId = UUID.randomUUID();
-        Match semifinal = new Match(matchId, homeTeamId, awayTeamId, MatchStatus.FINISHED,
-                false, 2, 0, null);
+        Match semifinal = Match.builder().matchId(matchId).homeTeamId(homeTeamId).awayTeamId(awayTeamId)
+                .status(MatchStatus.FINISHED).finalMatch(false).homeScore(2).awayScore(0).build();
         Tournament tournament = buildTournamentWithMatches(List.of(semifinal));
 
         assertThrows(ChampionAssignmentNotAllowedException.class,
@@ -90,8 +89,8 @@ class TournamentChampionTest {
     @Test
     void assignChampion_whenFinalMatchNotFinished_throwsNotAllowed() {
         UUID matchId = UUID.randomUUID();
-        Match finalMatch = new Match(matchId, homeTeamId, awayTeamId, MatchStatus.IN_PROGRESS,
-                true, 0, 0, null);
+        Match finalMatch = Match.builder().matchId(matchId).homeTeamId(homeTeamId).awayTeamId(awayTeamId)
+                .status(MatchStatus.IN_PROGRESS).finalMatch(true).homeScore(0).awayScore(0).build();
         Tournament tournament = buildTournamentWithMatches(List.of(finalMatch));
 
         assertThrows(ChampionAssignmentNotAllowedException.class,
@@ -108,8 +107,8 @@ class TournamentChampionTest {
 
     @Test
     void match_recordPenaltyShootout_whenNotTied_throwsNotAllowed() {
-        Match match = new Match(UUID.randomUUID(), homeTeamId, awayTeamId, MatchStatus.FINISHED,
-                true, 2, 1, null);
+        Match match = Match.builder().matchId(UUID.randomUUID()).homeTeamId(homeTeamId).awayTeamId(awayTeamId)
+                .status(MatchStatus.FINISHED).finalMatch(true).homeScore(2).awayScore(1).build();
 
         assertThrows(ChampionAssignmentNotAllowedException.class,
                 () -> match.recordPenaltyShootoutWinner(homeTeamId));

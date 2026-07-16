@@ -55,12 +55,12 @@ public class ConsultEnrolledTeamsSteps {
     @Given("a tournament exists with id {string} and capacity for {int} teams")
     public void aTournamentExistsWithCapacity(String id, int capacity) {
         UUID tournamentId = toUuid(id);
-        Tournament tournament = Tournament.reconstruct(
-                tournamentId, "Test Tournament", capacity, java.math.BigDecimal.ZERO,
-                java.time.LocalDate.now().plusDays(2), java.time.LocalDate.now().plusDays(10),
-                java.time.LocalDate.now(), TournamentStatus.ACTIVE,
-                new ArrayList<>(), new ArrayList<>()
-        );
+        Tournament tournament = Tournament.builder()
+                .id(tournamentId).name("Test Tournament").numberOfTeams(capacity).cost(java.math.BigDecimal.ZERO)
+                .startDate(java.time.LocalDate.now().plusDays(2)).endDate(java.time.LocalDate.now().plusDays(10))
+                .registrationDeadline(java.time.LocalDate.now())
+                .status(TournamentStatus.ACTIVE).teams(new ArrayList<>()).matches(new ArrayList<>())
+                .reconstruct();
         tournaments.put(id, tournament);
         when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
     }

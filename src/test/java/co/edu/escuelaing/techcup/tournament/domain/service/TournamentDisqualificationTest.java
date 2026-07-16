@@ -23,13 +23,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class TournamentDisqualificationTest {
 
     private Tournament sampleTournament(List<TeamRegistration> teams) {
-        return Tournament.reconstruct(
-                UUID.randomUUID(), "Copa Enero", TournamentType.NORMAL, TournamentFormat.BRACKETS,
-                8, BigDecimal.valueOf(50000),
-                LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 20), LocalDate.of(2026, 2, 20),
-                null, null, TournamentStatus.ACTIVE,
-                teams, List.of(), null, null
-        );
+        return Tournament.builder()
+                .id(UUID.randomUUID()).name("Copa Enero").type(TournamentType.NORMAL).format(TournamentFormat.BRACKETS)
+                .numberOfTeams(8).cost(BigDecimal.valueOf(50000))
+                .startDate(LocalDate.of(2026, 3, 1)).endDate(LocalDate.of(2026, 3, 20))
+                .registrationDeadline(LocalDate.of(2026, 2, 20))
+                .status(TournamentStatus.ACTIVE).teams(teams).matches(List.of())
+                .reconstruct();
     }
 
     @Test

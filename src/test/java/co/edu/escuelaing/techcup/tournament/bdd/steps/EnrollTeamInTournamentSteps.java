@@ -67,13 +67,14 @@ public class EnrollTeamInTournamentSteps {
             seeded.add(new Enrollment(toUuid("seed-team-" + i), "Equipo Semilla " + i, EnrollmentStatus.RESERVED));
         }
         UUID tournamentId = toUuid(id);
-        Tournament tournament = Tournament.reconstruct(
-                tournamentId, "Torneo de Prueba", TournamentType.NORMAL, TournamentFormat.BRACKETS,
-                slots, BigDecimal.valueOf(50000),
-                LocalDate.now().plusDays(10), LocalDate.now().plusDays(20), LocalDate.now().plusDays(1),
-                null, null, TournamentStatus.valueOf(status),
-                List.of(), List.of(), null, null, false, true, seeded, null
-        );
+        Tournament tournament = Tournament.builder()
+                .id(tournamentId).name("Torneo de Prueba").type(TournamentType.NORMAL).format(TournamentFormat.BRACKETS)
+                .numberOfTeams(slots).cost(BigDecimal.valueOf(50000))
+                .startDate(LocalDate.now().plusDays(10)).endDate(LocalDate.now().plusDays(20))
+                .registrationDeadline(LocalDate.now().plusDays(1))
+                .status(TournamentStatus.valueOf(status)).teams(List.of()).matches(List.of())
+                .enrollments(seeded)
+                .reconstruct();
         tournaments.put(id, tournament);
         when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
     }
