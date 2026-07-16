@@ -18,4 +18,5 @@ public interface TournamentRepositoryPort {
     Optional<Tournament> findByIdAndStatus(UUID id, TournamentStatus status);
     Optional<Tournament> findByMatchId(UUID matchId);
     List<Tournament> findAllWithReservedEnrollments();
+    boolean existsActiveEnrollmentForTeam(UUID teamId);
 }

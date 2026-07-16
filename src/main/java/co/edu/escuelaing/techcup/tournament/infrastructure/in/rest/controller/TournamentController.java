@@ -26,6 +26,7 @@ import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.MatchupResponse;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.GetChampionUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.GetTournamentByMatchUseCase;
+import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.CheckTeamActiveEnrollmentUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.AssignChampionUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.AttachRulebookUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.AttachRulebookUseCase.AttachRulebookCommand;
@@ -66,6 +67,7 @@ import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.PreparationResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.RulebookResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.TournamentResponse;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.TeamActiveEnrollmentResponse;
 import co.edu.escuelaing.techcup.tournament.application.mapper.EnrollmentRestMapper;
 import co.edu.escuelaing.techcup.tournament.application.mapper.MatchupRestMapper;
 import co.edu.escuelaing.techcup.tournament.application.mapper.TournamentRestMapper;
@@ -115,6 +117,7 @@ public class TournamentController implements TournamentControllerSwagger {
     private final ViewMatchupsUseCase viewMatchups;
     private final ViewMatchCourtUseCase viewMatchCourt;
     private final GetTournamentByMatchUseCase getTournamentByMatchUseCase;
+    private final CheckTeamActiveEnrollmentUseCase checkTeamActiveEnrollmentUseCase;
     private final TournamentRestMapper mapper;
     private final MatchupRestMapper matchupRestMapper;
     private final EnrollmentRestMapper enrollmentRestMapper;
@@ -223,6 +226,13 @@ public class TournamentController implements TournamentControllerSwagger {
     public ResponseEntity<TournamentResponse> getByMatch(@PathVariable UUID matchId) {
         Tournament tournament = getTournamentByMatchUseCase.getByMatch(matchId);
         return ResponseEntity.ok(mapper.toResponse(tournament));
+    }
+
+    @Override
+    @GetMapping("/by-team/{teamId}/active")
+    public ResponseEntity<TeamActiveEnrollmentResponse> hasActiveEnrollment(@PathVariable UUID teamId) {
+        boolean hasActiveEnrollment = checkTeamActiveEnrollmentUseCase.hasActiveEnrollment(teamId);
+        return ResponseEntity.ok(new TeamActiveEnrollmentResponse(teamId, hasActiveEnrollment));
     }
 
     @Override
