@@ -5,6 +5,7 @@ import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentNotFoundE
 import co.edu.escuelaing.techcup.tournament.domain.model.Tournament;
 import co.edu.escuelaing.techcup.tournament.domain.model.TournamentStatus;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.RecognitionAwardPort;
+import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentEventPublisherPort;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentRepositoryPort;
 import org.junit.jupiter.api.Test;
 
@@ -34,30 +35,33 @@ class FinalizeTournamentServiceTest {
     void finalizeTournament_whenInProgressAndEndDateReached_setsStatusFinishedYDisparaPremios() {
         TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
         RecognitionAwardPort awardPortMock = mock(RecognitionAwardPort.class);
+        TournamentEventPublisherPort eventPublisherMock = mock(TournamentEventPublisherPort.class);
         Tournament tournament = inProgressTournament();
 
         when(repositoryMock.findById("1")).thenReturn(Optional.of(tournament));
         when(repositoryMock.save(tournament)).thenReturn(tournament);
 
-        FinalizeTournamentService service = new FinalizeTournamentService(repositoryMock, awardPortMock);
+        FinalizeTournamentService service = new FinalizeTournamentService(repositoryMock, awardPortMock, eventPublisherMock);
         Tournament result = service.finalizeTournament("1");
 
         assertEquals(TournamentStatus.FINISHED, result.getStatus());
         verify(repositoryMock).save(tournament);
         verify(awardPortMock).triggerAwards("1");
+        verify(eventPublisherMock).publishTournamentFinalized("1");
     }
 
     @Test
     void finalizeTournament_cuandoFallaElDisparoDePremios_igualFinalizaSinLanzarExcepcion() {
         TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
         RecognitionAwardPort awardPortMock = mock(RecognitionAwardPort.class);
+        TournamentEventPublisherPort eventPublisherMock = mock(TournamentEventPublisherPort.class);
         Tournament tournament = inProgressTournament();
 
         when(repositoryMock.findById("1")).thenReturn(Optional.of(tournament));
         when(repositoryMock.save(tournament)).thenReturn(tournament);
         doThrow(new RuntimeException("proveedor de premios caído")).when(awardPortMock).triggerAwards("1");
 
-        FinalizeTournamentService service = new FinalizeTournamentService(repositoryMock, awardPortMock);
+        FinalizeTournamentService service = new FinalizeTournamentService(repositoryMock, awardPortMock, eventPublisherMock);
 
         Tournament result = assertDoesNotThrow(() -> service.finalizeTournament("1"));
 
@@ -69,9 +73,10 @@ class FinalizeTournamentServiceTest {
     void finalizeTournament_whenTournamentNotFound_throwsException() {
         TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
         RecognitionAwardPort awardPortMock = mock(RecognitionAwardPort.class);
+        TournamentEventPublisherPort eventPublisherMock = mock(TournamentEventPublisherPort.class);
         when(repositoryMock.findById("99")).thenReturn(Optional.empty());
 
-        FinalizeTournamentService service = new FinalizeTournamentService(repositoryMock, awardPortMock);
+        FinalizeTournamentService service = new FinalizeTournamentService(repositoryMock, awardPortMock, eventPublisherMock);
 
         assertThrows(TournamentNotFoundException.class, () -> service.finalizeTournament("99"));
     }
@@ -80,6 +85,7 @@ class FinalizeTournamentServiceTest {
     void finalizeTournament_whenEndDateNotReached_throwsException() {
         TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
         RecognitionAwardPort awardPortMock = mock(RecognitionAwardPort.class);
+        TournamentEventPublisherPort eventPublisherMock = mock(TournamentEventPublisherPort.class);
 
         Tournament tournament = Tournament.reconstruct(
                 "1", "Copa Enero", 8, BigDecimal.valueOf(50000),
@@ -89,7 +95,7 @@ class FinalizeTournamentServiceTest {
 
         when(repositoryMock.findById("1")).thenReturn(Optional.of(tournament));
 
-        FinalizeTournamentService service = new FinalizeTournamentService(repositoryMock, awardPortMock);
+        FinalizeTournamentService service = new FinalizeTournamentService(repositoryMock, awardPortMock, eventPublisherMock);
 
         assertThrows(TournamentCannotBeFinalizedException.class,
                 () -> service.finalizeTournament("1"));
@@ -99,6 +105,7 @@ class FinalizeTournamentServiceTest {
     void finalizeTournament_whenAlreadyFinished_throwsException() {
         TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
         RecognitionAwardPort awardPortMock = mock(RecognitionAwardPort.class);
+        TournamentEventPublisherPort eventPublisherMock = mock(TournamentEventPublisherPort.class);
 
         Tournament tournament = Tournament.reconstruct(
                 "1", "Copa Enero", 8, BigDecimal.valueOf(50000),
@@ -108,7 +115,7 @@ class FinalizeTournamentServiceTest {
 
         when(repositoryMock.findById("1")).thenReturn(Optional.of(tournament));
 
-        FinalizeTournamentService service = new FinalizeTournamentService(repositoryMock, awardPortMock);
+        FinalizeTournamentService service = new FinalizeTournamentService(repositoryMock, awardPortMock, eventPublisherMock);
 
         assertThrows(TournamentCannotBeFinalizedException.class,
                 () -> service.finalizeTournament("1"));

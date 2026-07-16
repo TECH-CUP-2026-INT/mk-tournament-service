@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: service-tournament
+  data:
+    mongodb:
+      uri: ${SPRING_DATA_MONGODB_URI}
+  rabbitmq:
+    host: toucan.lmq.cloudamqp.com
+    port: 5671
+    username: exdntvvm
+    password: ${RABBITMQ_PASS:}
+    virtual-host: exdntvvm
+    ssl:
+      enabled: true
+
+# TC-109: URL del Payment Service (aun no desplegado en este entorno); las
+# llamadas a GET /payment-orders/{enrollmentId} caen a UNKNOWN por timeout hasta que exista.
+payment-service:
+  base-url: http://localhost:8081
+
+# URL del Team Service (aun no desplegado en este entorno); las llamadas a
+# GET /teams/{teamId} fallan con TeamServiceUnavailableException hasta que exista.
+team-service:
+  base-url: http://localhost:8082
+
+# Feign clients (payment-service, team-service)
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 2500
+        readTimeout: 2500
+
+# Swagger / SpringDoc
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+    try-it-out-enabled: true
+  api-docs:
+    path: /v3/api-docs

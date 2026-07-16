@@ -6,6 +6,7 @@ import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentNotFoundE
 import co.edu.escuelaing.techcup.tournament.domain.model.Tournament;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.FinalizeTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.RecognitionAwardPort;
+import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentEventPublisherPort;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentRepositoryPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +22,7 @@ public class FinalizeTournamentService implements FinalizeTournamentUseCase {
 
     private final TournamentRepositoryPort repository;
     private final RecognitionAwardPort recognitionAwardPort;
+    private final TournamentEventPublisherPort tournamentEventPublisher;
 
 
     @Override
@@ -40,6 +42,8 @@ public class FinalizeTournamentService implements FinalizeTournamentUseCase {
         } catch (RuntimeException e) {
             log.warn("No se pudieron disparar los reconocimientos para el torneo '{}'", tournamentId, e);
         }
+
+        tournamentEventPublisher.publishTournamentFinalized(tournamentId);
 
         return saved;
     }
