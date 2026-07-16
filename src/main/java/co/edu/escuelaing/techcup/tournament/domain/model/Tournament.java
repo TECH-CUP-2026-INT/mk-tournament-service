@@ -1,8 +1,5 @@
 package co.edu.escuelaing.techcup.tournament.domain.model;
 
-import co.edu.escuelaing.techcup.tournament.application.usecase.EnrollTeamInTournamentService;
-import co.edu.escuelaing.techcup.tournament.application.usecase.StartTournamentPreparationService;
-
 import co.edu.escuelaing.techcup.tournament.domain.exception.ChampionAssignmentNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.ChampionPendingPenaltiesException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidTournamentDataException;
@@ -35,6 +32,7 @@ import java.util.UUID;
  * activo → en progreso → finalizado), equipos, inscripciones, partidos y reglas
  * de negocio asociadas.
  */
+@SuppressWarnings("java:S2160") // identidad por id (heredada de AggregateRoot), no por campos: patron DDD intencional
 public class Tournament extends AggregateRoot {
 
     private static final int MAX_NAME_LENGTH = 100;
@@ -42,6 +40,7 @@ public class Tournament extends AggregateRoot {
     private static final int MIN_TEAMS_TO_CREATE = 3;
     // TC-28: para que un torneo esté "listo para activarse" se requieren al menos 3 equipos aprobados.
     private static final int MIN_APPROVED_TEAMS_TO_ACTIVATE = 3;
+    private static final String TEAM_NOT_ENROLLED_MESSAGE = "El equipo no está inscrito en este torneo";
 
     private String name;
     private TournamentType type;
@@ -233,6 +232,10 @@ public class Tournament extends AggregateRoot {
                 .count();
     }
 
+    // "reason" se valida como obligatoria en la capa REST (RemoveTeamRequest) y se
+    // transporta hasta aqui por completitud del caso de uso; el dominio aun no la
+    // usa (reservada para un futuro registro de auditoria del retiro de equipos).
+    @SuppressWarnings("java:S1172")
     public List<Match> removeTeam(UUID teamId, RemovalReason reason) {
         assertActive();
         if (status != TournamentStatus.ACTIVE && status != TournamentStatus.IN_PROGRESS)
@@ -241,7 +244,7 @@ public class Tournament extends AggregateRoot {
         TeamRegistration team = teams.stream()
                 .filter(t -> t.getTeamId().equals(teamId))
                 .findFirst()
-                .orElseThrow(() -> new TeamRemovalNotAllowedException("El equipo no está inscrito en este torneo"));
+                .orElseThrow(() -> new TeamRemovalNotAllowedException(TEAM_NOT_ENROLLED_MESSAGE));
 
         teams.remove(team);
 
@@ -271,7 +274,7 @@ public class Tournament extends AggregateRoot {
         TeamRegistration team = teams.stream()
                 .filter(t -> t.getTeamId().equals(teamId))
                 .findFirst()
-                .orElseThrow(() -> new TeamDisqualificationNotAllowedException("El equipo no está inscrito en este torneo"));
+                .orElseThrow(() -> new TeamDisqualificationNotAllowedException(TEAM_NOT_ENROLLED_MESSAGE));
 
         if (team.getRegistrationStatus() == RegistrationStatus.DISQUALIFIED) {
             throw new TeamDisqualificationNotAllowedException("El equipo ya está descalificado");
@@ -306,7 +309,7 @@ public class Tournament extends AggregateRoot {
         }
 
         Enrollment enrollment = new Enrollment(teamId, teamName, EnrollmentStatus.RESERVED);
-        enrollment.setReservationExpiresAt(LocalDateTime.now().plusMinutes(RESERVATION_MINUTES));
+        enrollment.setReservationExpiresAt(LocalDateTime.now(java.time.ZoneOffset.UTC).plusMinutes(RESERVATION_MINUTES));
         enrollments.add(enrollment);
         return enrollment;
     }
@@ -327,7 +330,7 @@ public class Tournament extends AggregateRoot {
         TeamRegistration team = teams.stream()
                 .filter(t -> t.getTeamId().equals(teamId))
                 .findFirst()
-                .orElseThrow(() -> new TeamInactivationNotAllowedException("El equipo no está inscrito en este torneo"));
+                .orElseThrow(() -> new TeamInactivationNotAllowedException(TEAM_NOT_ENROLLED_MESSAGE));
 
         if (team.getRegistrationStatus() == RegistrationStatus.INACTIVE) {
             throw new TeamInactivationNotAllowedException("El equipo ya está inactivo en este torneo");
@@ -458,35 +461,40 @@ public class Tournament extends AggregateRoot {
     }
 
     /**
-     * TC-41: actualiza cualquier campo editable del torneo. Todos los parámetros
-     * son opcionales (null = no se toca ese campo). No se puede editar un torneo
-     * Finalizado. Tipo y formato (y las horas de partido asociadas a Lightning)
-     * solo se pueden cambiar mientras el torneo está en estado Activo.
+     * TC-41: actualiza cualquier campo editable del torneo. Todos los campos de
+     * {@link UpdateCommand} son opcionales (null = no se toca ese campo). No se
+     * puede editar un torneo Finalizado. Tipo y formato (y las horas de partido
+     * asociadas a Lightning) solo se pueden cambiar mientras el torneo está en
+     * estado Activo.
      */
-    public void update(String name, TournamentType type, TournamentFormat format,
-                       Integer numberOfTeams, BigDecimal cost, LocalDate registrationDeadline,
-                       LocalDate startDate, LocalDate endDate,
-                       LocalTime matchStartTime, LocalTime matchEndTime) {
+    public record UpdateCommand(String name, TournamentType type, TournamentFormat format,
+                                Integer numberOfTeams, BigDecimal cost, LocalDate registrationDeadline,
+                                LocalDate startDate, LocalDate endDate,
+                                LocalTime matchStartTime, LocalTime matchEndTime) {}
+
+    public void update(UpdateCommand command) {
         assertActive();
         if (status == TournamentStatus.FINISHED) {
             throw new TournamentCannotBeEditedException("No se puede editar un torneo en estado Finalizado");
         }
-        boolean changesTypeOrFormat = type != null || format != null || matchStartTime != null || matchEndTime != null;
+        boolean changesTypeOrFormat = command.type() != null || command.format() != null
+                || command.matchStartTime() != null || command.matchEndTime() != null;
         if (changesTypeOrFormat && status != TournamentStatus.ACTIVE) {
             throw new TournamentCannotBeEditedException(
                     "El tipo, formato y horario del torneo solo se pueden editar mientras está en estado Activo");
         }
 
-        String newName = name != null ? name : this.name;
-        TournamentType newType = type != null ? type : this.type;
-        TournamentFormat newFormat = format != null ? format : this.format;
-        int newNumberOfTeams = numberOfTeams != null ? numberOfTeams : this.numberOfTeams;
-        BigDecimal newCost = cost != null ? cost : this.cost;
-        LocalDate newRegistrationDeadline = registrationDeadline != null ? registrationDeadline : this.registrationDeadline;
-        LocalDate newStartDate = startDate != null ? startDate : this.startDate;
-        LocalDate newEndDate = endDate != null ? endDate : this.endDate;
-        LocalTime newMatchStartTime = matchStartTime != null ? matchStartTime : this.matchStartTime;
-        LocalTime newMatchEndTime = matchEndTime != null ? matchEndTime : this.matchEndTime;
+        String newName = command.name() != null ? command.name() : this.name;
+        TournamentType newType = command.type() != null ? command.type() : this.type;
+        TournamentFormat newFormat = command.format() != null ? command.format() : this.format;
+        int newNumberOfTeams = command.numberOfTeams() != null ? command.numberOfTeams() : this.numberOfTeams;
+        BigDecimal newCost = command.cost() != null ? command.cost() : this.cost;
+        LocalDate newRegistrationDeadline = command.registrationDeadline() != null
+                ? command.registrationDeadline() : this.registrationDeadline;
+        LocalDate newStartDate = command.startDate() != null ? command.startDate() : this.startDate;
+        LocalDate newEndDate = command.endDate() != null ? command.endDate() : this.endDate;
+        LocalTime newMatchStartTime = command.matchStartTime() != null ? command.matchStartTime() : this.matchStartTime;
+        LocalTime newMatchEndTime = command.matchEndTime() != null ? command.matchEndTime() : this.matchEndTime;
 
         validateName(newName);
         validateType(newType);

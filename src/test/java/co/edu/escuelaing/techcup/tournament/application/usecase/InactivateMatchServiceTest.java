@@ -79,7 +79,7 @@ class InactivateMatchServiceTest {
 
         InactivateMatchService service = new InactivateMatchService(repositoryMock);
 
-        assertThrows(MatchupNotFoundException.class,
-                () -> service.execute(new InactivateMatchCommand(matchId, MatchActivationAction.INACTIVATE)));
+        InactivateMatchCommand command = new InactivateMatchCommand(matchId, MatchActivationAction.INACTIVATE);
+        assertThrows(MatchupNotFoundException.class, () -> service.execute(command));
     }
 }

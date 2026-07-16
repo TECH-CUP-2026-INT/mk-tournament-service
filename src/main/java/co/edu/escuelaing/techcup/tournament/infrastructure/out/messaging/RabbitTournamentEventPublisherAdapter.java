@@ -9,6 +9,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 @Component
@@ -24,7 +25,7 @@ public class RabbitTournamentEventPublisherAdapter implements TournamentEventPub
     public void publishTournamentFinalized(UUID tournamentId) {
         try {
             rabbitTemplate.convertAndSend(RabbitMQConfig.TECHCUP_EXCHANGE, ROUTING_KEY_FINALIZED,
-                    new TournamentFinalizedEvent(tournamentId, LocalDateTime.now()));
+                    new TournamentFinalizedEvent(tournamentId, LocalDateTime.now(ZoneOffset.UTC)));
         } catch (RuntimeException e) {
             log.warn("No se pudo publicar el evento de finalización para el torneo '{}'", tournamentId, e);
         }

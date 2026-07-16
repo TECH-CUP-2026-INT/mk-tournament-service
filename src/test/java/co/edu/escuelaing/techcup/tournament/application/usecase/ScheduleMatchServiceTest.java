@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Month;
 import java.time.LocalTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -39,8 +40,8 @@ class ScheduleMatchServiceTest {
     private Tournament sampleTournament() {
         return Tournament.builder()
                 .id(tournamentId).name("Copa Enero").numberOfTeams(8).cost(BigDecimal.valueOf(50000))
-                .startDate(LocalDate.of(2026, 3, 1)).endDate(LocalDate.of(2026, 3, 20))
-                .registrationDeadline(LocalDate.of(2026, 2, 20))
+                .startDate(LocalDate.of(2026, Month.MARCH, 1)).endDate(LocalDate.of(2026, Month.MARCH, 20))
+                .registrationDeadline(LocalDate.of(2026, Month.FEBRUARY, 20))
                 .status(TournamentStatus.IN_PREPARATION)
                 .reconstruct();
     }
@@ -51,7 +52,7 @@ class ScheduleMatchServiceTest {
 
     private ScheduleMatchCommand sampleCommand() {
         return new ScheduleMatchCommand(
-                matchupId, LocalDate.of(2026, 8, 1), LocalTime.of(15, 0), courtId, refereeId);
+                matchupId, LocalDate.of(2026, Month.AUGUST, 1), LocalTime.of(15, 0), courtId, refereeId);
     }
 
     @Test
@@ -87,8 +88,9 @@ class ScheduleMatchServiceTest {
         when(tournamentRepository.findByMatchId(matchupId)).thenReturn(Optional.empty());
 
         ScheduleMatchService service = new ScheduleMatchService(tournamentRepository, courtRepository, scheduledMatchRepository);
+        ScheduleMatchCommand command = sampleCommand();
 
-        assertThrows(MatchupNotFoundException.class, () -> service.schedule(sampleCommand()));
+        assertThrows(MatchupNotFoundException.class, () -> service.schedule(command));
 
         verify(courtRepository, never()).findById(any());
         verify(scheduledMatchRepository, never()).save(any());
@@ -104,8 +106,9 @@ class ScheduleMatchServiceTest {
         when(courtRepository.findById(courtId)).thenReturn(Optional.empty());
 
         ScheduleMatchService service = new ScheduleMatchService(tournamentRepository, courtRepository, scheduledMatchRepository);
+        ScheduleMatchCommand command = sampleCommand();
 
-        assertThrows(CourtNotFoundException.class, () -> service.schedule(sampleCommand()));
+        assertThrows(CourtNotFoundException.class, () -> service.schedule(command));
 
         verify(scheduledMatchRepository, never()).save(any());
     }
@@ -121,8 +124,9 @@ class ScheduleMatchServiceTest {
         when(scheduledMatchRepository.existsConflict(eq(courtId), eq(refereeId), any(), any())).thenReturn(true);
 
         ScheduleMatchService service = new ScheduleMatchService(tournamentRepository, courtRepository, scheduledMatchRepository);
+        ScheduleMatchCommand command = sampleCommand();
 
-        assertThrows(ScheduleConflictException.class, () -> service.schedule(sampleCommand()));
+        assertThrows(ScheduleConflictException.class, () -> service.schedule(command));
 
         verify(scheduledMatchRepository, never()).save(any());
         verify(courtRepository, never()).save(any());

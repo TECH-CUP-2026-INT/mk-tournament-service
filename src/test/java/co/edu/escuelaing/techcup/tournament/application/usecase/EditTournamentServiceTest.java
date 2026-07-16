@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Month;
 import java.time.LocalTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,8 +29,8 @@ class EditTournamentServiceTest {
     private Tournament sampleTournament(UUID id, TournamentStatus status) {
         return Tournament.builder()
                 .id(id).name("Copa Enero").numberOfTeams(8).cost(BigDecimal.valueOf(50000))
-                .startDate(LocalDate.of(2026, 3, 1)).endDate(LocalDate.of(2026, 3, 20))
-                .registrationDeadline(LocalDate.of(2026, 2, 20))
+                .startDate(LocalDate.of(2026, Month.MARCH, 1)).endDate(LocalDate.of(2026, Month.MARCH, 20))
+                .registrationDeadline(LocalDate.of(2026, Month.FEBRUARY, 20))
                 .status(status)
                 .reconstruct();
     }
@@ -55,6 +56,34 @@ class EditTournamentServiceTest {
         assertEquals("Copa Febrero", result.getName());
         assertEquals(TournamentType.LIGHTNING, result.getType());
         assertEquals(TournamentFormat.GROUPS, result.getFormat());
+        verify(repositoryMock).save(tournament);
+    }
+
+    @Test
+    void edit_capacidadCostoYFechas_actualizaTodosLosCampos() {
+        UUID id = UUID.randomUUID();
+        TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
+        Tournament tournament = sampleTournament(id, TournamentStatus.ACTIVE);
+
+        when(repositoryMock.findById(id)).thenReturn(Optional.of(tournament));
+        when(repositoryMock.save(tournament)).thenReturn(tournament);
+
+        EditTournamentService service = new EditTournamentService(repositoryMock);
+
+        EditTournamentCommand command = new EditTournamentCommand(
+                id, null, null, null,
+                10, BigDecimal.valueOf(60000), LocalDate.of(2026, Month.FEBRUARY, 25),
+                LocalDate.of(2026, Month.APRIL, 1), LocalDate.of(2026, Month.APRIL, 20),
+                null, null
+        );
+
+        Tournament result = service.edit(command);
+
+        assertEquals(10, result.getNumberOfTeams());
+        assertEquals(BigDecimal.valueOf(60000), result.getCost());
+        assertEquals(LocalDate.of(2026, Month.FEBRUARY, 25), result.getRegistrationDeadline());
+        assertEquals(LocalDate.of(2026, Month.APRIL, 1), result.getStartDate());
+        assertEquals(LocalDate.of(2026, Month.APRIL, 20), result.getEndDate());
         verify(repositoryMock).save(tournament);
     }
 

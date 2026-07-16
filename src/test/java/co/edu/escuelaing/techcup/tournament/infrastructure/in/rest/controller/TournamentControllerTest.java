@@ -68,12 +68,14 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -356,7 +358,7 @@ class TournamentControllerTest {
         Court withMatch = Court.reconstruct(COURT_ID_2, TOURNAMENT_ID, CourtSection.CANCHA_2, "Court B", null, MATCH_ID);
         Match match = new Match(MATCH_ID, HOME_TEAM_ID, AWAY_TEAM_ID, MatchStatus.IN_PROGRESS);
         ScheduledMatch scheduledMatch = ScheduledMatch.reconstruct(
-                SCHEDULED_MATCH_ID, MATCH_ID, COURT_ID_2, REFEREE_ID, LocalDate.of(2026, 8, 5), java.time.LocalTime.of(9, 0));
+                SCHEDULED_MATCH_ID, MATCH_ID, COURT_ID_2, REFEREE_ID, LocalDate.of(2026, Month.AUGUST, 5), java.time.LocalTime.of(9, 0));
 
         when(viewCourtMapUseCase.getCourtMap(TOURNAMENT_ID)).thenReturn(List.of(
                 new ViewCourtMapUseCase.CourtMapEntry(available, null, null),
@@ -535,7 +537,7 @@ class TournamentControllerTest {
 
     @Test
     void recordPenaltyShootoutWinner_cuandoNoEmpatado_devuelve409() throws Exception {
-        org.mockito.Mockito.doThrow(new ChampionAssignmentNotAllowedException(
+        doThrow(new ChampionAssignmentNotAllowedException(
                         "La tanda de penales solo aplica cuando hay empate en tiempo reglamentario"))
                 .when(recordPenaltyShootoutWinnerUseCase).recordWinner(org.mockito.ArgumentMatchers.any());
 

@@ -2,8 +2,8 @@ package co.edu.escuelaing.techcup.tournament.infrastructure.out.persistence.adap
 
 import co.edu.escuelaing.techcup.tournament.domain.model.Match;
 import co.edu.escuelaing.techcup.tournament.domain.model.MatchStatus;
-import co.edu.escuelaing.techcup.tournament.domain.model.TournamentFormat;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.FixtureGenerationPort;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -33,6 +33,7 @@ public class RandomFixtureGenerationAdapter implements FixtureGenerationPort {
 
     private final Random random;
 
+    @Autowired
     public RandomFixtureGenerationAdapter() {
         this(new Random());
     }

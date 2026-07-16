@@ -1,7 +1,6 @@
 package co.edu.escuelaing.techcup.tournament.domain.service;
 
 import co.edu.escuelaing.techcup.tournament.domain.model.AuditEvent;
-import co.edu.escuelaing.techcup.tournament.application.usecase.CreateTournamentService;
 
 import org.junit.jupiter.api.Test;
 

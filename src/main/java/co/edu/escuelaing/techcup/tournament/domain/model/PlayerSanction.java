@@ -8,6 +8,7 @@ import java.util.UUID;
  * Sanción aplicada a un jugador (tarjeta roja, amarillas acumuladas o conducta),
  * con los partidos de suspensión restantes.
  */
+@SuppressWarnings("java:S2160") // identidad por id (heredada de AggregateRoot), no por campos: patron DDD intencional
 public class PlayerSanction extends AggregateRoot {
 
     private static final int AUTOMATIC_SANCTION_MATCHES = 1;

@@ -1,7 +1,5 @@
 package co.edu.escuelaing.techcup.tournament.domain.model;
 
-import co.edu.escuelaing.techcup.tournament.application.usecase.SyncEnrollmentStatusService;
-
 import java.time.LocalDateTime;
 import java.util.UUID;
 

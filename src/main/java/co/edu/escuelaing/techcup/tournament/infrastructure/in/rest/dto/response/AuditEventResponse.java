@@ -1,7 +1,5 @@
 package co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response;
 
-import co.edu.escuelaing.techcup.tournament.application.usecase.CreateTournamentService;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;

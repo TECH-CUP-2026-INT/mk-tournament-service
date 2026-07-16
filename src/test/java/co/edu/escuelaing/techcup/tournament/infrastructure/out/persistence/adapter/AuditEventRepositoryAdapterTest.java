@@ -1,7 +1,5 @@
 package co.edu.escuelaing.techcup.tournament.infrastructure.out.persistence.adapter;
 
-import co.edu.escuelaing.techcup.tournament.application.usecase.CreateTournamentService;
-
 import co.edu.escuelaing.techcup.tournament.infrastructure.out.persistence.mongo.AuditEventDocument;
 import co.edu.escuelaing.techcup.tournament.domain.model.AuditEventFilter;
 import org.bson.Document;
@@ -11,6 +9,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -49,7 +48,7 @@ class AuditEventRepositoryAdapterTest {
 
         AuditEventRepositoryAdapter adapter = new AuditEventRepositoryAdapter(mongoTemplate, mapper);
         adapter.search(new AuditEventFilter(
-                LocalDate.of(2026, 1, 1), LocalDate.of(2026, 1, 31),
+                LocalDate.of(2026, Month.JANUARY, 1), LocalDate.of(2026, Month.JANUARY, 31),
                 "CreateTournamentService.create", "t1"));
 
         var captor = forClass(Query.class);
