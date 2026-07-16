@@ -10,6 +10,7 @@ import java.util.UUID;
  * Programación real de un partido: fecha, hora, cancha y árbitro asignados a un
  * enfrentamiento ({@link Match}) ya generado en el fixture.
  */
+@SuppressWarnings("java:S2160") // identidad por id (heredada de AggregateRoot), no por campos: patron DDD intencional
 public class ScheduledMatch extends AggregateRoot {
 
     private final UUID matchupId;

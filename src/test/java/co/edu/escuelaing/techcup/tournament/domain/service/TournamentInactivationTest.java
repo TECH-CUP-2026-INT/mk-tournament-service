@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -21,8 +22,8 @@ class TournamentInactivationTest {
     private Tournament sampleTournament(TournamentStatus status) {
         return Tournament.builder()
                 .id(UUID.randomUUID()).name("Copa Enero").numberOfTeams(8).cost(BigDecimal.valueOf(50000))
-                .startDate(LocalDate.of(2026, 3, 1)).endDate(LocalDate.of(2026, 3, 20))
-                .registrationDeadline(LocalDate.of(2026, 2, 20))
+                .startDate(LocalDate.of(2026, Month.MARCH, 1)).endDate(LocalDate.of(2026, Month.MARCH, 20))
+                .registrationDeadline(LocalDate.of(2026, Month.FEBRUARY, 20))
                 .status(status)
                 .reconstruct();
     }
@@ -83,8 +84,9 @@ class TournamentInactivationTest {
         Tournament tournament = sampleTournament(TournamentStatus.ACTIVE);
         tournament.inactivate();
 
-        assertThrows(TournamentInactiveException.class,
-                () -> tournament.update(null, null, null, null, null, null, null, null, null, null));
+        Tournament.UpdateCommand command = new Tournament.UpdateCommand(
+                null, null, null, null, null, null, null, null, null, null);
+        assertThrows(TournamentInactiveException.class, () -> tournament.update(command));
     }
 
     @Test
@@ -100,6 +102,7 @@ class TournamentInactivationTest {
         Tournament tournament = sampleTournament(TournamentStatus.IN_PROGRESS);
         tournament.inactivate();
 
-        assertThrows(TournamentInactiveException.class, () -> tournament.finish(LocalDate.of(2026, 3, 25)));
+        LocalDate finishDate = LocalDate.of(2026, Month.MARCH, 25);
+        assertThrows(TournamentInactiveException.class, () -> tournament.finish(finishDate));
     }
 }

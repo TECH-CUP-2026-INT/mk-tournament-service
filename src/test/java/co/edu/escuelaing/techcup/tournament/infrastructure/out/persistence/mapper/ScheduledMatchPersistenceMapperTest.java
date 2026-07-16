@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
 import java.time.LocalDate;
+import java.time.Month;
 import java.time.LocalTime;
 import java.util.UUID;
 
@@ -22,7 +23,7 @@ class ScheduledMatchPersistenceMapperTest {
         UUID courtId = UUID.randomUUID();
         UUID refereeId = UUID.randomUUID();
         ScheduledMatchDocument document = new ScheduledMatchDocument(
-                id, matchupId, courtId, refereeId, LocalDate.of(2026, 8, 5), LocalTime.of(9, 0));
+                id, matchupId, courtId, refereeId, LocalDate.of(2026, Month.AUGUST, 5), LocalTime.of(9, 0));
 
         ScheduledMatch scheduledMatch = mapper.toDomain(document);
 
@@ -30,7 +31,7 @@ class ScheduledMatchPersistenceMapperTest {
         assertEquals(matchupId, scheduledMatch.getMatchupId());
         assertEquals(courtId, scheduledMatch.getCourtId());
         assertEquals(refereeId, scheduledMatch.getRefereeId());
-        assertEquals(LocalDate.of(2026, 8, 5), scheduledMatch.getMatchDate());
+        assertEquals(LocalDate.of(2026, Month.AUGUST, 5), scheduledMatch.getMatchDate());
         assertEquals(LocalTime.of(9, 0), scheduledMatch.getMatchTime());
     }
 
@@ -41,7 +42,7 @@ class ScheduledMatchPersistenceMapperTest {
         UUID courtId = UUID.randomUUID();
         UUID refereeId = UUID.randomUUID();
         ScheduledMatch scheduledMatch = ScheduledMatch.reconstruct(
-                id, matchupId, courtId, refereeId, LocalDate.of(2026, 8, 5), LocalTime.of(9, 0));
+                id, matchupId, courtId, refereeId, LocalDate.of(2026, Month.AUGUST, 5), LocalTime.of(9, 0));
 
         ScheduledMatchDocument document = mapper.toDocument(scheduledMatch);
 
@@ -49,7 +50,7 @@ class ScheduledMatchPersistenceMapperTest {
         assertEquals(matchupId, document.getMatchupId());
         assertEquals(courtId, document.getCourtId());
         assertEquals(refereeId, document.getRefereeId());
-        assertEquals(LocalDate.of(2026, 8, 5), document.getMatchDate());
+        assertEquals(LocalDate.of(2026, Month.AUGUST, 5), document.getMatchDate());
         assertEquals(LocalTime.of(9, 0), document.getMatchTime());
     }
 }

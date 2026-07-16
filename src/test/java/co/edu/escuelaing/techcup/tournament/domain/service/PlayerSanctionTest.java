@@ -39,14 +39,16 @@ class PlayerSanctionTest {
 
     @Test
     void create_conduct_sinMatchesSuspended_lanzaInvalidSanctionDataException() {
+        UUID playerId = UUID.randomUUID();
         assertThrows(InvalidSanctionDataException.class,
-                () -> PlayerSanction.create(UUID.randomUUID(), SanctionType.CONDUCT, null));
+                () -> PlayerSanction.create(playerId, SanctionType.CONDUCT, null));
     }
 
     @Test
     void create_conduct_conMatchesSuspendedCero_lanzaInvalidSanctionDataException() {
+        UUID playerId = UUID.randomUUID();
         assertThrows(InvalidSanctionDataException.class,
-                () -> PlayerSanction.create(UUID.randomUUID(), SanctionType.CONDUCT, 0));
+                () -> PlayerSanction.create(playerId, SanctionType.CONDUCT, 0));
     }
 
     @Test
@@ -57,8 +59,9 @@ class PlayerSanctionTest {
 
     @Test
     void create_sinType_lanzaInvalidSanctionDataException() {
+        UUID playerId = UUID.randomUUID();
         assertThrows(InvalidSanctionDataException.class,
-                () -> PlayerSanction.create(UUID.randomUUID(), null, null));
+                () -> PlayerSanction.create(playerId, null, null));
     }
 
     @Test

@@ -8,6 +8,7 @@ import java.util.UUID;
  * Cancha física del campus donde se juegan los partidos, con su sección del mapa,
  * imagen y el partido que tenga asignado.
  */
+@SuppressWarnings("java:S2160") // identidad por id (heredada de AggregateRoot), no por campos: patron DDD intencional
 public class Court extends AggregateRoot {
 
     private static final int MAX_DESCRIPTION_LENGTH = 300;

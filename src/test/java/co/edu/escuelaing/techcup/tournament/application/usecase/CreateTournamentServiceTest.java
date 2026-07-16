@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Month;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -26,7 +27,7 @@ class CreateTournamentServiceTest {
         CreateTournamentCommand command = new CreateTournamentCommand(
                 "Copa Enero", TournamentType.NORMAL, TournamentFormat.BRACKETS,
                 8, BigDecimal.valueOf(50000),
-                LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 20), LocalDate.of(2026, 2, 20),
+                LocalDate.of(2026, Month.MARCH, 1), LocalDate.of(2026, Month.MARCH, 20), LocalDate.of(2026, Month.FEBRUARY, 20),
                 null, null
         );
 

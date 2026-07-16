@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Month;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -76,7 +77,7 @@ class ViewCourtMapServiceTest {
         Tournament tournament = sampleTournament(List.of(match));
         Court court = Court.reconstruct(courtId, tournamentId, CourtSection.CANCHA_1, "Main court", null, matchId);
         ScheduledMatch scheduledMatch = ScheduledMatch.reconstruct(
-                UUID.randomUUID(), matchId, courtId, UUID.randomUUID(), LocalDate.of(2026, 8, 5), LocalTime.of(9, 0));
+                UUID.randomUUID(), matchId, courtId, UUID.randomUUID(), LocalDate.of(2026, Month.AUGUST, 5), LocalTime.of(9, 0));
 
         when(tournamentRepository.findById(tournamentId)).thenReturn(Optional.of(tournament));
         when(courtRepository.findAllByTournamentId(tournamentId)).thenReturn(List.of(court));
@@ -87,7 +88,7 @@ class ViewCourtMapServiceTest {
 
         assertEquals(1, result.size());
         assertEquals(matchId, result.get(0).match().getMatchId());
-        assertEquals(LocalDate.of(2026, 8, 5), result.get(0).scheduledMatch().getMatchDate());
+        assertEquals(LocalDate.of(2026, Month.AUGUST, 5), result.get(0).scheduledMatch().getMatchDate());
     }
 
     @Test

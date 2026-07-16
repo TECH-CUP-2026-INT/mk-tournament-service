@@ -14,7 +14,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -37,7 +36,7 @@ class ApplySanctionServiceTest {
         assertEquals(playerId, result.getPlayerId());
         assertEquals(1, result.getMatchesRemaining());
         verify(repository).save(any());
-        verify(notificationPort).notifyPlayerSanctioned(eq(playerId), eq(SanctionType.RED_CARD), eq(1));
+        verify(notificationPort).notifyPlayerSanctioned(playerId, SanctionType.RED_CARD, 1);
     }
 
     @Test
@@ -48,8 +47,8 @@ class ApplySanctionServiceTest {
 
         ApplySanctionService service = new ApplySanctionService(repository, notificationPort);
 
-        assertThrows(InvalidSanctionDataException.class,
-                () -> service.apply(new ApplySanctionCommand(playerId, SanctionType.CONDUCT, null)));
+        ApplySanctionCommand command = new ApplySanctionCommand(playerId, SanctionType.CONDUCT, null);
+        assertThrows(InvalidSanctionDataException.class, () -> service.apply(command));
 
         verify(repository, never()).save(any());
         verify(notificationPort, never()).notifyPlayerSanctioned(any(), any(), anyInt());

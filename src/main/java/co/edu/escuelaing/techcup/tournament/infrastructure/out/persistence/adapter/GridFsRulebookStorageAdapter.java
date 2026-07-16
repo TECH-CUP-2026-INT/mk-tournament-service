@@ -34,9 +34,12 @@ public class GridFsRulebookStorageAdapter implements RulebookStoragePort, Rulebo
 
     @Override
     public RulebookFile retrieve(String fileId) {
-        GridFsResource resource = gridFsTemplate.getResource(
-                gridFsTemplate.findOne(Query.query(Criteria.where("_id").is(new ObjectId(fileId))))
-        );
+        com.mongodb.client.gridfs.model.GridFSFile gridFsFile =
+                gridFsTemplate.findOne(Query.query(Criteria.where("_id").is(new ObjectId(fileId))));
+        if (gridFsFile == null) {
+            throw new IllegalStateException("No se encontró el archivo de reglamento en GridFS con id " + fileId);
+        }
+        GridFsResource resource = gridFsTemplate.getResource(gridFsFile);
         try {
             return new RulebookFile(
                     resource.getFilename(),
