@@ -10,6 +10,7 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ViewRegister
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -19,9 +20,9 @@ public class ViewRegisteredTeamsService implements ViewRegisteredTeamsUseCase {
 
 
     @Override
-    public List<TeamRegistration> getTeams(String tournamentId) {
+    public List<TeamRegistration> getTeams(UUID tournamentId) {
         Tournament tournament = tournamentRepository.findById(tournamentId)
-                .orElseThrow(() -> new TournamentNotFoundException(tournamentId));
+                .orElseThrow(() -> new TournamentNotFoundException(tournamentId.toString()));
         tournament.assertActive();
         return tournament.getTeams();
     }

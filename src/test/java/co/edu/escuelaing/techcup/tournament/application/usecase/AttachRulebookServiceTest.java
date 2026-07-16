@@ -13,6 +13,7 @@ import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -25,9 +26,9 @@ import static org.mockito.Mockito.when;
 
 class AttachRulebookServiceTest {
 
-    private Tournament sampleTournament() {
+    private Tournament sampleTournament(UUID id) {
         return Tournament.reconstruct(
-                "1", "Copa Enero", 8, BigDecimal.valueOf(50000),
+                id, "Copa Enero", 8, BigDecimal.valueOf(50000),
                 LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 20), LocalDate.of(2026, 2, 20),
                 TournamentStatus.DRAFT
         );
@@ -35,18 +36,19 @@ class AttachRulebookServiceTest {
 
     @Test
     void attach_pdfValidoYTorneoExiste_guardaYRetornaTorneoConFileId() {
+        UUID id = UUID.randomUUID();
         TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
         RulebookStoragePort storageMock = mock(RulebookStoragePort.class);
-        Tournament tournament = sampleTournament();
+        Tournament tournament = sampleTournament(id);
 
-        when(repositoryMock.findById("1")).thenReturn(Optional.of(tournament));
+        when(repositoryMock.findById(id)).thenReturn(Optional.of(tournament));
         when(storageMock.store(anyString(), anyString(), anyLong(), any())).thenReturn("file-123");
         when(repositoryMock.save(tournament)).thenReturn(tournament);
 
         AttachRulebookService service = new AttachRulebookService(repositoryMock, storageMock);
 
         AttachRulebookCommand command = new AttachRulebookCommand(
-                "1", "reglamento.pdf", "application/pdf", 1024L,
+                id, "reglamento.pdf", "application/pdf", 1024L,
                 new ByteArrayInputStream("contenido".getBytes())
         );
 
@@ -58,15 +60,16 @@ class AttachRulebookServiceTest {
 
     @Test
     void attach_torneoNoExiste_lanzaTournamentNotFoundException() {
+        UUID id = UUID.randomUUID();
         TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
         RulebookStoragePort storageMock = mock(RulebookStoragePort.class);
 
-        when(repositoryMock.findById("99")).thenReturn(Optional.empty());
+        when(repositoryMock.findById(id)).thenReturn(Optional.empty());
 
         AttachRulebookService service = new AttachRulebookService(repositoryMock, storageMock);
 
         AttachRulebookCommand command = new AttachRulebookCommand(
-                "99", "reglamento.pdf", "application/pdf", 1024L,
+                id, "reglamento.pdf", "application/pdf", 1024L,
                 new ByteArrayInputStream("contenido".getBytes())
         );
 
@@ -75,16 +78,17 @@ class AttachRulebookServiceTest {
 
     @Test
     void attach_archivoNoEsPdf_lanzaInvalidRulebookFileException() {
+        UUID id = UUID.randomUUID();
         TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
         RulebookStoragePort storageMock = mock(RulebookStoragePort.class);
-        Tournament tournament = sampleTournament();
+        Tournament tournament = sampleTournament(id);
 
-        when(repositoryMock.findById("1")).thenReturn(Optional.of(tournament));
+        when(repositoryMock.findById(id)).thenReturn(Optional.of(tournament));
 
         AttachRulebookService service = new AttachRulebookService(repositoryMock, storageMock);
 
         AttachRulebookCommand command = new AttachRulebookCommand(
-                "1", "reglamento.png", "image/png", 1024L,
+                id, "reglamento.png", "image/png", 1024L,
                 new ByteArrayInputStream("contenido".getBytes())
         );
 
@@ -93,16 +97,17 @@ class AttachRulebookServiceTest {
 
     @Test
     void attach_archivoSuperaLimite_lanzaInvalidRulebookFileException() {
+        UUID id = UUID.randomUUID();
         TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
         RulebookStoragePort storageMock = mock(RulebookStoragePort.class);
-        Tournament tournament = sampleTournament();
+        Tournament tournament = sampleTournament(id);
 
-        when(repositoryMock.findById("1")).thenReturn(Optional.of(tournament));
+        when(repositoryMock.findById(id)).thenReturn(Optional.of(tournament));
 
         AttachRulebookService service = new AttachRulebookService(repositoryMock, storageMock);
 
         AttachRulebookCommand command = new AttachRulebookCommand(
-                "1", "reglamento.pdf", "application/pdf", InvalidRulebookFileException.MAX_SIZE_BYTES + 1,
+                id, "reglamento.pdf", "application/pdf", InvalidRulebookFileException.MAX_SIZE_BYTES + 1,
                 new ByteArrayInputStream("contenido".getBytes())
         );
 

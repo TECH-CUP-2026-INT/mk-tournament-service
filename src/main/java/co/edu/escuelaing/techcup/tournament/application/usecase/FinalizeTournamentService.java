@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -26,7 +27,7 @@ public class FinalizeTournamentService implements FinalizeTournamentUseCase {
 
 
     @Override
-    public Tournament finalizeTournament(String tournamentId) {
+    public Tournament finalizeTournament(UUID tournamentId) {
         Tournament tournament = repository.findById(tournamentId)
                 .orElseThrow(() -> new TournamentNotFoundException(
                         "No se encontro un torneo con id " + tournamentId));

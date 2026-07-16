@@ -7,6 +7,7 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.CourtReposi
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ViewMatchCourtUseCase;
 import org.springframework.stereotype.Service;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -16,7 +17,7 @@ public class ViewMatchCourtService implements ViewMatchCourtUseCase {
 
 
     @Override
-    public Optional<Court> getCourtByMatch(String matchId) {
+    public Optional<Court> getCourtByMatch(UUID matchId) {
         return courtRepository.findByMatchId(matchId);
     }
 }

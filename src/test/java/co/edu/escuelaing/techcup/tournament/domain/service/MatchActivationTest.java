@@ -7,6 +7,8 @@ import co.edu.escuelaing.techcup.tournament.domain.exception.MatchActivationNotA
 import co.edu.escuelaing.techcup.tournament.domain.exception.MatchInactiveException;
 import org.junit.jupiter.api.Test;
 
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -14,16 +16,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MatchActivationTest {
 
+    private final UUID homeTeamId = UUID.randomUUID();
+    private final UUID awayTeamId = UUID.randomUUID();
+
     @Test
     void nuevoPartido_porDefectoEstaActivo() {
-        Match match = new Match("m1", "home", "away", MatchStatus.PENDING);
+        Match match = new Match(UUID.randomUUID(), homeTeamId, awayTeamId, MatchStatus.PENDING);
 
         assertTrue(match.isActive());
     }
 
     @Test
     void inactivate_partidoActivo_quedaInactivo() {
-        Match match = new Match("m1", "home", "away", MatchStatus.PENDING);
+        Match match = new Match(UUID.randomUUID(), homeTeamId, awayTeamId, MatchStatus.PENDING);
 
         match.inactivate();
 
@@ -32,7 +37,7 @@ class MatchActivationTest {
 
     @Test
     void inactivate_partidoYaInactivo_lanzaExcepcion() {
-        Match match = new Match("m1", "home", "away", MatchStatus.PENDING);
+        Match match = new Match(UUID.randomUUID(), homeTeamId, awayTeamId, MatchStatus.PENDING);
         match.inactivate();
 
         assertThrows(MatchActivationNotAllowedException.class, match::inactivate);
@@ -40,7 +45,7 @@ class MatchActivationTest {
 
     @Test
     void reactivate_partidoInactivo_quedaActivo() {
-        Match match = new Match("m1", "home", "away", MatchStatus.PENDING);
+        Match match = new Match(UUID.randomUUID(), homeTeamId, awayTeamId, MatchStatus.PENDING);
         match.inactivate();
 
         match.reactivate();
@@ -50,14 +55,14 @@ class MatchActivationTest {
 
     @Test
     void reactivate_partidoYaActivo_lanzaExcepcion() {
-        Match match = new Match("m1", "home", "away", MatchStatus.PENDING);
+        Match match = new Match(UUID.randomUUID(), homeTeamId, awayTeamId, MatchStatus.PENDING);
 
         assertThrows(MatchActivationNotAllowedException.class, match::reactivate);
     }
 
     @Test
     void finish_partidoInactivo_lanzaMatchInactiveException() {
-        Match match = new Match("m1", "home", "away", MatchStatus.PENDING,
+        Match match = new Match(UUID.randomUUID(), homeTeamId, awayTeamId, MatchStatus.PENDING,
                 true, 0, 0, null);
         match.inactivate();
 
@@ -66,16 +71,16 @@ class MatchActivationTest {
 
     @Test
     void recordPenaltyShootoutWinner_partidoInactivo_lanzaMatchInactiveException() {
-        Match match = new Match("m1", "home", "away", MatchStatus.FINISHED,
+        Match match = new Match(UUID.randomUUID(), homeTeamId, awayTeamId, MatchStatus.FINISHED,
                 true, 1, 1, null);
         match.inactivate();
 
-        assertThrows(MatchInactiveException.class, () -> match.recordPenaltyShootoutWinner("home"));
+        assertThrows(MatchInactiveException.class, () -> match.recordPenaltyShootoutWinner(homeTeamId));
     }
 
     @Test
     void markAsNoShow_partidoInactivo_lanzaMatchInactiveException() {
-        Match match = new Match("m1", "home", "away", MatchStatus.PENDING);
+        Match match = new Match(UUID.randomUUID(), homeTeamId, awayTeamId, MatchStatus.PENDING);
         match.inactivate();
 
         assertThrows(MatchInactiveException.class, match::markAsNoShow);
@@ -83,7 +88,7 @@ class MatchActivationTest {
 
     @Test
     void inactivate_preservaDatosYaRegistrados() {
-        Match match = new Match("m1", "home", "away", MatchStatus.FINISHED,
+        Match match = new Match(UUID.randomUUID(), homeTeamId, awayTeamId, MatchStatus.FINISHED,
                 true, 3, 1, null);
 
         match.inactivate();

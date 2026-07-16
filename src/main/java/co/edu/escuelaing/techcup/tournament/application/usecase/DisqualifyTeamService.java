@@ -9,6 +9,8 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.DisqualifyTe
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentRepositoryPort;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class DisqualifyTeamService implements DisqualifyTeamUseCase {
@@ -17,9 +19,9 @@ public class DisqualifyTeamService implements DisqualifyTeamUseCase {
 
 
     @Override
-    public Tournament disqualify(String tournamentId, String teamId, DisqualificationReason reason) {
+    public Tournament disqualify(UUID tournamentId, UUID teamId, DisqualificationReason reason) {
         Tournament tournament = repository.findById(tournamentId)
-                .orElseThrow(() -> new TournamentNotFoundException(tournamentId));
+                .orElseThrow(() -> new TournamentNotFoundException(tournamentId.toString()));
 
         tournament.disqualifyTeam(teamId, reason);
 

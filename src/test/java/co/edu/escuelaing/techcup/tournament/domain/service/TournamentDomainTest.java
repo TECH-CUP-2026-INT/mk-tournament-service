@@ -16,14 +16,15 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class TournamentDomainTest {
 
     private Tournament buildTournament(TournamentStatus status, List<TeamRegistration> teams) {
-        Tournament t = Tournament.reconstruct(
-                "t1", "TechCup", 4, BigDecimal.ZERO,
+        return Tournament.reconstruct(
+                UUID.randomUUID(), "TechCup", 4, BigDecimal.ZERO,
                 LocalDate.now().plusDays(2),
                 LocalDate.now().plusDays(10),
                 LocalDate.now(),
@@ -31,7 +32,6 @@ class TournamentDomainTest {
                 new ArrayList<>(teams),
                 new ArrayList<>()
         );
-        return t;
     }
 
     // --- Preparación ---
@@ -39,8 +39,8 @@ class TournamentDomainTest {
     @Test
     void preparation_menosDeTreeEquiposAprobados_retornaIncompleto() {
         Tournament t = buildTournament(TournamentStatus.DRAFT, List.of(
-                new TeamRegistration("e1", "Equipo 1", RegistrationStatus.APPROVED),
-                new TeamRegistration("e2", "Equipo 2", RegistrationStatus.APPROVED)
+                new TeamRegistration(UUID.randomUUID(), "Equipo 1", RegistrationStatus.APPROVED),
+                new TeamRegistration(UUID.randomUUID(), "Equipo 2", RegistrationStatus.APPROVED)
         ));
         PreparationResult result = t.checkPreparation();
         assertFalse(result.isReadyToActivate());
@@ -50,9 +50,9 @@ class TournamentDomainTest {
     @Test
     void preparation_tresEquiposAprobadosYFechasValidas_retornaCompleto() {
         Tournament t = buildTournament(TournamentStatus.DRAFT, List.of(
-                new TeamRegistration("e1", "Equipo 1", RegistrationStatus.APPROVED),
-                new TeamRegistration("e2", "Equipo 2", RegistrationStatus.APPROVED),
-                new TeamRegistration("e3", "Equipo 3", RegistrationStatus.APPROVED)
+                new TeamRegistration(UUID.randomUUID(), "Equipo 1", RegistrationStatus.APPROVED),
+                new TeamRegistration(UUID.randomUUID(), "Equipo 2", RegistrationStatus.APPROVED),
+                new TeamRegistration(UUID.randomUUID(), "Equipo 3", RegistrationStatus.APPROVED)
         ));
         PreparationResult result = t.checkPreparation();
         assertTrue(result.isReadyToActivate());
@@ -62,13 +62,13 @@ class TournamentDomainTest {
     @Test
     void preparation_sinFechas_retornaIncompleto() {
         Tournament t = Tournament.reconstruct(
-                "t1", "TechCup", 4, BigDecimal.ZERO,
+                UUID.randomUUID(), "TechCup", 4, BigDecimal.ZERO,
                 null, null, null,
                 TournamentStatus.DRAFT,
                 new ArrayList<>(List.of(
-                        new TeamRegistration("e1", "E1", RegistrationStatus.APPROVED),
-                        new TeamRegistration("e2", "E2", RegistrationStatus.APPROVED),
-                        new TeamRegistration("e3", "E3", RegistrationStatus.APPROVED)
+                        new TeamRegistration(UUID.randomUUID(), "E1", RegistrationStatus.APPROVED),
+                        new TeamRegistration(UUID.randomUUID(), "E2", RegistrationStatus.APPROVED),
+                        new TeamRegistration(UUID.randomUUID(), "E3", RegistrationStatus.APPROVED)
                 )),
                 new ArrayList<>()
         );
@@ -81,14 +81,16 @@ class TournamentDomainTest {
 
     @Test
     void removeTeam_torneoActivo_eliminaEquipoYMarcaPartidosPendientes() {
+        UUID team1 = UUID.randomUUID();
+        UUID team2 = UUID.randomUUID();
         Tournament t = buildTournament(TournamentStatus.ACTIVE, List.of(
-                new TeamRegistration("e1", "Equipo 1", RegistrationStatus.APPROVED),
-                new TeamRegistration("e2", "Equipo 2", RegistrationStatus.APPROVED)
+                new TeamRegistration(team1, "Equipo 1", RegistrationStatus.APPROVED),
+                new TeamRegistration(team2, "Equipo 2", RegistrationStatus.APPROVED)
         ));
-        Match pendingMatch = new Match("m1", "e1", "e2", MatchStatus.PENDING);
+        Match pendingMatch = new Match(UUID.randomUUID(), team1, team2, MatchStatus.PENDING);
         t.setMatches(new ArrayList<>(List.of(pendingMatch)));
 
-        List<Match> affected = t.removeTeam("e1", RemovalReason.DIRECT_DISQUALIFICATION);
+        List<Match> affected = t.removeTeam(team1, RemovalReason.DIRECT_DISQUALIFICATION);
 
         assertEquals(1, t.getTeams().size());
         assertEquals(1, affected.size());
@@ -97,19 +99,22 @@ class TournamentDomainTest {
 
     @Test
     void removeTeam_torneoEnDraft_lanza409() {
+        UUID team1 = UUID.randomUUID();
         Tournament t = buildTournament(TournamentStatus.DRAFT, List.of(
-                new TeamRegistration("e1", "Equipo 1", RegistrationStatus.APPROVED)
+                new TeamRegistration(team1, "Equipo 1", RegistrationStatus.APPROVED)
         ));
         assertThrows(TeamRemovalNotAllowedException.class,
-                () -> t.removeTeam("e1", RemovalReason.DISCIPLINARY_POINTS));
+                () -> t.removeTeam(team1, RemovalReason.DISCIPLINARY_POINTS));
     }
 
     @Test
     void removeTeam_equipoNoInscrito_lanzaExcepcion() {
+        UUID team1 = UUID.randomUUID();
+        UUID otherTeam = UUID.randomUUID();
         Tournament t = buildTournament(TournamentStatus.IN_PROGRESS, List.of(
-                new TeamRegistration("e1", "Equipo 1", RegistrationStatus.APPROVED)
+                new TeamRegistration(team1, "Equipo 1", RegistrationStatus.APPROVED)
         ));
         assertThrows(TeamRemovalNotAllowedException.class,
-                () -> t.removeTeam("e99", RemovalReason.DIRECT_DISQUALIFICATION));
+                () -> t.removeTeam(otherTeam, RemovalReason.DIRECT_DISQUALIFICATION));
     }
 }

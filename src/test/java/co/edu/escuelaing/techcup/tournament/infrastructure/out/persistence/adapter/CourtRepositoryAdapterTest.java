@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -22,50 +23,58 @@ class CourtRepositoryAdapterTest {
 
     @Test
     void save_delegaAlMongoRepositoryYMapeaDeVuelta() {
+        UUID courtId = UUID.randomUUID();
+        UUID tournamentId = UUID.randomUUID();
         CourtMongoRepository mongoRepository = mock(CourtMongoRepository.class);
-        Court court = Court.create("t1", CourtSection.CANCHA_1, "Descripción");
-        CourtDocument saved = new CourtDocument("c1", "t1", "CANCHA_1", "Descripción", null, null);
+        Court court = Court.create(tournamentId, CourtSection.CANCHA_1, "Descripción");
+        CourtDocument saved = new CourtDocument(courtId, tournamentId, "CANCHA_1", "Descripción", null, null);
         when(mongoRepository.save(any())).thenReturn(saved);
 
         CourtRepositoryAdapter adapter = new CourtRepositoryAdapter(mongoRepository, mapper);
         Court result = adapter.save(court);
 
-        assertEquals("c1", result.getId());
+        assertEquals(courtId, result.getId());
     }
 
     @Test
     void findById_cuandoExiste_retornaCourt() {
+        UUID courtId = UUID.randomUUID();
+        UUID tournamentId = UUID.randomUUID();
         CourtMongoRepository mongoRepository = mock(CourtMongoRepository.class);
-        CourtDocument document = new CourtDocument("c1", "t1", "CANCHA_1", "Descripción", "img1", null);
-        when(mongoRepository.findById("c1")).thenReturn(Optional.of(document));
+        CourtDocument document = new CourtDocument(courtId, tournamentId, "CANCHA_1", "Descripción", "img1", null);
+        when(mongoRepository.findById(courtId)).thenReturn(Optional.of(document));
 
         CourtRepositoryAdapter adapter = new CourtRepositoryAdapter(mongoRepository, mapper);
-        Optional<Court> result = adapter.findById("c1");
+        Optional<Court> result = adapter.findById(courtId);
 
         assertTrue(result.isPresent());
-        assertEquals("c1", result.get().getId());
+        assertEquals(courtId, result.get().getId());
     }
 
     @Test
     void findById_cuandoNoExiste_retornaVacio() {
+        UUID missing = UUID.randomUUID();
         CourtMongoRepository mongoRepository = mock(CourtMongoRepository.class);
-        when(mongoRepository.findById("missing")).thenReturn(Optional.empty());
+        when(mongoRepository.findById(missing)).thenReturn(Optional.empty());
 
         CourtRepositoryAdapter adapter = new CourtRepositoryAdapter(mongoRepository, mapper);
 
-        assertFalse(adapter.findById("missing").isPresent());
+        assertFalse(adapter.findById(missing).isPresent());
     }
 
     @Test
     void findByMatchId_cuandoExiste_retornaCourt() {
+        UUID courtId = UUID.randomUUID();
+        UUID tournamentId = UUID.randomUUID();
+        UUID matchId = UUID.randomUUID();
         CourtMongoRepository mongoRepository = mock(CourtMongoRepository.class);
-        CourtDocument document = new CourtDocument("c1", "t1", "CANCHA_1", "Descripción", "img1", "m1");
-        when(mongoRepository.findByMatchId("m1")).thenReturn(Optional.of(document));
+        CourtDocument document = new CourtDocument(courtId, tournamentId, "CANCHA_1", "Descripción", "img1", matchId);
+        when(mongoRepository.findByMatchId(matchId)).thenReturn(Optional.of(document));
 
         CourtRepositoryAdapter adapter = new CourtRepositoryAdapter(mongoRepository, mapper);
-        Optional<Court> result = adapter.findByMatchId("m1");
+        Optional<Court> result = adapter.findByMatchId(matchId);
 
         assertTrue(result.isPresent());
-        assertEquals("m1", result.get().getMatchId());
+        assertEquals(matchId, result.get().getMatchId());
     }
 }

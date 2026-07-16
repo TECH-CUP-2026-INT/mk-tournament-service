@@ -12,19 +12,19 @@ public class PlayerSanction extends AggregateRoot {
 
     private static final int AUTOMATIC_SANCTION_MATCHES = 1;
 
-    private final String playerId;
+    private final UUID playerId;
     private final SanctionType type;
     private int matchesRemaining;
 
-    private PlayerSanction(String id, String playerId, SanctionType type, int matchesRemaining) {
+    private PlayerSanction(UUID id, UUID playerId, SanctionType type, int matchesRemaining) {
         super(id);
         this.playerId = playerId;
         this.type = type;
         this.matchesRemaining = matchesRemaining;
     }
 
-    public static PlayerSanction create(String playerId, SanctionType type, Integer matchesSuspended) {
-        if (playerId == null || playerId.isBlank())
+    public static PlayerSanction create(UUID playerId, SanctionType type, Integer matchesSuspended) {
+        if (playerId == null)
             throw new InvalidSanctionDataException("El id del jugador es obligatorio");
         if (type == null)
             throw new InvalidSanctionDataException("El tipo de sanción es obligatorio");
@@ -39,10 +39,10 @@ public class PlayerSanction extends AggregateRoot {
             }
         };
 
-        return new PlayerSanction(UUID.randomUUID().toString(), playerId, type, matches);
+        return new PlayerSanction(UUID.randomUUID(), playerId, type, matches);
     }
 
-    public static PlayerSanction reconstruct(String id, String playerId, SanctionType type, int matchesRemaining) {
+    public static PlayerSanction reconstruct(UUID id, UUID playerId, SanctionType type, int matchesRemaining) {
         return new PlayerSanction(id, playerId, type, matchesRemaining);
     }
 
@@ -60,7 +60,7 @@ public class PlayerSanction extends AggregateRoot {
         return matchesRemaining > 0;
     }
 
-    public String getPlayerId() { return playerId; }
+    public UUID getPlayerId() { return playerId; }
     public SanctionType getType() { return type; }
     public int getMatchesRemaining() { return matchesRemaining; }
 }

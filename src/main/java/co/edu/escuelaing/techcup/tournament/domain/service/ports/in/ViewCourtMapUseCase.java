@@ -5,10 +5,11 @@ import co.edu.escuelaing.techcup.tournament.domain.model.Match;
 import co.edu.escuelaing.techcup.tournament.domain.model.ScheduledMatch;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface ViewCourtMapUseCase {
 
-    List<CourtMapEntry> getCourtMap(String tournamentId);
+    List<CourtMapEntry> getCourtMap(UUID tournamentId);
 
     /**
      * Una entrada del mapa de canchas: la cancha, y —si ya tiene un partido

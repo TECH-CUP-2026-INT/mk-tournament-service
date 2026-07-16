@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
+import java.util.UUID;
 
 @Tag(name = "Sanctions", description = "Applying and querying player sanctions")
 public interface SanctionControllerSwagger {
@@ -31,7 +32,7 @@ public interface SanctionControllerSwagger {
     @ApiResponse(responseCode = "200", description = "List of the player's active sanctions",
             content = @Content(schema = @Schema(implementation = SanctionResponse.class)))
     ResponseEntity<List<SanctionResponse>> getActiveSanctions(
-            @Parameter(description = "Player ID", example = "player_123") String playerId);
+            @Parameter(description = "Player ID", example = "550e8400-e29b-41d4-a716-446655440000") UUID playerId);
 
     /**
      * Pending integration point: the future "Finish match" story must invoke

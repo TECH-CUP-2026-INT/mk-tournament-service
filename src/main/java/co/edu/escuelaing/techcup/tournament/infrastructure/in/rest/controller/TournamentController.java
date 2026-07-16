@@ -82,6 +82,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/tournaments")
@@ -136,7 +137,7 @@ public class TournamentController implements TournamentControllerSwagger {
 
     @Override
     @PatchMapping("/{id}/finalize")
-    public ResponseEntity<TournamentResponse> finalizeTournament(@PathVariable String id) {
+    public ResponseEntity<TournamentResponse> finalizeTournament(@PathVariable UUID id) {
         Tournament finalized = finalizeTournamentUseCase.finalizeTournament(id);
 
         return ResponseEntity.ok(mapper.toResponse(finalized));
@@ -144,14 +145,14 @@ public class TournamentController implements TournamentControllerSwagger {
 
     @Override
     @PatchMapping("/{id}/prepare")
-    public ResponseEntity<TournamentResponse> prepare(@PathVariable String id) {
+    public ResponseEntity<TournamentResponse> prepare(@PathVariable UUID id) {
         Tournament tournament = startTournamentPreparation.startPreparation(id);
         return ResponseEntity.ok(mapper.toResponse(tournament));
     }
 
     @Override
     @GetMapping("/{tournamentId}/preparation")
-    public ResponseEntity<PreparationResponse> checkPreparation(@PathVariable String tournamentId) {
+    public ResponseEntity<PreparationResponse> checkPreparation(@PathVariable UUID tournamentId) {
         PreparationResult result = checkPreparation.check(tournamentId);
         String status = result.isReadyToActivate() ? "complete" : "incomplete";
         return ResponseEntity.ok(new PreparationResponse(status, result.isReadyToActivate(),
@@ -161,7 +162,7 @@ public class TournamentController implements TournamentControllerSwagger {
     @Override
     @PostMapping("/{tournamentId}/matches/{matchId}/champion")
     public ResponseEntity<ChampionResponse> assignChampion(
-            @PathVariable String tournamentId, @PathVariable String matchId) {
+            @PathVariable UUID tournamentId, @PathVariable UUID matchId) {
         ChampionAssignment assignment = assignChampionUseCase.assignChampion(tournamentId, matchId);
         return ResponseEntity.ok(new ChampionResponse(
                 tournamentId, assignment.championTeamId(), assignment.resolution()));
@@ -170,7 +171,7 @@ public class TournamentController implements TournamentControllerSwagger {
     @Override
     @PostMapping("/{tournamentId}/matches/{matchId}/penalty-shootout")
     public ResponseEntity<Void> recordPenaltyShootoutWinner(
-            @PathVariable String tournamentId, @PathVariable String matchId,
+            @PathVariable UUID tournamentId, @PathVariable UUID matchId,
             @Valid @RequestBody RecordPenaltyShootoutWinnerRequest request) {
         recordPenaltyShootoutWinnerUseCase.recordWinner(new RecordPenaltyShootoutWinnerUseCase.RecordPenaltyShootoutWinnerCommand(
                 tournamentId, matchId, request.winnerTeamId()));
@@ -179,7 +180,7 @@ public class TournamentController implements TournamentControllerSwagger {
 
     @Override
     @GetMapping("/{tournamentId}/champion")
-    public ResponseEntity<ChampionResponse> getChampion(@PathVariable String tournamentId) {
+    public ResponseEntity<ChampionResponse> getChampion(@PathVariable UUID tournamentId) {
         ChampionAssignment assignment = getChampionUseCase.getChampion(tournamentId);
         return ResponseEntity.ok(new ChampionResponse(
                 tournamentId, assignment.championTeamId(), assignment.resolution()));
@@ -187,7 +188,7 @@ public class TournamentController implements TournamentControllerSwagger {
 
     @Override
     @DeleteMapping("/{id}")
-    public ResponseEntity<DeleteTournamentResponse> delete(@PathVariable String id) {
+    public ResponseEntity<DeleteTournamentResponse> delete(@PathVariable UUID id) {
         deleteTournamentUseCase.delete(id);
         return ResponseEntity.ok(new DeleteTournamentResponse(
                 "Tournament '" + id + "' has been permanently deleted."
@@ -196,7 +197,7 @@ public class TournamentController implements TournamentControllerSwagger {
 
     @Override
     @GetMapping("/{tournamentId}/matchups")
-    public ResponseEntity<List<MatchupResponse>> getMatchups(@PathVariable String tournamentId) {
+    public ResponseEntity<List<MatchupResponse>> getMatchups(@PathVariable UUID tournamentId) {
         List<MatchupResponse> result = viewMatchups.getMatchups(tournamentId)
                 .stream()
                 .map(matchupRestMapper::toResponse)
@@ -206,7 +207,7 @@ public class TournamentController implements TournamentControllerSwagger {
 
     @Override
     @GetMapping("/matches/{matchId}/court")
-    public ResponseEntity<MatchCourtResponse> getMatchCourt(@PathVariable String matchId) {
+    public ResponseEntity<MatchCourtResponse> getMatchCourt(@PathVariable UUID matchId) {
         return viewMatchCourt.getCourtByMatch(matchId)
                 .map(c -> ResponseEntity.ok(new MatchCourtResponse(
                         c.getId(), c.getMatchId(), c.getSection().name(),
@@ -217,7 +218,7 @@ public class TournamentController implements TournamentControllerSwagger {
 
     @Override
     @GetMapping("/{tournamentId}/teams")
-    public ResponseEntity<List<RegisteredTeamResponse>> getRegisteredTeams(@PathVariable String tournamentId) {
+    public ResponseEntity<List<RegisteredTeamResponse>> getRegisteredTeams(@PathVariable UUID tournamentId) {
         List<RegisteredTeamResponse> result = viewRegisteredTeams.getTeams(tournamentId)
                 .stream()
                 .map(t -> new RegisteredTeamResponse(
@@ -232,7 +233,7 @@ public class TournamentController implements TournamentControllerSwagger {
 
     @Override
     @GetMapping("/{tournamentId}/enrollments")
-    public ResponseEntity<RegisteredTeamsResponse> getEnrolledTeams(@PathVariable String tournamentId) {
+    public ResponseEntity<RegisteredTeamsResponse> getEnrolledTeams(@PathVariable UUID tournamentId) {
         GetEnrolledTeamsUseCase.EnrolledTeamsView view = getEnrolledTeams.getEnrolledTeams(tournamentId);
 
         List<EnrolledTeamResponse> enrolledTeams = view.enrolled().stream()
@@ -262,7 +263,7 @@ public class TournamentController implements TournamentControllerSwagger {
     @Override
     @PostMapping("/{tournamentId}/enrollments")
     public ResponseEntity<EnrollmentResponse> enrollTeam(
-            @PathVariable String tournamentId,
+            @PathVariable UUID tournamentId,
             @Valid @RequestBody EnrollTeamRequest request) {
         Enrollment enrollment = enrollTeamInTournamentUseCase.enrollTeam(tournamentId, request.teamId());
         return ResponseEntity.status(HttpStatus.CREATED).body(enrollmentRestMapper.toResponse(enrollment));
@@ -280,13 +281,13 @@ public class TournamentController implements TournamentControllerSwagger {
 
     @Override
     @GetMapping("/history/{tournamentId}")
-    public ResponseEntity<HistoricalTournamentResponse> getHistoricalById(@PathVariable String tournamentId) {
+    public ResponseEntity<HistoricalTournamentResponse> getHistoricalById(@PathVariable UUID tournamentId) {
         return ResponseEntity.ok(mapper.toHistoricalResponse(consultHistorical.findById(tournamentId)));
     }
 
     @Override
     @GetMapping("/{tournamentId}/rulebook")
-    public ResponseEntity<InputStreamResource> consultRulebook(@PathVariable String tournamentId) {
+    public ResponseEntity<InputStreamResource> consultRulebook(@PathVariable UUID tournamentId) {
         ConsultRulebookUseCase.RulebookResource resource = consultRulebook.consult(tournamentId);
         return ResponseEntity.ok()
                 .header("Content-Disposition", "inline; filename=\"" + resource.fileName() + "\"")
@@ -297,7 +298,7 @@ public class TournamentController implements TournamentControllerSwagger {
     @Override
     @PostMapping(value = "/{tournamentId}/rulebook", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<RulebookResponse> attachRulebook(
-            @PathVariable String tournamentId,
+            @PathVariable UUID tournamentId,
             @RequestParam("file") MultipartFile file) throws IOException {
 
         Tournament updated = attachRulebook.attach(new AttachRulebookCommand(
@@ -316,7 +317,7 @@ public class TournamentController implements TournamentControllerSwagger {
     @Override
     @PostMapping(value = "/{tournamentId}/courts", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CourtResponse> registerCourt(
-            @PathVariable String tournamentId,
+            @PathVariable UUID tournamentId,
             @RequestParam("section") String section,
             @RequestParam(value = "description", required = false) String description,
             @RequestParam(value = "image", required = false) MultipartFile image) throws IOException {
@@ -346,7 +347,7 @@ public class TournamentController implements TournamentControllerSwagger {
 
     @Override
     @GetMapping("/{tournamentId}/courts")
-    public ResponseEntity<List<CourtMapEntryResponse>> getCourtMap(@PathVariable String tournamentId) {
+    public ResponseEntity<List<CourtMapEntryResponse>> getCourtMap(@PathVariable UUID tournamentId) {
         List<CourtMapEntryResponse> result = viewCourtMapUseCase.getCourtMap(tournamentId).stream()
                 .map(this::toCourtMapEntryResponse)
                 .toList();
@@ -398,7 +399,7 @@ public class TournamentController implements TournamentControllerSwagger {
     @Override
     @PatchMapping("/{id}")
     public ResponseEntity<TournamentResponse> edit(
-            @PathVariable String id,
+            @PathVariable UUID id,
             @Valid @RequestBody EditTournamentRequest request) {
         Tournament updated = editTournamentUseCase.edit(new EditTournamentCommand(
                 id,
@@ -420,7 +421,7 @@ public class TournamentController implements TournamentControllerSwagger {
     @Override
     @PatchMapping("/{id}/pause")
     public ResponseEntity<PauseTournamentResponse> pause(
-            @PathVariable String id,
+            @PathVariable UUID id,
             @Valid @RequestBody PauseTournamentRequest request) {
         Tournament updated = pauseTournamentUseCase.execute(new PauseTournamentCommand(id, request.action()));
 
@@ -435,7 +436,7 @@ public class TournamentController implements TournamentControllerSwagger {
     @Override
     @PatchMapping("/{id}/inactivate")
     public ResponseEntity<InactivateTournamentResponse> inactivate(
-            @PathVariable String id,
+            @PathVariable UUID id,
             @Valid @RequestBody InactivateTournamentRequest request) {
         Tournament updated = inactivateTournamentUseCase.execute(new InactivateTournamentCommand(id, request.action()));
 
@@ -450,8 +451,8 @@ public class TournamentController implements TournamentControllerSwagger {
     @Override
     @PatchMapping("/{tournamentId}/teams/{teamId}/disqualify")
     public ResponseEntity<DisqualifyTeamResponse> disqualifyTeam(
-            @PathVariable String tournamentId,
-            @PathVariable String teamId,
+            @PathVariable UUID tournamentId,
+            @PathVariable UUID teamId,
             @Valid @RequestBody DisqualifyTeamRequest request) {
         disqualifyTeamUseCase.disqualify(tournamentId, teamId, request.reason());
 
@@ -463,8 +464,8 @@ public class TournamentController implements TournamentControllerSwagger {
     @Override
     @PatchMapping("/{tournamentId}/teams/{teamId}/inactivate")
     public ResponseEntity<InactivateTeamResponse> inactivateTeam(
-            @PathVariable String tournamentId,
-            @PathVariable String teamId) {
+            @PathVariable UUID tournamentId,
+            @PathVariable UUID teamId) {
         inactivateTeamUseCase.inactivate(tournamentId, teamId);
 
         return ResponseEntity.ok(new InactivateTeamResponse(
@@ -475,8 +476,8 @@ public class TournamentController implements TournamentControllerSwagger {
     @Override
     @PatchMapping("/{tournamentId}/users/{userId}/inactivate")
     public ResponseEntity<InactivateUserResponse> inactivateUser(
-            @PathVariable String tournamentId,
-            @PathVariable String userId) {
+            @PathVariable UUID tournamentId,
+            @PathVariable UUID userId) {
         inactivateUserUseCase.inactivate(tournamentId, userId);
 
         return ResponseEntity.ok(new InactivateUserResponse(

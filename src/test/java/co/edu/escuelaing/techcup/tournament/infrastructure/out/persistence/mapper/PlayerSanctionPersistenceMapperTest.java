@@ -6,6 +6,8 @@ import co.edu.escuelaing.techcup.tournament.domain.model.SanctionType;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class PlayerSanctionPersistenceMapperTest {
@@ -14,24 +16,28 @@ class PlayerSanctionPersistenceMapperTest {
 
     @Test
     void toDomain_convierteTodosLosCampos() {
-        PlayerSanctionDocument document = new PlayerSanctionDocument("s1", "player1", "RED_CARD", 1);
+        UUID id = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+        PlayerSanctionDocument document = new PlayerSanctionDocument(id, playerId, "RED_CARD", 1);
 
         PlayerSanction sanction = mapper.toDomain(document);
 
-        assertEquals("s1", sanction.getId());
-        assertEquals("player1", sanction.getPlayerId());
+        assertEquals(id, sanction.getId());
+        assertEquals(playerId, sanction.getPlayerId());
         assertEquals(SanctionType.RED_CARD, sanction.getType());
         assertEquals(1, sanction.getMatchesRemaining());
     }
 
     @Test
     void toDocument_convierteTodosLosCampos() {
-        PlayerSanction sanction = PlayerSanction.reconstruct("s1", "player1", SanctionType.CONDUCT, 3);
+        UUID id = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+        PlayerSanction sanction = PlayerSanction.reconstruct(id, playerId, SanctionType.CONDUCT, 3);
 
         PlayerSanctionDocument document = mapper.toDocument(sanction);
 
-        assertEquals("s1", document.getId());
-        assertEquals("player1", document.getPlayerId());
+        assertEquals(id, document.getId());
+        assertEquals(playerId, document.getPlayerId());
         assertEquals("CONDUCT", document.getType());
         assertEquals(3, document.getMatchesRemaining());
     }
