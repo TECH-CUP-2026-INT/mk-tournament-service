@@ -14,8 +14,8 @@ public class SecurityConfig {
      * Decision intencional, no un descuido: no existe ningun sistema de
      * autenticacion/roles en el proyecto todavia (TC-40: /audit-events deberia
      * exigir rol Admin/Organizer; otros consumidores como el Team Service no
-     * deberian necesitar credenciales para consultarnos). Todo queda sin control
-     * de acceso real, bloqueado por el futuro Servicio de Identidad (JWT + roles).
+     * deberian necesitar credenciales para consultarnos); no hay control de
+     * acceso real, bloqueado por el futuro Servicio de Identidad (JWT + roles).
      * Pendiente de retirar esta configuracion antes de producción real.
      */
     @Bean

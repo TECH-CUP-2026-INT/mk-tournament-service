@@ -25,7 +25,7 @@ class AggregateRootTest {
     void equals_conNull_esFalse() {
         Court court = Court.reconstruct(UUID.randomUUID(), UUID.randomUUID(), CourtSection.CANCHA_1, null, null, null);
 
-        assertNotEquals(court, null);
+        assertNotEquals(null, court);
     }
 
     @Test
