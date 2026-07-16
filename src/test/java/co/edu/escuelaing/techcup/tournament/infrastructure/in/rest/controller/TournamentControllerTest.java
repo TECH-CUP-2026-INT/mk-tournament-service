@@ -43,6 +43,7 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.EnrollTeamIn
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.FinalizeTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.GetChampionUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.GetEnrolledTeamsUseCase;
+import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.GetActiveTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.GetTournamentByMatchUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.CheckTeamActiveEnrollmentUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.InactivateTeamUseCase;
@@ -124,6 +125,7 @@ class TournamentControllerTest {
     @MockitoBean private ViewMatchCourtUseCase viewMatchCourt;
     @MockitoBean private GetTournamentByMatchUseCase getTournamentByMatchUseCase;
     @MockitoBean private CheckTeamActiveEnrollmentUseCase checkTeamActiveEnrollmentUseCase;
+    @MockitoBean private GetActiveTournamentUseCase getActiveTournamentUseCase;
     @MockitoBean private TournamentRestMapper mapper;
     @MockitoBean private MatchupRestMapper matchupRestMapper;
     @MockitoBean private EnrollmentRestMapper enrollmentRestMapper;
