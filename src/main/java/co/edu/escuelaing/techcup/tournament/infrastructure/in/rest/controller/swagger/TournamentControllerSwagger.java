@@ -138,6 +138,18 @@ public interface TournamentControllerSwagger {
     ResponseEntity<MatchCourtResponse> getMatchCourt(
             @Parameter(description = "Match ID", example = "m01") UUID matchId);
 
+    @Operation(summary = "Get tournament by match ID",
+            description = "Looks up which tournament a given match (fixture entry) belongs to. Intended for other "
+                    + "services (e.g. the Match/Competition service) that only have a matchId and need the "
+                    + "tournamentId to correlate events.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Tournament found",
+                    content = @Content(schema = @Schema(implementation = TournamentResponse.class))),
+            @ApiResponse(responseCode = "404", description = "No tournament has a match with that ID", content = @Content)
+    })
+    ResponseEntity<TournamentResponse> getByMatch(
+            @Parameter(description = "Match ID", example = "550e8400-e29b-41d4-a716-446655440000") UUID matchId);
+
     @Operation(summary = "List registered teams",
             description = "Legacy registration view (name + status). For payment/reservation details, use "
                     + "GET /tournaments/{tournamentId}/enrollments instead.")
