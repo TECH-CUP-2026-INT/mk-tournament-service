@@ -7,6 +7,7 @@ import java.util.UUID;
  * Registro inmutable de una acción exitosa, capturado automáticamente por el aspecto
  * de auditoría (AOP) sobre los casos de uso de {@code application.usecase}.
  */
+@SuppressWarnings("java:S2160") // identidad por id (heredada de AggregateRoot), no por campos: patron DDD intencional
 public class AuditEvent extends AggregateRoot {
 
     /**

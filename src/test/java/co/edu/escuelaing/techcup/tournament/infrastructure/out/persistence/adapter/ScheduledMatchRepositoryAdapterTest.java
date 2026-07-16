@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
 import java.time.LocalDate;
+import java.time.Month;
 import java.time.LocalTime;
 import java.util.UUID;
 
@@ -30,9 +31,9 @@ class ScheduledMatchRepositoryAdapterTest {
     void save_delegaAlMongoRepositoryYMapeaDeVuelta() {
         ScheduledMatchMongoRepository mongoRepository = mock(ScheduledMatchMongoRepository.class);
         ScheduledMatch scheduledMatch = ScheduledMatch.create(matchupId, courtId, refereeId,
-                LocalDate.of(2026, 8, 5), LocalTime.of(9, 0));
+                LocalDate.of(2026, Month.AUGUST, 5), LocalTime.of(9, 0));
         ScheduledMatchDocument saved = new ScheduledMatchDocument(scheduledMatchId, matchupId, courtId, refereeId,
-                LocalDate.of(2026, 8, 5), LocalTime.of(9, 0));
+                LocalDate.of(2026, Month.AUGUST, 5), LocalTime.of(9, 0));
         when(mongoRepository.save(any())).thenReturn(saved);
 
         ScheduledMatchRepositoryAdapter adapter = new ScheduledMatchRepositoryAdapter(mongoRepository, mapper);
@@ -44,7 +45,7 @@ class ScheduledMatchRepositoryAdapterTest {
     @Test
     void existsConflict_cuandoHayConflicto_retornaTrue() {
         ScheduledMatchMongoRepository mongoRepository = mock(ScheduledMatchMongoRepository.class);
-        LocalDate date = LocalDate.of(2026, 8, 5);
+        LocalDate date = LocalDate.of(2026, Month.AUGUST, 5);
         LocalTime time = LocalTime.of(9, 0);
         when(mongoRepository.existsByCourtIdAndMatchDateAndMatchTimeOrRefereeIdAndMatchDateAndMatchTime(
                 courtId, date, time, refereeId, date, time)).thenReturn(true);
@@ -57,7 +58,7 @@ class ScheduledMatchRepositoryAdapterTest {
     @Test
     void existsConflict_cuandoNoHayConflicto_retornaFalse() {
         ScheduledMatchMongoRepository mongoRepository = mock(ScheduledMatchMongoRepository.class);
-        LocalDate date = LocalDate.of(2026, 8, 5);
+        LocalDate date = LocalDate.of(2026, Month.AUGUST, 5);
         LocalTime time = LocalTime.of(9, 0);
         when(mongoRepository.existsByCourtIdAndMatchDateAndMatchTimeOrRefereeIdAndMatchDateAndMatchTime(
                 courtId, date, time, refereeId, date, time)).thenReturn(false);

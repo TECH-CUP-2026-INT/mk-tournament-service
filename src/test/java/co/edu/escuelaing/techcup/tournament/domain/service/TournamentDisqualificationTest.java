@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,8 +27,8 @@ class TournamentDisqualificationTest {
         return Tournament.builder()
                 .id(UUID.randomUUID()).name("Copa Enero").type(TournamentType.NORMAL).format(TournamentFormat.BRACKETS)
                 .numberOfTeams(8).cost(BigDecimal.valueOf(50000))
-                .startDate(LocalDate.of(2026, 3, 1)).endDate(LocalDate.of(2026, 3, 20))
-                .registrationDeadline(LocalDate.of(2026, 2, 20))
+                .startDate(LocalDate.of(2026, Month.MARCH, 1)).endDate(LocalDate.of(2026, Month.MARCH, 20))
+                .registrationDeadline(LocalDate.of(2026, Month.FEBRUARY, 20))
                 .status(TournamentStatus.ACTIVE).teams(teams).matches(List.of())
                 .reconstruct();
     }

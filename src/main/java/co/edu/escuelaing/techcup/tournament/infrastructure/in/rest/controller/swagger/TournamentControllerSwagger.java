@@ -31,7 +31,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.MediaType;
@@ -48,32 +47,26 @@ public interface TournamentControllerSwagger {
     @Operation(summary = "Create tournament",
             description = "Creates a tournament directly in ACTIVE status. See CreateTournamentRequest for the "
                     + "NORMAL vs LIGHTNING field rules.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Tournament created",
-                    content = @Content(schema = @Schema(implementation = TournamentResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content)
-    })
+    @ApiResponse(responseCode = "201", description = "Tournament created",
+            content = @Content(schema = @Schema(implementation = TournamentResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content)
     ResponseEntity<TournamentResponse> create(CreateTournamentRequest request);
 
     @Operation(summary = "Finalize tournament",
             description = "Moves the tournament to FINISHED and archives it to the historical read-only view. "
                     + "Only allowed once the tournament is In Progress and the end date has been reached.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Tournament finalized",
-                    content = @Content(schema = @Schema(implementation = TournamentResponse.class))),
-            @ApiResponse(responseCode = "409", description = "The tournament cannot be finalized in its current state", content = @Content)
-    })
+    @ApiResponse(responseCode = "200", description = "Tournament finalized",
+            content = @Content(schema = @Schema(implementation = TournamentResponse.class)))
+    @ApiResponse(responseCode = "409", description = "The tournament cannot be finalized in its current state", content = @Content)
     ResponseEntity<TournamentResponse> finalizeTournament(
             @Parameter(description = "Tournament ID", example = "abc123") UUID id);
 
     @Operation(summary = "Start preparation phase",
             description = "Moves the tournament to IN_PREPARATION and generates its fixture (matchups) at random, "
                     + "based on the tournament's format. Requires at least 3 approved teams.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Preparation started, fixture generated",
-                    content = @Content(schema = @Schema(implementation = TournamentResponse.class))),
-            @ApiResponse(responseCode = "409", description = "The tournament does not meet the requirements to enter preparation", content = @Content)
-    })
+    @ApiResponse(responseCode = "200", description = "Preparation started, fixture generated",
+            content = @Content(schema = @Schema(implementation = TournamentResponse.class)))
+    @ApiResponse(responseCode = "409", description = "The tournament does not meet the requirements to enter preparation", content = @Content)
     ResponseEntity<TournamentResponse> prepare(
             @Parameter(description = "Tournament ID", example = "abc123") UUID id);
 
@@ -97,11 +90,9 @@ public interface TournamentControllerSwagger {
     @Operation(summary = "Record penalty shootout winner",
             description = "Records the winner of the penalty shootout for a match tied in regulation time. "
                     + "Required before the champion can be assigned for that match.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Penalty shootout winner recorded"),
-            @ApiResponse(responseCode = "400", description = "Invalid input data, or the match isn't tied in regulation time", content = @Content),
-            @ApiResponse(responseCode = "404", description = "The tournament or the match doesn't exist", content = @Content)
-    })
+    @ApiResponse(responseCode = "200", description = "Penalty shootout winner recorded")
+    @ApiResponse(responseCode = "400", description = "Invalid input data, or the match isn't tied in regulation time", content = @Content)
+    @ApiResponse(responseCode = "404", description = "The tournament or the match doesn't exist", content = @Content)
     ResponseEntity<Void> recordPenaltyShootoutWinner(
             @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId,
             @Parameter(description = "Match ID", example = "m01") UUID matchId,
@@ -115,11 +106,9 @@ public interface TournamentControllerSwagger {
 
     @Operation(summary = "Delete tournament (Draft status only)",
             description = "Permanently deletes a tournament. Only allowed while it is still in Draft status.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Tournament deleted",
-                    content = @Content(schema = @Schema(implementation = DeleteTournamentResponse.class))),
-            @ApiResponse(responseCode = "409", description = "The tournament is not in Draft status", content = @Content)
-    })
+    @ApiResponse(responseCode = "200", description = "Tournament deleted",
+            content = @Content(schema = @Schema(implementation = DeleteTournamentResponse.class)))
+    @ApiResponse(responseCode = "409", description = "The tournament is not in Draft status", content = @Content)
     ResponseEntity<DeleteTournamentResponse> delete(
             @Parameter(description = "Tournament ID", example = "abc123") UUID id);
 
@@ -143,11 +132,9 @@ public interface TournamentControllerSwagger {
             description = "Looks up which tournament a given match (fixture entry) belongs to. Intended for other "
                     + "services (e.g. the Match/Competition service) that only have a matchId and need the "
                     + "tournamentId to correlate events.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Tournament found",
-                    content = @Content(schema = @Schema(implementation = TournamentResponse.class))),
-            @ApiResponse(responseCode = "404", description = "No tournament has a match with that ID", content = @Content)
-    })
+    @ApiResponse(responseCode = "200", description = "Tournament found",
+            content = @Content(schema = @Schema(implementation = TournamentResponse.class)))
+    @ApiResponse(responseCode = "404", description = "No tournament has a match with that ID", content = @Content)
     ResponseEntity<TournamentResponse> getByMatch(
             @Parameter(description = "Match ID", example = "550e8400-e29b-41d4-a716-446655440000") UUID matchId);
 
@@ -179,12 +166,10 @@ public interface TournamentControllerSwagger {
     @Operation(summary = "Enroll team in tournament",
             description = "The team captain enrolls their team. The tournament must be ACTIVE and have open slots; "
                     + "the enrollment starts as RESERVED/PENDING_PAYMENT until payment-service confirms payment.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Team enrolled",
-                    content = @Content(schema = @Schema(implementation = EnrollmentResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content),
-            @ApiResponse(responseCode = "409", description = "The team is already enrolled, or there are no open slots", content = @Content)
-    })
+    @ApiResponse(responseCode = "201", description = "Team enrolled",
+            content = @Content(schema = @Schema(implementation = EnrollmentResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content)
+    @ApiResponse(responseCode = "409", description = "The team is already enrolled, or there are no open slots", content = @Content)
     ResponseEntity<EnrollmentResponse> enrollTeam(
             @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId,
             EnrollTeamRequest request);
@@ -196,21 +181,17 @@ public interface TournamentControllerSwagger {
     ResponseEntity<List<HistoricalTournamentResponse>> getHistory();
 
     @Operation(summary = "Get historical tournament by ID")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Historical tournament found",
-                    content = @Content(schema = @Schema(implementation = HistoricalTournamentResponse.class))),
-            @ApiResponse(responseCode = "404", description = "The tournament doesn't exist or hasn't finished yet", content = @Content)
-    })
+    @ApiResponse(responseCode = "200", description = "Historical tournament found",
+            content = @Content(schema = @Schema(implementation = HistoricalTournamentResponse.class)))
+    @ApiResponse(responseCode = "404", description = "The tournament doesn't exist or hasn't finished yet", content = @Content)
     ResponseEntity<HistoricalTournamentResponse> getHistoricalById(
             @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId);
 
     @Operation(summary = "Download rulebook (PDF)",
             description = "Streams the tournament's rulebook file inline as application/pdf.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Rulebook PDF file",
-                    content = @Content(mediaType = MediaType.APPLICATION_PDF_VALUE)),
-            @ApiResponse(responseCode = "404", description = "The tournament has no rulebook attached", content = @Content)
-    })
+    @ApiResponse(responseCode = "200", description = "Rulebook PDF file",
+            content = @Content(mediaType = MediaType.APPLICATION_PDF_VALUE))
+    @ApiResponse(responseCode = "404", description = "The tournament has no rulebook attached", content = @Content)
     ResponseEntity<InputStreamResource> consultRulebook(
             @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId);
 
@@ -226,11 +207,9 @@ public interface TournamentControllerSwagger {
     @Operation(summary = "Register court",
             description = "Registers a court on one of the 4 campus map sections, with an optional description and "
                     + "image. The request body is multipart/form-data.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Court registered",
-                    content = @Content(schema = @Schema(implementation = CourtResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid court section or invalid image", content = @Content)
-    })
+    @ApiResponse(responseCode = "201", description = "Court registered",
+            content = @Content(schema = @Schema(implementation = CourtResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid court section or invalid image", content = @Content)
     ResponseEntity<CourtResponse> registerCourt(
             @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId,
             @Parameter(description = "Campus map section for the court: CANCHA_1, CANCHA_2, CANCHA_3 or CANCHA_4",
@@ -252,12 +231,10 @@ public interface TournamentControllerSwagger {
     @Operation(summary = "Edit tournament",
             description = "Updates any field defined at tournament creation. Every field in the request body is "
                     + "optional — omitted (null) fields keep their current value. Blocked once the tournament is FINISHED.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Tournament edited",
-                    content = @Content(schema = @Schema(implementation = TournamentResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content),
-            @ApiResponse(responseCode = "404", description = "The tournament doesn't exist", content = @Content)
-    })
+    @ApiResponse(responseCode = "200", description = "Tournament edited",
+            content = @Content(schema = @Schema(implementation = TournamentResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content)
+    @ApiResponse(responseCode = "404", description = "The tournament doesn't exist", content = @Content)
     ResponseEntity<TournamentResponse> edit(
             @Parameter(description = "Tournament ID", example = "abc123") UUID id,
             EditTournamentRequest request);

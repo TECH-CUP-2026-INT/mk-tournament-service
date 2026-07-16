@@ -10,9 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AggregateRootTest {
 
@@ -20,14 +18,14 @@ class AggregateRootTest {
     void equals_mismaInstancia_esTrue() {
         Court court = Court.reconstruct(UUID.randomUUID(), UUID.randomUUID(), CourtSection.CANCHA_1, null, null, null);
 
-        assertTrue(court.equals(court));
+        assertEquals(court, court);
     }
 
     @Test
     void equals_conNull_esFalse() {
         Court court = Court.reconstruct(UUID.randomUUID(), UUID.randomUUID(), CourtSection.CANCHA_1, null, null, null);
 
-        assertFalse(court.equals(null));
+        assertNotEquals(court, null);
     }
 
     @Test

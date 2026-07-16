@@ -13,6 +13,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 /**
  * Sincroniza periódicamente el estado de los Enrollment RESERVED con el
@@ -45,7 +46,7 @@ public class SyncEnrollmentStatusService implements SyncEnrollmentStatusUseCase 
 
             PaymentOrderStatus paymentStatus = paymentServiceClient.getOrderStatus(enrollment.getEnrollmentId());
             if (paymentStatus == PaymentOrderStatus.APPROVED) {
-                enrollment.markEnrolled(LocalDateTime.now());
+                enrollment.markEnrolled(LocalDateTime.now(ZoneOffset.UTC));
                 changed = true;
             } else if (paymentStatus == PaymentOrderStatus.REJECTED) {
                 enrollment.markRejected();

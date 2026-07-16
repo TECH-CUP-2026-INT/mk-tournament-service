@@ -20,7 +20,7 @@ public class EditTournamentService implements EditTournamentUseCase {
         Tournament tournament = tournamentRepository.findById(command.tournamentId())
                 .orElseThrow(() -> new TournamentNotFoundException(command.tournamentId().toString()));
 
-        tournament.update(
+        tournament.update(new Tournament.UpdateCommand(
                 command.name(),
                 command.type(),
                 command.format(),
@@ -31,7 +31,7 @@ public class EditTournamentService implements EditTournamentUseCase {
                 command.endDate(),
                 command.matchStartTime(),
                 command.matchEndTime()
-        );
+        ));
 
         return tournamentRepository.save(tournament);
     }

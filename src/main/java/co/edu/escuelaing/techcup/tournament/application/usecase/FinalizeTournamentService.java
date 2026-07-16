@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 @Service
@@ -32,7 +33,7 @@ public class FinalizeTournamentService implements FinalizeTournamentUseCase {
                 .orElseThrow(() -> new TournamentNotFoundException(
                         "No se encontro un torneo con id " + tournamentId));
 
-        tournament.finish(LocalDate.now());
+        tournament.finish(LocalDate.now(ZoneOffset.UTC));
 
         Tournament saved = repository.save(tournament);
 

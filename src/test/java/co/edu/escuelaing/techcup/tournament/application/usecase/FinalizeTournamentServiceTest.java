@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -27,8 +28,8 @@ class FinalizeTournamentServiceTest {
     private Tournament inProgressTournament(UUID id) {
         return Tournament.builder()
                 .id(id).name("Copa Enero").numberOfTeams(8).cost(BigDecimal.valueOf(50000))
-                .startDate(LocalDate.of(2026, 3, 1)).endDate(LocalDate.of(2026, 3, 10))
-                .registrationDeadline(LocalDate.of(2026, 2, 20))
+                .startDate(LocalDate.of(2026, Month.MARCH, 1)).endDate(LocalDate.of(2026, Month.MARCH, 10))
+                .registrationDeadline(LocalDate.of(2026, Month.FEBRUARY, 20))
                 .status(TournamentStatus.IN_PROGRESS)
                 .reconstruct();
     }
@@ -95,8 +96,8 @@ class FinalizeTournamentServiceTest {
 
         Tournament tournament = Tournament.builder()
                 .id(id).name("Copa Enero").numberOfTeams(8).cost(BigDecimal.valueOf(50000))
-                .startDate(LocalDate.of(2026, 3, 1)).endDate(LocalDate.now().plusDays(10))
-                .registrationDeadline(LocalDate.of(2026, 2, 20))
+                .startDate(LocalDate.of(2026, Month.MARCH, 1)).endDate(LocalDate.now().plusDays(10))
+                .registrationDeadline(LocalDate.of(2026, Month.FEBRUARY, 20))
                 .status(TournamentStatus.IN_PROGRESS)
                 .reconstruct();
 
@@ -117,8 +118,8 @@ class FinalizeTournamentServiceTest {
 
         Tournament tournament = Tournament.builder()
                 .id(id).name("Copa Enero").numberOfTeams(8).cost(BigDecimal.valueOf(50000))
-                .startDate(LocalDate.of(2026, 3, 1)).endDate(LocalDate.of(2026, 3, 10))
-                .registrationDeadline(LocalDate.of(2026, 2, 20))
+                .startDate(LocalDate.of(2026, Month.MARCH, 1)).endDate(LocalDate.of(2026, Month.MARCH, 10))
+                .registrationDeadline(LocalDate.of(2026, Month.FEBRUARY, 20))
                 .status(TournamentStatus.FINISHED)
                 .reconstruct();
 
