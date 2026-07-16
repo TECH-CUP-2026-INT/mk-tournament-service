@@ -4,6 +4,7 @@ import co.edu.escuelaing.techcup.tournament.infrastructure.config.SecurityConfig
 import co.edu.escuelaing.techcup.tournament.domain.exception.ChampionAssignmentNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.HistoricalTournamentNotFoundException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.MatchNotFoundException;
+import co.edu.escuelaing.techcup.tournament.domain.exception.MatchupNotFoundException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentNotFoundException;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.EnrollmentResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.HistoricalTournamentResponse;
@@ -42,6 +43,7 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.EnrollTeamIn
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.FinalizeTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.GetChampionUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.GetEnrolledTeamsUseCase;
+import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.GetTournamentByMatchUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.InactivateTeamUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.InactivateTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.InactivateUserUseCase;
@@ -117,6 +119,7 @@ class TournamentControllerTest {
     @MockitoBean private StartTournamentPreparationUseCase startTournamentPreparation;
     @MockitoBean private ViewMatchupsUseCase viewMatchups;
     @MockitoBean private ViewMatchCourtUseCase viewMatchCourt;
+    @MockitoBean private GetTournamentByMatchUseCase getTournamentByMatchUseCase;
     @MockitoBean private TournamentRestMapper mapper;
     @MockitoBean private MatchupRestMapper matchupRestMapper;
     @MockitoBean private EnrollmentRestMapper enrollmentRestMapper;
@@ -302,6 +305,25 @@ class TournamentControllerTest {
         mockMvc.perform(get("/tournaments/matches/" + MATCH_ID_2 + "/court"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
+    void getByMatch_devuelve200() throws Exception {
+        when(getTournamentByMatchUseCase.getByMatch(MATCH_ID)).thenReturn(sampleTournament(TOURNAMENT_ID));
+        when(mapper.toResponse(any())).thenReturn(sampleResponse(TOURNAMENT_ID));
+
+        mockMvc.perform(get("/tournaments/by-match/" + MATCH_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(TOURNAMENT_ID.toString()));
+    }
+
+    @Test
+    void getByMatch_cuandoNoExiste_devuelve404() throws Exception {
+        when(getTournamentByMatchUseCase.getByMatch(MISSING_ID))
+                .thenThrow(new MatchupNotFoundException(MISSING_ID));
+
+        mockMvc.perform(get("/tournaments/by-match/" + MISSING_ID))
+                .andExpect(status().isNotFound());
     }
 
     @Test
