@@ -44,6 +44,7 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.FinalizeTour
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.GetChampionUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.GetEnrolledTeamsUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.GetTournamentByMatchUseCase;
+import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.CheckTeamActiveEnrollmentUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.InactivateTeamUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.InactivateTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.InactivateUserUseCase;
@@ -120,6 +121,7 @@ class TournamentControllerTest {
     @MockitoBean private ViewMatchupsUseCase viewMatchups;
     @MockitoBean private ViewMatchCourtUseCase viewMatchCourt;
     @MockitoBean private GetTournamentByMatchUseCase getTournamentByMatchUseCase;
+    @MockitoBean private CheckTeamActiveEnrollmentUseCase checkTeamActiveEnrollmentUseCase;
     @MockitoBean private TournamentRestMapper mapper;
     @MockitoBean private MatchupRestMapper matchupRestMapper;
     @MockitoBean private EnrollmentRestMapper enrollmentRestMapper;
@@ -324,6 +326,25 @@ class TournamentControllerTest {
 
         mockMvc.perform(get("/tournaments/by-match/" + MISSING_ID))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void hasActiveEnrollment_devuelveTrue() throws Exception {
+        when(checkTeamActiveEnrollmentUseCase.hasActiveEnrollment(TEAM_ID)).thenReturn(true);
+
+        mockMvc.perform(get("/tournaments/by-team/" + TEAM_ID + "/active"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.teamId").value(TEAM_ID.toString()))
+                .andExpect(jsonPath("$.hasActiveEnrollment").value(true));
+    }
+
+    @Test
+    void hasActiveEnrollment_devuelveFalse() throws Exception {
+        when(checkTeamActiveEnrollmentUseCase.hasActiveEnrollment(TEAM_ID)).thenReturn(false);
+
+        mockMvc.perform(get("/tournaments/by-team/" + TEAM_ID + "/active"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.hasActiveEnrollment").value(false));
     }
 
     @Test
