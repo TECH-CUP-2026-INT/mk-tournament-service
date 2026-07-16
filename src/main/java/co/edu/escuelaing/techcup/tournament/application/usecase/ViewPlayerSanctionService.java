@@ -8,6 +8,7 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ViewPlayerSa
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -17,7 +18,7 @@ public class ViewPlayerSanctionService implements ViewPlayerSanctionUseCase {
 
 
     @Override
-    public List<PlayerSanction> getActiveSanctions(String playerId) {
+    public List<PlayerSanction> getActiveSanctions(UUID playerId) {
         return repository.findActiveByPlayerId(playerId);
     }
 }

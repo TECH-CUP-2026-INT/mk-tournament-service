@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/sanctions")
@@ -43,7 +44,7 @@ public class SanctionController implements SanctionControllerSwagger {
 
     @Override
     @GetMapping("/{playerId}")
-    public ResponseEntity<List<SanctionResponse>> getActiveSanctions(@PathVariable String playerId) {
+    public ResponseEntity<List<SanctionResponse>> getActiveSanctions(@PathVariable UUID playerId) {
         List<SanctionResponse> result = viewPlayerSanctionUseCase.getActiveSanctions(playerId)
                 .stream()
                 .map(mapper::toResponse)

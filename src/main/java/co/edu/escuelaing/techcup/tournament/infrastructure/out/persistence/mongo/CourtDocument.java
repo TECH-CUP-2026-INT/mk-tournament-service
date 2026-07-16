@@ -7,6 +7,8 @@ import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.UUID;
+
 @Document(collection = "courts")
 @Getter
 @Setter
@@ -15,10 +17,11 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class CourtDocument {
 
     @Id
-    private String id;
-    private String tournamentId;
+    private UUID id;
+    private UUID tournamentId;
     private String section;
     private String description;
+    // GridFS ObjectId (hex string, no es formato UUID).
     private String imageId;
-    private String matchId;
+    private UUID matchId;
 }

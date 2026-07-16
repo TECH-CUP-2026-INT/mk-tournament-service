@@ -8,6 +8,8 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.CheckTournam
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentRepositoryPort;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class CheckTournamentPreparationService implements CheckTournamentPreparationUseCase {
@@ -16,7 +18,7 @@ public class CheckTournamentPreparationService implements CheckTournamentPrepara
 
 
     @Override
-    public PreparationResult check(String tournamentId) {
+    public PreparationResult check(UUID tournamentId) {
         Tournament tournament = repository.findById(tournamentId)
                 .orElseThrow(() -> new IllegalArgumentException("Torneo no encontrado: " + tournamentId));
         tournament.assertActive();

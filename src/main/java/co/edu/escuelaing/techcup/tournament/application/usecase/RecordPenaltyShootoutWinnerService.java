@@ -17,7 +17,7 @@ public class RecordPenaltyShootoutWinnerService implements RecordPenaltyShootout
     @Override
     public void recordWinner(RecordPenaltyShootoutWinnerCommand command) {
         Tournament tournament = repository.findById(command.tournamentId())
-                .orElseThrow(() -> new TournamentNotFoundException(command.tournamentId()));
+                .orElseThrow(() -> new TournamentNotFoundException(command.tournamentId().toString()));
 
         tournament.recordPenaltyShootoutWinner(command.matchId(), command.winnerTeamId());
         repository.save(tournament);

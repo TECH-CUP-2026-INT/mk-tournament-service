@@ -8,6 +8,7 @@ import org.mapstruct.factory.Mappers;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -20,19 +21,24 @@ class ScheduledMatchRepositoryAdapterTest {
 
     private final co.edu.escuelaing.techcup.tournament.infrastructure.out.persistence.mapper.ScheduledMatchPersistenceMapper mapper = Mappers.getMapper(co.edu.escuelaing.techcup.tournament.infrastructure.out.persistence.mapper.ScheduledMatchPersistenceMapper.class);
 
+    private final UUID scheduledMatchId = UUID.randomUUID();
+    private final UUID matchupId = UUID.randomUUID();
+    private final UUID courtId = UUID.randomUUID();
+    private final UUID refereeId = UUID.randomUUID();
+
     @Test
     void save_delegaAlMongoRepositoryYMapeaDeVuelta() {
         ScheduledMatchMongoRepository mongoRepository = mock(ScheduledMatchMongoRepository.class);
-        ScheduledMatch scheduledMatch = ScheduledMatch.create("m01", "court-1", "ref-1",
+        ScheduledMatch scheduledMatch = ScheduledMatch.create(matchupId, courtId, refereeId,
                 LocalDate.of(2026, 8, 5), LocalTime.of(9, 0));
-        ScheduledMatchDocument saved = new ScheduledMatchDocument("sm1", "m01", "court-1", "ref-1",
+        ScheduledMatchDocument saved = new ScheduledMatchDocument(scheduledMatchId, matchupId, courtId, refereeId,
                 LocalDate.of(2026, 8, 5), LocalTime.of(9, 0));
         when(mongoRepository.save(any())).thenReturn(saved);
 
         ScheduledMatchRepositoryAdapter adapter = new ScheduledMatchRepositoryAdapter(mongoRepository, mapper);
         ScheduledMatch result = adapter.save(scheduledMatch);
 
-        assertEquals("sm1", result.getId());
+        assertEquals(scheduledMatchId, result.getId());
     }
 
     @Test
@@ -41,11 +47,11 @@ class ScheduledMatchRepositoryAdapterTest {
         LocalDate date = LocalDate.of(2026, 8, 5);
         LocalTime time = LocalTime.of(9, 0);
         when(mongoRepository.existsByCourtIdAndMatchDateAndMatchTimeOrRefereeIdAndMatchDateAndMatchTime(
-                "court-1", date, time, "ref-1", date, time)).thenReturn(true);
+                courtId, date, time, refereeId, date, time)).thenReturn(true);
 
         ScheduledMatchRepositoryAdapter adapter = new ScheduledMatchRepositoryAdapter(mongoRepository, mapper);
 
-        assertTrue(adapter.existsConflict("court-1", "ref-1", date, time));
+        assertTrue(adapter.existsConflict(courtId, refereeId, date, time));
     }
 
     @Test
@@ -54,10 +60,10 @@ class ScheduledMatchRepositoryAdapterTest {
         LocalDate date = LocalDate.of(2026, 8, 5);
         LocalTime time = LocalTime.of(9, 0);
         when(mongoRepository.existsByCourtIdAndMatchDateAndMatchTimeOrRefereeIdAndMatchDateAndMatchTime(
-                "court-1", date, time, "ref-1", date, time)).thenReturn(false);
+                courtId, date, time, refereeId, date, time)).thenReturn(false);
 
         ScheduledMatchRepositoryAdapter adapter = new ScheduledMatchRepositoryAdapter(mongoRepository, mapper);
 
-        assertFalse(adapter.existsConflict("court-1", "ref-1", date, time));
+        assertFalse(adapter.existsConflict(courtId, refereeId, date, time));
     }
 }

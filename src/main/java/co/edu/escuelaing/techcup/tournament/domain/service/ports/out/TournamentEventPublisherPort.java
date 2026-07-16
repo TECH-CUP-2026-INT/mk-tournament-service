@@ -1,5 +1,7 @@
 package co.edu.escuelaing.techcup.tournament.domain.service.ports.out;
 
+import java.util.UUID;
+
 /**
  * Puerto de salida para publicar eventos del ciclo de vida del torneo hacia
  * el resto del ecosistema TechCup (ej. Estadísticas), vía el exchange
@@ -13,5 +15,5 @@ public interface TournamentEventPublisherPort {
      * bloquear la finalización del torneo (mismo criterio que
      * {@link RecognitionAwardPort}).
      */
-    void publishTournamentFinalized(String tournamentId);
+    void publishTournamentFinalized(UUID tournamentId);
 }

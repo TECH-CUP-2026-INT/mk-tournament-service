@@ -18,7 +18,7 @@ public class PauseTournamentService implements PauseTournamentUseCase {
     @Override
     public Tournament execute(PauseTournamentCommand command) {
         Tournament tournament = tournamentRepository.findById(command.tournamentId())
-                .orElseThrow(() -> new TournamentNotFoundException(command.tournamentId()));
+                .orElseThrow(() -> new TournamentNotFoundException(command.tournamentId().toString()));
 
         switch (command.action()) {
             case PAUSE -> tournament.pause();

@@ -15,6 +15,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -26,52 +27,63 @@ class RecordPenaltyShootoutWinnerServiceTest {
 
     @Test
     void recordWinner_whenTiedFinalMatch_recordsWinnerAndPersists() {
+        UUID tournamentId = UUID.randomUUID();
+        UUID matchId = UUID.randomUUID();
+        UUID homeTeamId = UUID.randomUUID();
+        UUID awayTeamId = UUID.randomUUID();
         TournamentRepositoryPort repository = mock(TournamentRepositoryPort.class);
-        Match finalMatch = new Match("final-1", "home", "away", MatchStatus.FINISHED,
+        Match finalMatch = new Match(matchId, homeTeamId, awayTeamId, MatchStatus.FINISHED,
                 true, 1, 1, null);
         Tournament tournament = Tournament.reconstruct(
-                "t1", "TechCup", 4, BigDecimal.ZERO,
+                tournamentId, "TechCup", 4, BigDecimal.ZERO,
                 LocalDate.now().plusDays(2), LocalDate.now().plusDays(10), LocalDate.now(),
                 TournamentStatus.IN_PROGRESS, new ArrayList<>(), new ArrayList<>(List.of(finalMatch))
         );
 
-        when(repository.findById("t1")).thenReturn(Optional.of(tournament));
+        when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
         when(repository.save(tournament)).thenReturn(tournament);
 
         RecordPenaltyShootoutWinnerService service = new RecordPenaltyShootoutWinnerService(repository);
-        service.recordWinner(new RecordPenaltyShootoutWinnerCommand("t1", "final-1", "away"));
+        service.recordWinner(new RecordPenaltyShootoutWinnerCommand(tournamentId, matchId, awayTeamId));
 
-        assertEquals("away", tournament.getMatches().get(0).getPenaltyShootoutWinnerTeamId());
+        assertEquals(awayTeamId, tournament.getMatches().get(0).getPenaltyShootoutWinnerTeamId());
         verify(repository).save(tournament);
     }
 
     @Test
     void recordWinner_whenNotTied_throwsException() {
+        UUID tournamentId = UUID.randomUUID();
+        UUID matchId = UUID.randomUUID();
+        UUID homeTeamId = UUID.randomUUID();
+        UUID awayTeamId = UUID.randomUUID();
         TournamentRepositoryPort repository = mock(TournamentRepositoryPort.class);
-        Match finalMatch = new Match("final-1", "home", "away", MatchStatus.FINISHED,
+        Match finalMatch = new Match(matchId, homeTeamId, awayTeamId, MatchStatus.FINISHED,
                 true, 2, 1, null);
         Tournament tournament = Tournament.reconstruct(
-                "t1", "TechCup", 4, BigDecimal.ZERO,
+                tournamentId, "TechCup", 4, BigDecimal.ZERO,
                 LocalDate.now().plusDays(2), LocalDate.now().plusDays(10), LocalDate.now(),
                 TournamentStatus.IN_PROGRESS, new ArrayList<>(), new ArrayList<>(List.of(finalMatch))
         );
 
-        when(repository.findById("t1")).thenReturn(Optional.of(tournament));
+        when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
 
         RecordPenaltyShootoutWinnerService service = new RecordPenaltyShootoutWinnerService(repository);
 
         assertThrows(ChampionAssignmentNotAllowedException.class,
-                () -> service.recordWinner(new RecordPenaltyShootoutWinnerCommand("t1", "final-1", "away")));
+                () -> service.recordWinner(new RecordPenaltyShootoutWinnerCommand(tournamentId, matchId, awayTeamId)));
     }
 
     @Test
     void recordWinner_whenTournamentNotFound_throwsException() {
+        UUID tournamentId = UUID.randomUUID();
+        UUID matchId = UUID.randomUUID();
+        UUID awayTeamId = UUID.randomUUID();
         TournamentRepositoryPort repository = mock(TournamentRepositoryPort.class);
-        when(repository.findById("missing")).thenReturn(Optional.empty());
+        when(repository.findById(tournamentId)).thenReturn(Optional.empty());
 
         RecordPenaltyShootoutWinnerService service = new RecordPenaltyShootoutWinnerService(repository);
 
         assertThrows(TournamentNotFoundException.class,
-                () -> service.recordWinner(new RecordPenaltyShootoutWinnerCommand("missing", "final-1", "away")));
+                () -> service.recordWinner(new RecordPenaltyShootoutWinnerCommand(tournamentId, matchId, awayTeamId)));
     }
 }

@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -36,7 +38,7 @@ class GlobalExceptionHandlerTest {
     @Test
     void handleRulebookNotAttached_devuelve404ConHintEnDetails() {
         ResponseEntity<ErrorResponse> response =
-                handler.handleRulebookNotAttached(new RulebookNotAttachedException("t1"));
+                handler.handleRulebookNotAttached(new RulebookNotAttachedException(UUID.randomUUID()));
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertEquals(1, response.getBody().details().size());

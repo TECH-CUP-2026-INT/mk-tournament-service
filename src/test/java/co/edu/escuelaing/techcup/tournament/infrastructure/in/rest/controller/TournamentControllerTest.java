@@ -15,20 +15,17 @@ import co.edu.escuelaing.techcup.tournament.domain.model.ChampionAssignment;
 import co.edu.escuelaing.techcup.tournament.domain.model.ChampionResolution;
 import co.edu.escuelaing.techcup.tournament.domain.model.Court;
 import co.edu.escuelaing.techcup.tournament.domain.model.CourtSection;
-import co.edu.escuelaing.techcup.tournament.domain.model.DisqualificationReason;
 import co.edu.escuelaing.techcup.tournament.domain.model.Enrollment;
 import co.edu.escuelaing.techcup.tournament.domain.model.EnrollmentStatus;
 import co.edu.escuelaing.techcup.tournament.domain.model.Match;
 import co.edu.escuelaing.techcup.tournament.domain.model.MatchStatus;
 import co.edu.escuelaing.techcup.tournament.domain.model.ScheduledMatch;
 import co.edu.escuelaing.techcup.tournament.domain.model.ParticipantStatus;
-import co.edu.escuelaing.techcup.tournament.domain.model.PaymentOrderStatus;
 import co.edu.escuelaing.techcup.tournament.domain.model.PreparationResult;
 import co.edu.escuelaing.techcup.tournament.domain.model.RegistrationStatus;
 import co.edu.escuelaing.techcup.tournament.domain.model.TeamRegistration;
 import co.edu.escuelaing.techcup.tournament.domain.model.Tournament;
 import co.edu.escuelaing.techcup.tournament.domain.model.TournamentFormat;
-import co.edu.escuelaing.techcup.tournament.domain.model.TournamentParticipant;
 import co.edu.escuelaing.techcup.tournament.domain.model.TournamentStatus;
 import co.edu.escuelaing.techcup.tournament.domain.model.TournamentType;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.AssignChampionUseCase;
@@ -71,9 +68,9 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -124,21 +121,35 @@ class TournamentControllerTest {
     @MockitoBean private MatchupRestMapper matchupRestMapper;
     @MockitoBean private EnrollmentRestMapper enrollmentRestMapper;
 
-    private Tournament sampleTournament(String id) {
+    private static final UUID TOURNAMENT_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
+    private static final UUID MISSING_ID = UUID.fromString("00000000-0000-0000-0000-000000000000");
+    private static final UUID MATCH_ID = UUID.fromString("22222222-2222-2222-2222-222222222222");
+    private static final UUID MATCH_ID_2 = UUID.fromString("33333333-3333-3333-3333-333333333333");
+    private static final UUID COURT_ID = UUID.fromString("44444444-4444-4444-4444-444444444444");
+    private static final UUID COURT_ID_2 = UUID.fromString("55555555-5555-5555-5555-555555555555");
+    private static final UUID SCHEDULED_MATCH_ID = UUID.fromString("66666666-6666-6666-6666-666666666666");
+    private static final UUID REFEREE_ID = UUID.fromString("77777777-7777-7777-7777-777777777777");
+    private static final UUID HOME_TEAM_ID = UUID.fromString("88888888-8888-8888-8888-888888888888");
+    private static final UUID AWAY_TEAM_ID = UUID.fromString("99999999-9999-9999-9999-999999999999");
+    private static final UUID TEAM_ID = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+    private static final UUID ENROLLMENT_ID = UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+    private static final UUID USER_ID = UUID.fromString("cccccccc-cccc-cccc-cccc-cccccccccccc");
+
+    private Tournament sampleTournament(UUID id) {
         return Tournament.reconstruct(id, "TechCup Fútbol 2026", TournamentType.NORMAL, TournamentFormat.BRACKETS,
                 8, BigDecimal.valueOf(50000), LocalDate.now().plusDays(10), LocalDate.now().plusDays(20),
                 LocalDate.now().plusDays(5), null, null, TournamentStatus.ACTIVE,
                 new ArrayList<>(), new ArrayList<>(), null, null, false);
     }
 
-    private co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.TournamentResponse sampleResponse(String id) {
+    private co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.TournamentResponse sampleResponse(UUID id) {
         return new co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.TournamentResponse(
                 id, "TechCup Fútbol 2026", TournamentType.NORMAL, TournamentFormat.BRACKETS, 8,
                 BigDecimal.valueOf(50000), LocalDate.now().plusDays(10), LocalDate.now().plusDays(20),
                 LocalDate.now().plusDays(5), null, null, TournamentStatus.ACTIVE, false, true);
     }
 
-    private HistoricalTournamentResponse sampleHistoricalResponse(String id) {
+    private HistoricalTournamentResponse sampleHistoricalResponse(UUID id) {
         return new HistoricalTournamentResponse(
                 id, "TechCup Fútbol 2026", 8, BigDecimal.valueOf(50000),
                 LocalDate.now().plusDays(10), LocalDate.now().plusDays(20),
@@ -147,8 +158,8 @@ class TournamentControllerTest {
 
     @Test
     void create_datosValidos_devuelve201() throws Exception {
-        when(mapper.toResponse(any())).thenReturn(sampleResponse("t1"));
-        when(createTournamentUseCase.create(any())).thenReturn(sampleTournament("t1"));
+        when(mapper.toResponse(any())).thenReturn(sampleResponse(TOURNAMENT_ID));
+        when(createTournamentUseCase.create(any())).thenReturn(sampleTournament(TOURNAMENT_ID));
 
         String body = """
                 {"name":"TechCup Fútbol 2026","type":"NORMAL","format":"BRACKETS","numberOfTeams":8,
@@ -157,7 +168,7 @@ class TournamentControllerTest {
 
         mockMvc.perform(post("/tournaments").contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value("t1"));
+                .andExpect(jsonPath("$.id").value(TOURNAMENT_ID.toString()));
     }
 
     @Test
@@ -190,46 +201,46 @@ class TournamentControllerTest {
 
     @Test
     void edit_devuelve200() throws Exception {
-        when(editTournamentUseCase.edit(any())).thenReturn(sampleTournament("t1"));
-        when(mapper.toResponse(any())).thenReturn(sampleResponse("t1"));
+        when(editTournamentUseCase.edit(any())).thenReturn(sampleTournament(TOURNAMENT_ID));
+        when(mapper.toResponse(any())).thenReturn(sampleResponse(TOURNAMENT_ID));
 
-        mockMvc.perform(patch("/tournaments/t1").contentType(MediaType.APPLICATION_JSON).content("{}"))
+        mockMvc.perform(patch("/tournaments/" + TOURNAMENT_ID).contentType(MediaType.APPLICATION_JSON).content("{}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value("t1"));
+                .andExpect(jsonPath("$.id").value(TOURNAMENT_ID.toString()));
     }
 
     @Test
     void finalize_devuelve200() throws Exception {
-        when(finalizeTournamentUseCase.finalizeTournament("t1")).thenReturn(sampleTournament("t1"));
-        when(mapper.toResponse(any())).thenReturn(sampleResponse("t1"));
+        when(finalizeTournamentUseCase.finalizeTournament(TOURNAMENT_ID)).thenReturn(sampleTournament(TOURNAMENT_ID));
+        when(mapper.toResponse(any())).thenReturn(sampleResponse(TOURNAMENT_ID));
 
-        mockMvc.perform(patch("/tournaments/t1/finalize"))
+        mockMvc.perform(patch("/tournaments/" + TOURNAMENT_ID + "/finalize"))
                 .andExpect(status().isOk());
     }
 
     @Test
     void finalize_cuandoNoExiste_devuelve404() throws Exception {
-        when(finalizeTournamentUseCase.finalizeTournament("missing"))
+        when(finalizeTournamentUseCase.finalizeTournament(MISSING_ID))
                 .thenThrow(new TournamentNotFoundException("No existe el torneo 'missing'"));
 
-        mockMvc.perform(patch("/tournaments/missing/finalize"))
+        mockMvc.perform(patch("/tournaments/" + MISSING_ID + "/finalize"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void prepare_devuelve200() throws Exception {
-        when(startTournamentPreparation.startPreparation("t1")).thenReturn(sampleTournament("t1"));
-        when(mapper.toResponse(any())).thenReturn(sampleResponse("t1"));
+        when(startTournamentPreparation.startPreparation(TOURNAMENT_ID)).thenReturn(sampleTournament(TOURNAMENT_ID));
+        when(mapper.toResponse(any())).thenReturn(sampleResponse(TOURNAMENT_ID));
 
-        mockMvc.perform(patch("/tournaments/t1/prepare"))
+        mockMvc.perform(patch("/tournaments/" + TOURNAMENT_ID + "/prepare"))
                 .andExpect(status().isOk());
     }
 
     @Test
     void checkPreparation_devuelve200() throws Exception {
-        when(checkPreparation.check("t1")).thenReturn(new PreparationResult(true, List.of(), 8));
+        when(checkPreparation.check(TOURNAMENT_ID)).thenReturn(new PreparationResult(true, List.of(), 8));
 
-        mockMvc.perform(get("/tournaments/t1/preparation"))
+        mockMvc.perform(get("/tournaments/" + TOURNAMENT_ID + "/preparation"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.readyToActivate").value(true))
                 .andExpect(jsonPath("$.approvedTeamsCount").value(8));
@@ -237,104 +248,104 @@ class TournamentControllerTest {
 
     @Test
     void pause_devuelve200() throws Exception {
-        when(pauseTournamentUseCase.execute(any())).thenReturn(sampleTournament("t1"));
+        when(pauseTournamentUseCase.execute(any())).thenReturn(sampleTournament(TOURNAMENT_ID));
 
-        mockMvc.perform(patch("/tournaments/t1/pause")
+        mockMvc.perform(patch("/tournaments/" + TOURNAMENT_ID + "/pause")
                         .contentType(MediaType.APPLICATION_JSON).content("{\"action\":\"PAUSE\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.tournamentId").value("t1"));
+                .andExpect(jsonPath("$.tournamentId").value(TOURNAMENT_ID.toString()));
     }
 
     @Test
     void inactivate_devuelve200() throws Exception {
-        when(inactivateTournamentUseCase.execute(any())).thenReturn(sampleTournament("t1"));
+        when(inactivateTournamentUseCase.execute(any())).thenReturn(sampleTournament(TOURNAMENT_ID));
 
-        mockMvc.perform(patch("/tournaments/t1/inactivate")
+        mockMvc.perform(patch("/tournaments/" + TOURNAMENT_ID + "/inactivate")
                         .contentType(MediaType.APPLICATION_JSON).content("{\"action\":\"INACTIVATE\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.tournamentId").value("t1"));
+                .andExpect(jsonPath("$.tournamentId").value(TOURNAMENT_ID.toString()));
     }
 
     @Test
     void delete_devuelve200() throws Exception {
-        mockMvc.perform(delete("/tournaments/t1"))
+        mockMvc.perform(delete("/tournaments/" + TOURNAMENT_ID))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").exists());
     }
 
     @Test
     void getMatchups_devuelve200ConLista() throws Exception {
-        when(viewMatchups.getMatchups("t1")).thenReturn(List.of(
-                new Match("m1", "home", "away", MatchStatus.PENDING)));
+        when(viewMatchups.getMatchups(TOURNAMENT_ID)).thenReturn(List.of(
+                new Match(MATCH_ID, HOME_TEAM_ID, AWAY_TEAM_ID, MatchStatus.PENDING)));
         when(matchupRestMapper.toResponse(any())).thenReturn(new MatchupResponse(
-                "m1", "home", "away", MatchStatus.PENDING, 0, 0, false));
+                MATCH_ID, HOME_TEAM_ID, AWAY_TEAM_ID, MatchStatus.PENDING, 0, 0, false));
 
-        mockMvc.perform(get("/tournaments/t1/matchups"))
+        mockMvc.perform(get("/tournaments/" + TOURNAMENT_ID + "/matchups"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].matchId").value("m1"));
+                .andExpect(jsonPath("$[0].matchId").value(MATCH_ID.toString()));
     }
 
     @Test
     void getMatchCourt_cuandoExisteCancha_devuelve200() throws Exception {
-        Court court = Court.reconstruct("c1", "t1", CourtSection.CANCHA_1, "Descripción", "img1", "m1");
-        when(viewMatchCourt.getCourtByMatch("m1")).thenReturn(Optional.of(court));
+        Court court = Court.reconstruct(COURT_ID, TOURNAMENT_ID, CourtSection.CANCHA_1, "Descripción", "img1", MATCH_ID);
+        when(viewMatchCourt.getCourtByMatch(MATCH_ID)).thenReturn(Optional.of(court));
 
-        mockMvc.perform(get("/tournaments/matches/m1/court"))
+        mockMvc.perform(get("/tournaments/matches/" + MATCH_ID + "/court"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.courtId").value("c1"));
+                .andExpect(jsonPath("$.courtId").value(COURT_ID.toString()));
     }
 
     @Test
     void getMatchCourt_cuandoNoHayCanchaAsignada_devuelvePendiente() throws Exception {
-        when(viewMatchCourt.getCourtByMatch("m2")).thenReturn(Optional.empty());
+        when(viewMatchCourt.getCourtByMatch(MATCH_ID_2)).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/tournaments/matches/m2/court"))
+        mockMvc.perform(get("/tournaments/matches/" + MATCH_ID_2 + "/court"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").exists());
     }
 
     @Test
     void getCourtMap_devuelve200ConCanchaDisponibleYConPartido() throws Exception {
-        Court available = Court.reconstruct("c1", "t1", CourtSection.CANCHA_1, "Court A", null, null);
-        Court withMatch = Court.reconstruct("c2", "t1", CourtSection.CANCHA_2, "Court B", null, "m1");
-        Match match = new Match("m1", "home", "away", MatchStatus.IN_PROGRESS);
+        Court available = Court.reconstruct(COURT_ID, TOURNAMENT_ID, CourtSection.CANCHA_1, "Court A", null, null);
+        Court withMatch = Court.reconstruct(COURT_ID_2, TOURNAMENT_ID, CourtSection.CANCHA_2, "Court B", null, MATCH_ID);
+        Match match = new Match(MATCH_ID, HOME_TEAM_ID, AWAY_TEAM_ID, MatchStatus.IN_PROGRESS);
         ScheduledMatch scheduledMatch = ScheduledMatch.reconstruct(
-                "sm1", "m1", "c2", "ref-1", LocalDate.of(2026, 8, 5), java.time.LocalTime.of(9, 0));
+                SCHEDULED_MATCH_ID, MATCH_ID, COURT_ID_2, REFEREE_ID, LocalDate.of(2026, 8, 5), java.time.LocalTime.of(9, 0));
 
-        when(viewCourtMapUseCase.getCourtMap("t1")).thenReturn(List.of(
+        when(viewCourtMapUseCase.getCourtMap(TOURNAMENT_ID)).thenReturn(List.of(
                 new ViewCourtMapUseCase.CourtMapEntry(available, null, null),
                 new ViewCourtMapUseCase.CourtMapEntry(withMatch, match, scheduledMatch)
         ));
 
-        mockMvc.perform(get("/tournaments/t1/courts"))
+        mockMvc.perform(get("/tournaments/" + TOURNAMENT_ID + "/courts"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].courtId").value("c1"))
+                .andExpect(jsonPath("$[0].courtId").value(COURT_ID.toString()))
                 .andExpect(jsonPath("$[0].status").value("AVAILABLE"))
                 .andExpect(jsonPath("$[0].statusLabel").value("Available"))
-                .andExpect(jsonPath("$[1].courtId").value("c2"))
+                .andExpect(jsonPath("$[1].courtId").value(COURT_ID_2.toString()))
                 .andExpect(jsonPath("$[1].status").value("IN_PROGRESS"))
                 .andExpect(jsonPath("$[1].statusLabel").value("In Progress"))
-                .andExpect(jsonPath("$[1].matchId").value("m1"))
+                .andExpect(jsonPath("$[1].matchId").value(MATCH_ID.toString()))
                 .andExpect(jsonPath("$[1].matchDate").value("2026-08-05"));
     }
 
     @Test
     void getRegisteredTeams_devuelve200() throws Exception {
-        when(viewRegisteredTeams.getTeams("t1")).thenReturn(List.of(
-                new TeamRegistration("team1", "Los Compiladores", RegistrationStatus.APPROVED)));
+        when(viewRegisteredTeams.getTeams(TOURNAMENT_ID)).thenReturn(List.of(
+                new TeamRegistration(TEAM_ID, "Los Compiladores", RegistrationStatus.APPROVED)));
 
-        mockMvc.perform(get("/tournaments/t1/teams"))
+        mockMvc.perform(get("/tournaments/" + TOURNAMENT_ID + "/teams"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].teamId").value("team1"));
+                .andExpect(jsonPath("$[0].teamId").value(TEAM_ID.toString()));
     }
 
     @Test
     void getEnrolledTeams_devuelve200() throws Exception {
-        Enrollment enrolled = new Enrollment("e1", "team1", "Los Compiladores", EnrollmentStatus.ENROLLED, null, null);
-        when(getEnrolledTeams.getEnrolledTeams("t1"))
+        Enrollment enrolled = new Enrollment(ENROLLMENT_ID, TEAM_ID, "Los Compiladores", EnrollmentStatus.ENROLLED, null, null);
+        when(getEnrolledTeams.getEnrolledTeams(TOURNAMENT_ID))
                 .thenReturn(new GetEnrolledTeamsUseCase.EnrolledTeamsView(List.of(enrolled), List.of(), 4));
 
-        mockMvc.perform(get("/tournaments/t1/enrollments"))
+        mockMvc.perform(get("/tournaments/" + TOURNAMENT_ID + "/enrollments"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalEnrolled").value(1))
                 .andExpect(jsonPath("$.availableSlots").value(4));
@@ -342,51 +353,51 @@ class TournamentControllerTest {
 
     @Test
     void enrollTeam_devuelve201() throws Exception {
-        Enrollment enrollment = new Enrollment("e1", "team1", "Los Compiladores", EnrollmentStatus.PENDING_PAYMENT, null, null);
-        when(enrollTeamInTournamentUseCase.enrollTeam("t1", "team1")).thenReturn(enrollment);
+        Enrollment enrollment = new Enrollment(ENROLLMENT_ID, TEAM_ID, "Los Compiladores", EnrollmentStatus.PENDING_PAYMENT, null, null);
+        when(enrollTeamInTournamentUseCase.enrollTeam(TOURNAMENT_ID, TEAM_ID)).thenReturn(enrollment);
         when(enrollmentRestMapper.toResponse(any())).thenReturn(new EnrollmentResponse(
-                "e1", EnrollmentStatus.PENDING_PAYMENT, null));
+                ENROLLMENT_ID, EnrollmentStatus.PENDING_PAYMENT, null));
 
-        mockMvc.perform(post("/tournaments/t1/enrollments")
-                        .contentType(MediaType.APPLICATION_JSON).content("{\"teamId\":\"team1\"}"))
+        mockMvc.perform(post("/tournaments/" + TOURNAMENT_ID + "/enrollments")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"teamId\":\"" + TEAM_ID + "\"}"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.enrollmentId").value("e1"));
+                .andExpect(jsonPath("$.enrollmentId").value(ENROLLMENT_ID.toString()));
     }
 
     @Test
     void getHistory_devuelve200() throws Exception {
-        when(consultHistorical.findAll()).thenReturn(List.of(sampleTournament("t1")));
-        when(mapper.toHistoricalResponse(any())).thenReturn(sampleHistoricalResponse("t1"));
+        when(consultHistorical.findAll()).thenReturn(List.of(sampleTournament(TOURNAMENT_ID)));
+        when(mapper.toHistoricalResponse(any())).thenReturn(sampleHistoricalResponse(TOURNAMENT_ID));
 
         mockMvc.perform(get("/tournaments/history"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value("t1"));
+                .andExpect(jsonPath("$[0].id").value(TOURNAMENT_ID.toString()));
     }
 
     @Test
     void getHistoricalById_devuelve200() throws Exception {
-        when(consultHistorical.findById("t1")).thenReturn(sampleTournament("t1"));
-        when(mapper.toHistoricalResponse(any())).thenReturn(sampleHistoricalResponse("t1"));
+        when(consultHistorical.findById(TOURNAMENT_ID)).thenReturn(sampleTournament(TOURNAMENT_ID));
+        when(mapper.toHistoricalResponse(any())).thenReturn(sampleHistoricalResponse(TOURNAMENT_ID));
 
-        mockMvc.perform(get("/tournaments/history/t1"))
+        mockMvc.perform(get("/tournaments/history/" + TOURNAMENT_ID))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value("t1"));
+                .andExpect(jsonPath("$.id").value(TOURNAMENT_ID.toString()));
     }
 
     @Test
     void getHistoricalById_cuandoNoExiste_devuelve404() throws Exception {
-        when(consultHistorical.findById("missing")).thenThrow(new HistoricalTournamentNotFoundException("missing"));
+        when(consultHistorical.findById(MISSING_ID)).thenThrow(new HistoricalTournamentNotFoundException(MISSING_ID));
 
-        mockMvc.perform(get("/tournaments/history/missing"))
+        mockMvc.perform(get("/tournaments/history/" + MISSING_ID))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void consultRulebook_devuelvePdf() throws Exception {
-        when(consultRulebook.consult("t1")).thenReturn(new ConsultRulebookUseCase.RulebookResource(
+        when(consultRulebook.consult(TOURNAMENT_ID)).thenReturn(new ConsultRulebookUseCase.RulebookResource(
                 "reglamento.pdf", "application/pdf", new ByteArrayInputStream("pdf-content".getBytes())));
 
-        mockMvc.perform(get("/tournaments/t1/rulebook"))
+        mockMvc.perform(get("/tournaments/" + TOURNAMENT_ID + "/rulebook"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_PDF))
                 .andExpect(header().string("Content-Disposition", "inline; filename=\"reglamento.pdf\""));
@@ -394,86 +405,86 @@ class TournamentControllerTest {
 
     @Test
     void attachRulebook_devuelve200() throws Exception {
-        when(attachRulebook.attach(any())).thenReturn(sampleTournament("t1"));
+        when(attachRulebook.attach(any())).thenReturn(sampleTournament(TOURNAMENT_ID));
         MockMultipartFile file = new MockMultipartFile("file", "reglamento.pdf",
                 MediaType.APPLICATION_PDF_VALUE, "pdf-content".getBytes());
 
-        mockMvc.perform(multipart("/tournaments/t1/rulebook").file(file))
+        mockMvc.perform(multipart("/tournaments/" + TOURNAMENT_ID + "/rulebook").file(file))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.tournamentId").value("t1"));
+                .andExpect(jsonPath("$.tournamentId").value(TOURNAMENT_ID.toString()));
     }
 
     @Test
     void registerCourt_devuelve201() throws Exception {
-        Court court = Court.create("t1", CourtSection.CANCHA_1, "Descripción");
+        Court court = Court.create(TOURNAMENT_ID, CourtSection.CANCHA_1, "Descripción");
         when(registerCourtUseCase.register(any())).thenReturn(court);
 
-        mockMvc.perform(multipart("/tournaments/t1/courts")
+        mockMvc.perform(multipart("/tournaments/" + TOURNAMENT_ID + "/courts")
                         .param("section", "CANCHA_1")
                         .param("description", "Descripción"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.tournamentId").value("t1"));
+                .andExpect(jsonPath("$.tournamentId").value(TOURNAMENT_ID.toString()));
     }
 
     @Test
     void registerCourt_conImagen_devuelve201() throws Exception {
-        Court court = Court.create("t1", CourtSection.CANCHA_1, "Descripción");
+        Court court = Court.create(TOURNAMENT_ID, CourtSection.CANCHA_1, "Descripción");
         when(registerCourtUseCase.register(any())).thenReturn(court);
         MockMultipartFile image = new MockMultipartFile("image", "cancha.jpg",
                 MediaType.IMAGE_JPEG_VALUE, "img-bytes".getBytes());
 
-        mockMvc.perform(multipart("/tournaments/t1/courts")
+        mockMvc.perform(multipart("/tournaments/" + TOURNAMENT_ID + "/courts")
                         .file(image)
                         .param("section", "CANCHA_1")
                         .param("description", "Descripción"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.tournamentId").value("t1"));
+                .andExpect(jsonPath("$.tournamentId").value(TOURNAMENT_ID.toString()));
     }
 
     @Test
     void registerCourt_seccionInvalida_devuelve400() throws Exception {
-        mockMvc.perform(multipart("/tournaments/t1/courts")
+        mockMvc.perform(multipart("/tournaments/" + TOURNAMENT_ID + "/courts")
                         .param("section", "CANCHA_9"))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
     void assignChampion_devuelve200() throws Exception {
-        when(assignChampionUseCase.assignChampion("t1", "m1"))
-                .thenReturn(new ChampionAssignment("team1", ChampionResolution.REGULATION_TIME));
+        when(assignChampionUseCase.assignChampion(TOURNAMENT_ID, MATCH_ID))
+                .thenReturn(new ChampionAssignment(TEAM_ID, ChampionResolution.REGULATION_TIME));
 
-        mockMvc.perform(post("/tournaments/t1/matches/m1/champion"))
+        mockMvc.perform(post("/tournaments/" + TOURNAMENT_ID + "/matches/" + MATCH_ID + "/champion"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.championTeamId").value("team1"));
+                .andExpect(jsonPath("$.championTeamId").value(TEAM_ID.toString()));
     }
 
     @Test
     void assignChampion_cuandoPartidoNoExiste_devuelve404() throws Exception {
-        when(assignChampionUseCase.assignChampion("t1", "missing"))
-                .thenThrow(new MatchNotFoundException("t1", "missing"));
+        when(assignChampionUseCase.assignChampion(TOURNAMENT_ID, MISSING_ID))
+                .thenThrow(new MatchNotFoundException(TOURNAMENT_ID, MISSING_ID));
 
-        mockMvc.perform(post("/tournaments/t1/matches/missing/champion"))
+        mockMvc.perform(post("/tournaments/" + TOURNAMENT_ID + "/matches/" + MISSING_ID + "/champion"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void assignChampion_cuandoNoPermitido_devuelve409() throws Exception {
-        when(assignChampionUseCase.assignChampion("t1", "m1"))
+        when(assignChampionUseCase.assignChampion(TOURNAMENT_ID, MATCH_ID))
                 .thenThrow(new ChampionAssignmentNotAllowedException("El partido debe estar finalizado"));
 
-        mockMvc.perform(post("/tournaments/t1/matches/m1/champion"))
+        mockMvc.perform(post("/tournaments/" + TOURNAMENT_ID + "/matches/" + MATCH_ID + "/champion"))
                 .andExpect(status().isConflict());
     }
 
     @Test
     void recordPenaltyShootoutWinner_devuelve200() throws Exception {
-        mockMvc.perform(post("/tournaments/t1/matches/m1/penalty-shootout")
+        mockMvc.perform(post("/tournaments/" + TOURNAMENT_ID + "/matches/" + MATCH_ID + "/penalty-shootout")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"winnerTeamId\":\"team1\"}"))
+                        .content("{\"winnerTeamId\":\"" + TEAM_ID + "\"}"))
                 .andExpect(status().isOk());
 
         verify(recordPenaltyShootoutWinnerUseCase).recordWinner(
-                new RecordPenaltyShootoutWinnerUseCase.RecordPenaltyShootoutWinnerCommand("t1", "m1", "team1"));
+                new RecordPenaltyShootoutWinnerUseCase.RecordPenaltyShootoutWinnerCommand(TOURNAMENT_ID, MATCH_ID, TEAM_ID));
     }
 
     @Test
@@ -482,33 +493,33 @@ class TournamentControllerTest {
                         "La tanda de penales solo aplica cuando hay empate en tiempo reglamentario"))
                 .when(recordPenaltyShootoutWinnerUseCase).recordWinner(org.mockito.ArgumentMatchers.any());
 
-        mockMvc.perform(post("/tournaments/t1/matches/m1/penalty-shootout")
+        mockMvc.perform(post("/tournaments/" + TOURNAMENT_ID + "/matches/" + MATCH_ID + "/penalty-shootout")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"winnerTeamId\":\"team1\"}"))
+                        .content("{\"winnerTeamId\":\"" + TEAM_ID + "\"}"))
                 .andExpect(status().isConflict());
     }
 
     @Test
     void recordPenaltyShootoutWinner_datosInvalidos_devuelve400() throws Exception {
-        mockMvc.perform(post("/tournaments/t1/matches/m1/penalty-shootout")
+        mockMvc.perform(post("/tournaments/" + TOURNAMENT_ID + "/matches/" + MATCH_ID + "/penalty-shootout")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"winnerTeamId\":\"\"}"))
+                        .content("{\"winnerTeamId\":null}"))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
     void getChampion_devuelve200() throws Exception {
-        when(getChampionUseCase.getChampion("t1"))
-                .thenReturn(new ChampionAssignment("team1", ChampionResolution.PENALTIES));
+        when(getChampionUseCase.getChampion(TOURNAMENT_ID))
+                .thenReturn(new ChampionAssignment(TEAM_ID, ChampionResolution.PENALTIES));
 
-        mockMvc.perform(get("/tournaments/t1/champion"))
+        mockMvc.perform(get("/tournaments/" + TOURNAMENT_ID + "/champion"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.resolution").value("PENALTIES"));
     }
 
     @Test
     void disqualifyTeam_devuelve200() throws Exception {
-        mockMvc.perform(patch("/tournaments/t1/teams/team1/disqualify")
+        mockMvc.perform(patch("/tournaments/" + TOURNAMENT_ID + "/teams/" + TEAM_ID + "/disqualify")
                         .contentType(MediaType.APPLICATION_JSON).content("{\"reason\":\"RULES_VIOLATION\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(RegistrationStatus.DISQUALIFIED.name()));
@@ -516,14 +527,14 @@ class TournamentControllerTest {
 
     @Test
     void inactivateTeam_devuelve200() throws Exception {
-        mockMvc.perform(patch("/tournaments/t1/teams/team1/inactivate"))
+        mockMvc.perform(patch("/tournaments/" + TOURNAMENT_ID + "/teams/" + TEAM_ID + "/inactivate"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(RegistrationStatus.INACTIVE.name()));
     }
 
     @Test
     void inactivateUser_devuelve200() throws Exception {
-        mockMvc.perform(patch("/tournaments/t1/users/user1/inactivate"))
+        mockMvc.perform(patch("/tournaments/" + TOURNAMENT_ID + "/users/" + USER_ID + "/inactivate"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(ParticipantStatus.INACTIVE.name()));
     }

@@ -39,6 +39,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 @Tag(name = "Tournaments", description = "Creating, editing, and managing the full tournament lifecycle")
 public interface TournamentControllerSwagger {
@@ -62,7 +63,7 @@ public interface TournamentControllerSwagger {
             @ApiResponse(responseCode = "409", description = "The tournament cannot be finalized in its current state", content = @Content)
     })
     ResponseEntity<TournamentResponse> finalizeTournament(
-            @Parameter(description = "Tournament ID", example = "abc123") String id);
+            @Parameter(description = "Tournament ID", example = "abc123") UUID id);
 
     @Operation(summary = "Start preparation phase",
             description = "Moves the tournament to IN_PREPARATION and generates its fixture (matchups) at random, "
@@ -73,7 +74,7 @@ public interface TournamentControllerSwagger {
             @ApiResponse(responseCode = "409", description = "The tournament does not meet the requirements to enter preparation", content = @Content)
     })
     ResponseEntity<TournamentResponse> prepare(
-            @Parameter(description = "Tournament ID", example = "abc123") String id);
+            @Parameter(description = "Tournament ID", example = "abc123") UUID id);
 
     @Operation(summary = "Check preparation readiness",
             description = "Reports whether the tournament already meets the requirements to move into preparation "
@@ -81,7 +82,7 @@ public interface TournamentControllerSwagger {
     @ApiResponse(responseCode = "200", description = "Tournament preparation readiness",
             content = @Content(schema = @Schema(implementation = PreparationResponse.class)))
     ResponseEntity<PreparationResponse> checkPreparation(
-            @Parameter(description = "Tournament ID", example = "abc123") String tournamentId);
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId);
 
     @Operation(summary = "Assign tournament champion",
             description = "Triggered when the match marked as the final finishes. If the score is tied in "
@@ -89,8 +90,8 @@ public interface TournamentControllerSwagger {
     @ApiResponse(responseCode = "200", description = "Champion assigned",
             content = @Content(schema = @Schema(implementation = ChampionResponse.class)))
     ResponseEntity<ChampionResponse> assignChampion(
-            @Parameter(description = "Tournament ID", example = "abc123") String tournamentId,
-            @Parameter(description = "ID of the final match", example = "m01") String matchId);
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId,
+            @Parameter(description = "ID of the final match", example = "m01") UUID matchId);
 
     @Operation(summary = "Record penalty shootout winner",
             description = "Records the winner of the penalty shootout for a match tied in regulation time. "
@@ -101,15 +102,15 @@ public interface TournamentControllerSwagger {
             @ApiResponse(responseCode = "404", description = "The tournament or the match doesn't exist", content = @Content)
     })
     ResponseEntity<Void> recordPenaltyShootoutWinner(
-            @Parameter(description = "Tournament ID", example = "abc123") String tournamentId,
-            @Parameter(description = "Match ID", example = "m01") String matchId,
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId,
+            @Parameter(description = "Match ID", example = "m01") UUID matchId,
             RecordPenaltyShootoutWinnerRequest request);
 
     @Operation(summary = "Get tournament champion")
     @ApiResponse(responseCode = "200", description = "Tournament champion",
             content = @Content(schema = @Schema(implementation = ChampionResponse.class)))
     ResponseEntity<ChampionResponse> getChampion(
-            @Parameter(description = "Tournament ID", example = "abc123") String tournamentId);
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId);
 
     @Operation(summary = "Delete tournament (Draft status only)",
             description = "Permanently deletes a tournament. Only allowed while it is still in Draft status.")
@@ -119,7 +120,7 @@ public interface TournamentControllerSwagger {
             @ApiResponse(responseCode = "409", description = "The tournament is not in Draft status", content = @Content)
     })
     ResponseEntity<DeleteTournamentResponse> delete(
-            @Parameter(description = "Tournament ID", example = "abc123") String id);
+            @Parameter(description = "Tournament ID", example = "abc123") UUID id);
 
     @Operation(summary = "Get fixture / bracket",
             description = "Returns every matchup generated for the tournament, with current results. Slots not yet "
@@ -127,7 +128,7 @@ public interface TournamentControllerSwagger {
     @ApiResponse(responseCode = "200", description = "List of tournament matchups",
             content = @Content(schema = @Schema(implementation = MatchupResponse.class)))
     ResponseEntity<List<MatchupResponse>> getMatchups(
-            @Parameter(description = "Tournament ID", example = "abc123") String tournamentId);
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId);
 
     @Operation(summary = "Get the court assigned to a match",
             description = "Returns a pending placeholder (200, with a message) instead of 404 if the match hasn't "
@@ -135,7 +136,7 @@ public interface TournamentControllerSwagger {
     @ApiResponse(responseCode = "200", description = "Court assigned to the match (or a pending state if not scheduled yet)",
             content = @Content(schema = @Schema(implementation = MatchCourtResponse.class)))
     ResponseEntity<MatchCourtResponse> getMatchCourt(
-            @Parameter(description = "Match ID", example = "m01") String matchId);
+            @Parameter(description = "Match ID", example = "m01") UUID matchId);
 
     @Operation(summary = "List registered teams",
             description = "Legacy registration view (name + status). For payment/reservation details, use "
@@ -143,7 +144,7 @@ public interface TournamentControllerSwagger {
     @ApiResponse(responseCode = "200", description = "List of teams registered in the tournament",
             content = @Content(schema = @Schema(implementation = RegisteredTeamResponse.class)))
     ResponseEntity<List<RegisteredTeamResponse>> getRegisteredTeams(
-            @Parameter(description = "Tournament ID", example = "abc123") String tournamentId);
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId);
 
     @Operation(summary = "List enrolled and reserved teams",
             description = "Returns teams with a confirmed (paid) enrollment separately from teams with a slot "
@@ -151,7 +152,7 @@ public interface TournamentControllerSwagger {
     @ApiResponse(responseCode = "200", description = "Enrolled teams and reserved teams",
             content = @Content(schema = @Schema(implementation = RegisteredTeamsResponse.class)))
     ResponseEntity<RegisteredTeamsResponse> getEnrolledTeams(
-            @Parameter(description = "Tournament ID", example = "abc123") String tournamentId);
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId);
 
     @Operation(summary = "Enroll team in tournament",
             description = "The team captain enrolls their team. The tournament must be ACTIVE and have open slots; "
@@ -163,7 +164,7 @@ public interface TournamentControllerSwagger {
             @ApiResponse(responseCode = "409", description = "The team is already enrolled, or there are no open slots", content = @Content)
     })
     ResponseEntity<EnrollmentResponse> enrollTeam(
-            @Parameter(description = "Tournament ID", example = "abc123") String tournamentId,
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId,
             EnrollTeamRequest request);
 
     @Operation(summary = "List historical tournaments",
@@ -179,7 +180,7 @@ public interface TournamentControllerSwagger {
             @ApiResponse(responseCode = "404", description = "The tournament doesn't exist or hasn't finished yet", content = @Content)
     })
     ResponseEntity<HistoricalTournamentResponse> getHistoricalById(
-            @Parameter(description = "Tournament ID", example = "abc123") String tournamentId);
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId);
 
     @Operation(summary = "Download rulebook (PDF)",
             description = "Streams the tournament's rulebook file inline as application/pdf.")
@@ -189,7 +190,7 @@ public interface TournamentControllerSwagger {
             @ApiResponse(responseCode = "404", description = "The tournament has no rulebook attached", content = @Content)
     })
     ResponseEntity<InputStreamResource> consultRulebook(
-            @Parameter(description = "Tournament ID", example = "abc123") String tournamentId);
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId);
 
     @Operation(summary = "Attach rulebook (PDF)",
             description = "Uploads and attaches the official rulebook PDF (max. 10 MB) to the tournament. "
@@ -197,7 +198,7 @@ public interface TournamentControllerSwagger {
     @ApiResponse(responseCode = "200", description = "Rulebook attached",
             content = @Content(schema = @Schema(implementation = RulebookResponse.class)))
     ResponseEntity<RulebookResponse> attachRulebook(
-            @Parameter(description = "Tournament ID", example = "abc123") String tournamentId,
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId,
             @Parameter(description = "Rulebook PDF file (max. 10 MB)") MultipartFile file) throws IOException;
 
     @Operation(summary = "Register court",
@@ -209,7 +210,7 @@ public interface TournamentControllerSwagger {
             @ApiResponse(responseCode = "400", description = "Invalid court section or invalid image", content = @Content)
     })
     ResponseEntity<CourtResponse> registerCourt(
-            @Parameter(description = "Tournament ID", example = "abc123") String tournamentId,
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId,
             @Parameter(description = "Campus map section for the court: CANCHA_1, CANCHA_2, CANCHA_3 or CANCHA_4",
                     example = "CANCHA_1") String section,
             @Parameter(description = "Court description", example = "Synthetic grass court, north side of campus")
@@ -224,7 +225,7 @@ public interface TournamentControllerSwagger {
     @ApiResponse(responseCode = "200", description = "Campus court map",
             content = @Content(schema = @Schema(implementation = CourtMapEntryResponse.class)))
     ResponseEntity<List<CourtMapEntryResponse>> getCourtMap(
-            @Parameter(description = "Tournament ID", example = "abc123") String tournamentId);
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId);
 
     @Operation(summary = "Edit tournament",
             description = "Updates any field defined at tournament creation. Every field in the request body is "
@@ -236,7 +237,7 @@ public interface TournamentControllerSwagger {
             @ApiResponse(responseCode = "404", description = "The tournament doesn't exist", content = @Content)
     })
     ResponseEntity<TournamentResponse> edit(
-            @Parameter(description = "Tournament ID", example = "abc123") String id,
+            @Parameter(description = "Tournament ID", example = "abc123") UUID id,
             EditTournamentRequest request);
 
     @Operation(summary = "Pause or resume tournament",
@@ -245,7 +246,7 @@ public interface TournamentControllerSwagger {
     @ApiResponse(responseCode = "200", description = "Tournament paused or resumed",
             content = @Content(schema = @Schema(implementation = PauseTournamentResponse.class)))
     ResponseEntity<PauseTournamentResponse> pause(
-            @Parameter(description = "Tournament ID", example = "abc123") String id,
+            @Parameter(description = "Tournament ID", example = "abc123") UUID id,
             PauseTournamentRequest request);
 
     @Operation(summary = "Inactivate or reactivate tournament",
@@ -254,7 +255,7 @@ public interface TournamentControllerSwagger {
     @ApiResponse(responseCode = "200", description = "Tournament inactivated or reactivated",
             content = @Content(schema = @Schema(implementation = InactivateTournamentResponse.class)))
     ResponseEntity<InactivateTournamentResponse> inactivate(
-            @Parameter(description = "Tournament ID", example = "abc123") String id,
+            @Parameter(description = "Tournament ID", example = "abc123") UUID id,
             InactivateTournamentRequest request);
 
     @Operation(summary = "Disqualify team",
@@ -263,8 +264,8 @@ public interface TournamentControllerSwagger {
     @ApiResponse(responseCode = "200", description = "Team disqualified",
             content = @Content(schema = @Schema(implementation = DisqualifyTeamResponse.class)))
     ResponseEntity<DisqualifyTeamResponse> disqualifyTeam(
-            @Parameter(description = "Tournament ID", example = "abc123") String tournamentId,
-            @Parameter(description = "Team ID", example = "team_xyz789") String teamId,
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId,
+            @Parameter(description = "Team ID", example = "team_xyz789") UUID teamId,
             DisqualifyTeamRequest request);
 
     @Operation(summary = "Inactivate team in tournament",
@@ -273,8 +274,8 @@ public interface TournamentControllerSwagger {
     @ApiResponse(responseCode = "200", description = "Team inactivated",
             content = @Content(schema = @Schema(implementation = InactivateTeamResponse.class)))
     ResponseEntity<InactivateTeamResponse> inactivateTeam(
-            @Parameter(description = "Tournament ID", example = "abc123") String tournamentId,
-            @Parameter(description = "Team ID", example = "team_xyz789") String teamId);
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId,
+            @Parameter(description = "Team ID", example = "team_xyz789") UUID teamId);
 
     @Operation(summary = "Inactivate participant user",
             description = "The inactivated user cannot be included in lineups or accumulate statistics in that "
@@ -282,6 +283,6 @@ public interface TournamentControllerSwagger {
     @ApiResponse(responseCode = "200", description = "User inactivated",
             content = @Content(schema = @Schema(implementation = InactivateUserResponse.class)))
     ResponseEntity<InactivateUserResponse> inactivateUser(
-            @Parameter(description = "Tournament ID", example = "abc123") String tournamentId,
-            @Parameter(description = "User ID", example = "user_123") String userId);
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId,
+            @Parameter(description = "User ID", example = "user_123") UUID userId);
 }

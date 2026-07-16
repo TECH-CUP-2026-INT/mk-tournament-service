@@ -13,6 +13,7 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentR
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -23,9 +24,9 @@ public class ViewCourtMapService implements ViewCourtMapUseCase {
     private final ScheduledMatchRepositoryPort scheduledMatchRepository;
 
     @Override
-    public List<CourtMapEntry> getCourtMap(String tournamentId) {
+    public List<CourtMapEntry> getCourtMap(UUID tournamentId) {
         Tournament tournament = tournamentRepository.findById(tournamentId)
-                .orElseThrow(() -> new TournamentNotFoundException(tournamentId));
+                .orElseThrow(() -> new TournamentNotFoundException(tournamentId.toString()));
 
         List<Court> courts = courtRepository.findAllByTournamentId(tournamentId);
 

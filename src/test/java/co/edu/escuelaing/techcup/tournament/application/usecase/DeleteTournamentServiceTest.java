@@ -12,6 +12,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -30,7 +31,7 @@ class DeleteTournamentServiceTest {
     @Test
     @DisplayName("TC-51: Debe eliminar el torneo cuando el estado es FINISHED")
     void shouldDeleteTournamentWhenStatusIsFinished() {
-        String id = "t-001";
+        UUID id = UUID.randomUUID();
         Tournament tournament = new Tournament(id, "TechCup 2026", TournamentStatus.FINISHED);
         when(repository.findById(id)).thenReturn(Optional.of(tournament));
 
@@ -43,7 +44,7 @@ class DeleteTournamentServiceTest {
     @EnumSource(value = TournamentStatus.class, names = {"DRAFT", "ACTIVE", "IN_PREPARATION", "IN_PROGRESS"})
     @DisplayName("TC-51: Debe lanzar TournamentCannotBeDeletedException para cualquier estado que no sea FINISHED")
     void shouldThrowExceptionWhenTournamentIsNotFinished(TournamentStatus status) {
-        String id = "t-002";
+        UUID id = UUID.randomUUID();
         Tournament tournament = new Tournament(id, "TechCup 2026", status);
         when(repository.findById(id)).thenReturn(Optional.of(tournament));
 
@@ -53,13 +54,13 @@ class DeleteTournamentServiceTest {
         );
 
         assertTrue(ex.getMessage().contains(status.name()));
-        verify(repository, never()).deleteById(anyString());
+        verify(repository, never()).deleteById(any());
     }
 
     @Test
     @DisplayName("TC-51: Debe lanzar TournamentNotFoundException cuando el torneo no existe")
     void shouldThrowExceptionWhenTournamentNotFound() {
-        String id = "t-999";
+        UUID id = UUID.randomUUID();
         when(repository.findById(id)).thenReturn(Optional.empty());
 
         TournamentNotFoundException ex = assertThrows(
@@ -67,7 +68,7 @@ class DeleteTournamentServiceTest {
                 () -> service.delete(id)
         );
 
-        assertTrue(ex.getMessage().contains(id));
-        verify(repository, never()).deleteById(anyString());
+        assertTrue(ex.getMessage().contains(id.toString()));
+        verify(repository, never()).deleteById(any());
     }
 }

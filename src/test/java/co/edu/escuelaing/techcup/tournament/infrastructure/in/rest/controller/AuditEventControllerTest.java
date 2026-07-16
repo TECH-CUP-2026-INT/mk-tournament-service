@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -38,7 +39,7 @@ class AuditEventControllerTest {
 
     @Test
     void consult_sinFiltros_devuelve200() throws Exception {
-        AuditEvent event = AuditEvent.reconstruct("ev1", Instant.parse("2026-07-01T00:00:00Z"),
+        AuditEvent event = AuditEvent.reconstruct(UUID.randomUUID(), Instant.parse("2026-07-01T00:00:00Z"),
                 "system", "CreateTournamentService.create", "t1");
         when(consultAuditEventsUseCase.consult(any())).thenReturn(List.of(event));
         when(mapper.toResponse(any())).thenReturn(new AuditEventResponse(

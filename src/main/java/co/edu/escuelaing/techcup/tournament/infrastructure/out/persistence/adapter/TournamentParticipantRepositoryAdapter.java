@@ -7,6 +7,7 @@ import co.edu.escuelaing.techcup.tournament.domain.model.TournamentParticipant;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentParticipantRepositoryPort;
 import org.springframework.stereotype.Component;
 import java.util.Optional;
+import java.util.UUID;
 
 @Component
 public class TournamentParticipantRepositoryAdapter implements TournamentParticipantRepositoryPort {
@@ -27,7 +28,7 @@ public class TournamentParticipantRepositoryAdapter implements TournamentPartici
     }
 
     @Override
-    public Optional<TournamentParticipant> findByTournamentIdAndUserId(String tournamentId, String userId) {
+    public Optional<TournamentParticipant> findByTournamentIdAndUserId(UUID tournamentId, UUID userId) {
         return mongoRepository.findByTournamentIdAndUserId(tournamentId, userId)
                 .map(mapper::toDomain);
     }

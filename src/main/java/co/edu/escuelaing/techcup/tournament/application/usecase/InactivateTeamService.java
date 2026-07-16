@@ -8,6 +8,8 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.InactivateTe
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentRepositoryPort;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class InactivateTeamService implements InactivateTeamUseCase {
@@ -16,9 +18,9 @@ public class InactivateTeamService implements InactivateTeamUseCase {
 
 
     @Override
-    public Tournament inactivate(String tournamentId, String teamId) {
+    public Tournament inactivate(UUID tournamentId, UUID teamId) {
         Tournament tournament = repository.findById(tournamentId)
-                .orElseThrow(() -> new TournamentNotFoundException(tournamentId));
+                .orElseThrow(() -> new TournamentNotFoundException(tournamentId.toString()));
 
         tournament.inactivateTeam(teamId);
 

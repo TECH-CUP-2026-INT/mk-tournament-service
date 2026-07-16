@@ -18,7 +18,7 @@ public class InactivateTournamentService implements InactivateTournamentUseCase 
     @Override
     public Tournament execute(InactivateTournamentCommand command) {
         Tournament tournament = tournamentRepository.findById(command.tournamentId())
-                .orElseThrow(() -> new TournamentNotFoundException(command.tournamentId()));
+                .orElseThrow(() -> new TournamentNotFoundException(command.tournamentId().toString()));
 
         switch (command.action()) {
             case INACTIVATE -> tournament.inactivate();

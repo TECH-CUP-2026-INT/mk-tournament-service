@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -23,7 +24,7 @@ class TournamentDisqualificationTest {
 
     private Tournament sampleTournament(List<TeamRegistration> teams) {
         return Tournament.reconstruct(
-                "1", "Copa Enero", TournamentType.NORMAL, TournamentFormat.BRACKETS,
+                UUID.randomUUID(), "Copa Enero", TournamentType.NORMAL, TournamentFormat.BRACKETS,
                 8, BigDecimal.valueOf(50000),
                 LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 20), LocalDate.of(2026, 2, 20),
                 null, null, TournamentStatus.ACTIVE,
@@ -33,11 +34,12 @@ class TournamentDisqualificationTest {
 
     @Test
     void disqualifyTeam_equipoInscrito_quedaDescalificadoYSePreserva() {
+        UUID teamId = UUID.randomUUID();
         Tournament tournament = sampleTournament(List.of(
-                new TeamRegistration("e1", "Equipo 1", RegistrationStatus.APPROVED)
+                new TeamRegistration(teamId, "Equipo 1", RegistrationStatus.APPROVED)
         ));
 
-        tournament.disqualifyTeam("e1", DisqualificationReason.RULES_VIOLATION);
+        tournament.disqualifyTeam(teamId, DisqualificationReason.RULES_VIOLATION);
 
         assertEquals(1, tournament.getTeams().size());
         assertEquals(RegistrationStatus.DISQUALIFIED, tournament.getTeams().get(0).getRegistrationStatus());
@@ -45,43 +47,48 @@ class TournamentDisqualificationTest {
 
     @Test
     void disqualifyTeam_equipoNoInscrito_lanzaExcepcion() {
+        UUID teamId = UUID.randomUUID();
+        UUID otherTeamId = UUID.randomUUID();
         Tournament tournament = sampleTournament(List.of(
-                new TeamRegistration("e1", "Equipo 1", RegistrationStatus.APPROVED)
+                new TeamRegistration(teamId, "Equipo 1", RegistrationStatus.APPROVED)
         ));
 
         assertThrows(TeamDisqualificationNotAllowedException.class,
-                () -> tournament.disqualifyTeam("e2", DisqualificationReason.RULES_VIOLATION));
+                () -> tournament.disqualifyTeam(otherTeamId, DisqualificationReason.RULES_VIOLATION));
     }
 
     @Test
     void disqualifyTeam_equipoYaDescalificado_lanzaExcepcion() {
+        UUID teamId = UUID.randomUUID();
         Tournament tournament = sampleTournament(List.of(
-                new TeamRegistration("e1", "Equipo 1", RegistrationStatus.APPROVED)
+                new TeamRegistration(teamId, "Equipo 1", RegistrationStatus.APPROVED)
         ));
-        tournament.disqualifyTeam("e1", DisqualificationReason.POINTS_STANDING);
+        tournament.disqualifyTeam(teamId, DisqualificationReason.POINTS_STANDING);
 
         assertThrows(TeamDisqualificationNotAllowedException.class,
-                () -> tournament.disqualifyTeam("e1", DisqualificationReason.POINTS_STANDING));
+                () -> tournament.disqualifyTeam(teamId, DisqualificationReason.POINTS_STANDING));
     }
 
     @Test
     void disqualifyTeam_sinMotivo_lanzaExcepcion() {
+        UUID teamId = UUID.randomUUID();
         Tournament tournament = sampleTournament(List.of(
-                new TeamRegistration("e1", "Equipo 1", RegistrationStatus.APPROVED)
+                new TeamRegistration(teamId, "Equipo 1", RegistrationStatus.APPROVED)
         ));
 
         assertThrows(TeamDisqualificationNotAllowedException.class,
-                () -> tournament.disqualifyTeam("e1", null));
+                () -> tournament.disqualifyTeam(teamId, null));
     }
 
     @Test
     void disqualifyTeam_torneoInactivo_lanzaExcepcion() {
+        UUID teamId = UUID.randomUUID();
         Tournament tournament = sampleTournament(List.of(
-                new TeamRegistration("e1", "Equipo 1", RegistrationStatus.APPROVED)
+                new TeamRegistration(teamId, "Equipo 1", RegistrationStatus.APPROVED)
         ));
         tournament.inactivate();
 
         assertThrows(TournamentInactiveException.class,
-                () -> tournament.disqualifyTeam("e1", DisqualificationReason.RULES_VIOLATION));
+                () -> tournament.disqualifyTeam(teamId, DisqualificationReason.RULES_VIOLATION));
     }
 }
