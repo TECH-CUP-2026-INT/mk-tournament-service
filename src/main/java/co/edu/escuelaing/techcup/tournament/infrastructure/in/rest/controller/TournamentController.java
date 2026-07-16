@@ -25,6 +25,7 @@ import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.ReservedTeamResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.MatchupResponse;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.GetChampionUseCase;
+import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.GetTournamentByMatchUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.AssignChampionUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.AttachRulebookUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.AttachRulebookUseCase.AttachRulebookCommand;
@@ -113,6 +114,7 @@ public class TournamentController implements TournamentControllerSwagger {
     private final StartTournamentPreparationUseCase startTournamentPreparation;
     private final ViewMatchupsUseCase viewMatchups;
     private final ViewMatchCourtUseCase viewMatchCourt;
+    private final GetTournamentByMatchUseCase getTournamentByMatchUseCase;
     private final TournamentRestMapper mapper;
     private final MatchupRestMapper matchupRestMapper;
     private final EnrollmentRestMapper enrollmentRestMapper;
@@ -214,6 +216,13 @@ public class TournamentController implements TournamentControllerSwagger {
                         c.getDescription(), c.getImageId(), null
                 )))
                 .orElse(ResponseEntity.ok(MatchCourtResponse.pending(matchId)));
+    }
+
+    @Override
+    @GetMapping("/by-match/{matchId}")
+    public ResponseEntity<TournamentResponse> getByMatch(@PathVariable UUID matchId) {
+        Tournament tournament = getTournamentByMatchUseCase.getByMatch(matchId);
+        return ResponseEntity.ok(mapper.toResponse(tournament));
     }
 
     @Override
