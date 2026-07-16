@@ -60,6 +60,34 @@ class EditTournamentServiceTest {
     }
 
     @Test
+    void edit_capacidadCostoYFechas_actualizaTodosLosCampos() {
+        UUID id = UUID.randomUUID();
+        TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
+        Tournament tournament = sampleTournament(id, TournamentStatus.ACTIVE);
+
+        when(repositoryMock.findById(id)).thenReturn(Optional.of(tournament));
+        when(repositoryMock.save(tournament)).thenReturn(tournament);
+
+        EditTournamentService service = new EditTournamentService(repositoryMock);
+
+        EditTournamentCommand command = new EditTournamentCommand(
+                id, null, null, null,
+                10, BigDecimal.valueOf(60000), LocalDate.of(2026, Month.FEBRUARY, 25),
+                LocalDate.of(2026, Month.APRIL, 1), LocalDate.of(2026, Month.APRIL, 20),
+                null, null
+        );
+
+        Tournament result = service.edit(command);
+
+        assertEquals(10, result.getNumberOfTeams());
+        assertEquals(BigDecimal.valueOf(60000), result.getCost());
+        assertEquals(LocalDate.of(2026, Month.FEBRUARY, 25), result.getRegistrationDeadline());
+        assertEquals(LocalDate.of(2026, Month.APRIL, 1), result.getStartDate());
+        assertEquals(LocalDate.of(2026, Month.APRIL, 20), result.getEndDate());
+        verify(repositoryMock).save(tournament);
+    }
+
+    @Test
     void edit_nombreEnEstadoNoActivoSinTocarTipo_actualizaYGuarda() {
         UUID id = UUID.randomUUID();
         TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
