@@ -65,4 +65,9 @@ public class TournamentRepositoryAdapter implements TournamentRepositoryPort {
                 .map(mapper::toDomain)
                 .toList();
     }
+
+    @Override
+    public boolean existsActiveEnrollmentForTeam(UUID teamId) {
+        return mongoRepository.existsActiveEnrollmentForTeam(teamId);
+    }
 }
