@@ -12,14 +12,14 @@ public class SecurityConfig {
 
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        // No existe ningún sistema de autenticación/roles en el proyecto todavía
+        // (TC-40: /audit-events debería exigir rol Admin/Organizer, otros consumidores
+        // como el Team Service no deberían necesitar credenciales para consultarnos).
+        // Todo queda sin control de acceso real, pendiente del futuro Servicio de
+        // Identidad (JWT + roles). NO debería quedar público en producción.
         http.csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // TC-40: /audit-events debería exigir rol Admin/Organizer, pero no existe
-                        // ningún sistema de autenticación/roles en el proyecto todavía. Queda
-                        // sin control de acceso real, pendiente del futuro Servicio de Identidad
-                        // (JWT + roles). NO debería quedar público en producción.
-                        .requestMatchers("/tournaments/**", "/matches/**", "/sanctions/**", "/audit-events/**", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 );
         return http.build();
     }
