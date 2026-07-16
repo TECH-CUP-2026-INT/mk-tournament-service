@@ -24,6 +24,7 @@ import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.RegisteredTeamsResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.ReservedTeamResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.MatchupResponse;
+import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.GetActiveTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.GetChampionUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.GetTournamentByMatchUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.CheckTeamActiveEnrollmentUseCase;
@@ -54,6 +55,7 @@ import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.P
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.InactivateTournamentRequest;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.DisqualifyTeamRequest;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.EnrollTeamRequest;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.ActiveTournamentResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.ChampionResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.CourtMapEntryResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.CourtResponse;
@@ -92,6 +94,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TournamentController implements TournamentControllerSwagger {
 
+    private final GetActiveTournamentUseCase getActiveTournamentUseCase;
     private final CreateTournamentUseCase createTournamentUseCase;
     private final FinalizeTournamentUseCase finalizeTournamentUseCase;
     private final CheckTournamentPreparationUseCase checkPreparation;
@@ -121,6 +124,14 @@ public class TournamentController implements TournamentControllerSwagger {
     private final TournamentRestMapper mapper;
     private final MatchupRestMapper matchupRestMapper;
     private final EnrollmentRestMapper enrollmentRestMapper;
+
+    @Override
+    @GetMapping("/active")
+    public ResponseEntity<?> getActive() {
+        return getActiveTournamentUseCase.getActive()
+                .map(t -> ResponseEntity.ok(new ActiveTournamentResponse(t.getId().toString())))
+                .orElse(ResponseEntity.noContent().build());
+    }
 
     @Override
     @PostMapping

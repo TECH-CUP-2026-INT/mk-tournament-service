@@ -7,6 +7,7 @@ import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.E
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.InactivateTournamentRequest;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.PauseTournamentRequest;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.RecordPenaltyShootoutWinnerRequest;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.ActiveTournamentResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.ChampionResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.CourtMapEntryResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.CourtResponse;
@@ -43,6 +44,17 @@ import java.util.UUID;
 
 @Tag(name = "Tournaments", description = "Creating, editing, and managing the full tournament lifecycle")
 public interface TournamentControllerSwagger {
+
+    @Operation(summary = "Get active tournament",
+            description = "Returns the ID of the currently active tournament (status = ACTIVE or IN_PROGRESS). "
+                    + "Returns 204 No Content if no active tournament exists. "
+                    + "Used by external services (e.g. Statistics) to resolve tournament context.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Active tournament found",
+                    content = @Content(schema = @Schema(implementation = ActiveTournamentResponse.class))),
+            @ApiResponse(responseCode = "204", description = "No active tournament", content = @Content)
+    })
+    ResponseEntity<?> getActive();
 
     @Operation(summary = "Create tournament",
             description = "Creates a tournament directly in ACTIVE status. See CreateTournamentRequest for the "
