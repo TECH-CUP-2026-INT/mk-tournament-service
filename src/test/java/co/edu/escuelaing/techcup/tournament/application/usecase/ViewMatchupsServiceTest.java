@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -28,47 +29,53 @@ class ViewMatchupsServiceTest {
 
     @Test
     void getMatchups_whenMatchesExist_returnsMatchList() {
-        Tournament tournament = new Tournament("t1", "Copa ECI", TournamentStatus.IN_PROGRESS);
+        UUID tournamentId = UUID.randomUUID();
+        UUID m1 = UUID.randomUUID();
+        UUID m2 = UUID.randomUUID();
+        Tournament tournament = new Tournament(tournamentId, "Copa ECI", TournamentStatus.IN_PROGRESS);
         tournament.setMatches(List.of(
-                new Match("m1", "team1", "team2", MatchStatus.PENDING),
-                new Match("m2", "team3", "team4", MatchStatus.FINISHED)
+                new Match(m1, UUID.randomUUID(), UUID.randomUUID(), MatchStatus.PENDING),
+                new Match(m2, UUID.randomUUID(), UUID.randomUUID(), MatchStatus.FINISHED)
         ));
-        when(tournamentRepository.findById("t1")).thenReturn(Optional.of(tournament));
+        when(tournamentRepository.findById(tournamentId)).thenReturn(Optional.of(tournament));
 
-        List<Match> result = service.getMatchups("t1");
+        List<Match> result = service.getMatchups(tournamentId);
 
         assertEquals(2, result.size());
-        assertEquals("m1", result.get(0).getMatchId());
-        assertEquals("m2", result.get(1).getMatchId());
+        assertEquals(m1, result.get(0).getMatchId());
+        assertEquals(m2, result.get(1).getMatchId());
     }
 
     @Test
     void getMatchups_whenNoMatchesGenerated_returnsEmptyList() {
-        Tournament tournament = new Tournament("t1", "Copa ECI", TournamentStatus.ACTIVE);
+        UUID tournamentId = UUID.randomUUID();
+        Tournament tournament = new Tournament(tournamentId, "Copa ECI", TournamentStatus.ACTIVE);
         tournament.setMatches(List.of());
-        when(tournamentRepository.findById("t1")).thenReturn(Optional.of(tournament));
+        when(tournamentRepository.findById(tournamentId)).thenReturn(Optional.of(tournament));
 
-        List<Match> result = service.getMatchups("t1");
+        List<Match> result = service.getMatchups(tournamentId);
 
         assertTrue(result.isEmpty());
     }
 
     @Test
     void getMatchups_whenTournamentNotFound_throwsTournamentNotFoundException() {
-        when(tournamentRepository.findById("unknown")).thenReturn(Optional.empty());
+        UUID unknown = UUID.randomUUID();
+        when(tournamentRepository.findById(unknown)).thenReturn(Optional.empty());
 
-        assertThrows(TournamentNotFoundException.class, () -> service.getMatchups("unknown"));
+        assertThrows(TournamentNotFoundException.class, () -> service.getMatchups(unknown));
     }
 
     @Test
     void getMatchups_pendingSlotHasNullTeamIds() {
-        Tournament tournament = new Tournament("t1", "Copa ECI", TournamentStatus.IN_PROGRESS);
+        UUID tournamentId = UUID.randomUUID();
+        Tournament tournament = new Tournament(tournamentId, "Copa ECI", TournamentStatus.IN_PROGRESS);
         tournament.setMatches(List.of(
-                new Match("m1", null, null, MatchStatus.PENDING)
+                new Match(UUID.randomUUID(), null, null, MatchStatus.PENDING)
         ));
-        when(tournamentRepository.findById("t1")).thenReturn(Optional.of(tournament));
+        when(tournamentRepository.findById(tournamentId)).thenReturn(Optional.of(tournament));
 
-        List<Match> result = service.getMatchups("t1");
+        List<Match> result = service.getMatchups(tournamentId);
 
         assertNull(result.get(0).getHomeTeamId());
         assertNull(result.get(0).getAwayTeamId());

@@ -18,6 +18,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -30,21 +31,26 @@ import static org.mockito.Mockito.when;
 
 class ScheduleMatchServiceTest {
 
+    private final UUID tournamentId = UUID.randomUUID();
+    private final UUID matchupId = UUID.randomUUID();
+    private final UUID courtId = UUID.randomUUID();
+    private final UUID refereeId = UUID.randomUUID();
+
     private Tournament sampleTournament() {
         return Tournament.reconstruct(
-                "t1", "Copa Enero", 8, BigDecimal.valueOf(50000),
+                tournamentId, "Copa Enero", 8, BigDecimal.valueOf(50000),
                 LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 20), LocalDate.of(2026, 2, 20),
                 TournamentStatus.IN_PREPARATION
         );
     }
 
     private Court sampleCourt() {
-        return Court.create("t1", CourtSection.CANCHA_1, "Cancha techada");
+        return Court.create(tournamentId, CourtSection.CANCHA_1, "Cancha techada");
     }
 
     private ScheduleMatchCommand sampleCommand() {
         return new ScheduleMatchCommand(
-                "matchup-1", LocalDate.of(2026, 8, 1), LocalTime.of(15, 0), "court-1", "referee-1");
+                matchupId, LocalDate.of(2026, 8, 1), LocalTime.of(15, 0), courtId, refereeId);
     }
 
     @Test
@@ -54,9 +60,9 @@ class ScheduleMatchServiceTest {
         ScheduledMatchRepositoryPort scheduledMatchRepository = mock(ScheduledMatchRepositoryPort.class);
         Court court = sampleCourt();
 
-        when(tournamentRepository.findByMatchId("matchup-1")).thenReturn(Optional.of(sampleTournament()));
-        when(courtRepository.findById("court-1")).thenReturn(Optional.of(court));
-        when(scheduledMatchRepository.existsConflict(eq("court-1"), eq("referee-1"), any(), any())).thenReturn(false);
+        when(tournamentRepository.findByMatchId(matchupId)).thenReturn(Optional.of(sampleTournament()));
+        when(courtRepository.findById(courtId)).thenReturn(Optional.of(court));
+        when(scheduledMatchRepository.existsConflict(eq(courtId), eq(refereeId), any(), any())).thenReturn(false);
         when(scheduledMatchRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(courtRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -64,10 +70,10 @@ class ScheduleMatchServiceTest {
 
         ScheduledMatch result = service.schedule(sampleCommand());
 
-        assertEquals("matchup-1", result.getMatchupId());
-        assertEquals("court-1", result.getCourtId());
-        assertEquals("referee-1", result.getRefereeId());
-        assertEquals("matchup-1", court.getMatchId());
+        assertEquals(matchupId, result.getMatchupId());
+        assertEquals(courtId, result.getCourtId());
+        assertEquals(refereeId, result.getRefereeId());
+        assertEquals(matchupId, court.getMatchId());
         verify(courtRepository).save(court);
     }
 
@@ -77,7 +83,7 @@ class ScheduleMatchServiceTest {
         CourtRepositoryPort courtRepository = mock(CourtRepositoryPort.class);
         ScheduledMatchRepositoryPort scheduledMatchRepository = mock(ScheduledMatchRepositoryPort.class);
 
-        when(tournamentRepository.findByMatchId("matchup-1")).thenReturn(Optional.empty());
+        when(tournamentRepository.findByMatchId(matchupId)).thenReturn(Optional.empty());
 
         ScheduleMatchService service = new ScheduleMatchService(tournamentRepository, courtRepository, scheduledMatchRepository);
 
@@ -93,8 +99,8 @@ class ScheduleMatchServiceTest {
         CourtRepositoryPort courtRepository = mock(CourtRepositoryPort.class);
         ScheduledMatchRepositoryPort scheduledMatchRepository = mock(ScheduledMatchRepositoryPort.class);
 
-        when(tournamentRepository.findByMatchId("matchup-1")).thenReturn(Optional.of(sampleTournament()));
-        when(courtRepository.findById("court-1")).thenReturn(Optional.empty());
+        when(tournamentRepository.findByMatchId(matchupId)).thenReturn(Optional.of(sampleTournament()));
+        when(courtRepository.findById(courtId)).thenReturn(Optional.empty());
 
         ScheduleMatchService service = new ScheduleMatchService(tournamentRepository, courtRepository, scheduledMatchRepository);
 
@@ -109,9 +115,9 @@ class ScheduleMatchServiceTest {
         CourtRepositoryPort courtRepository = mock(CourtRepositoryPort.class);
         ScheduledMatchRepositoryPort scheduledMatchRepository = mock(ScheduledMatchRepositoryPort.class);
 
-        when(tournamentRepository.findByMatchId("matchup-1")).thenReturn(Optional.of(sampleTournament()));
-        when(courtRepository.findById("court-1")).thenReturn(Optional.of(sampleCourt()));
-        when(scheduledMatchRepository.existsConflict(eq("court-1"), eq("referee-1"), any(), any())).thenReturn(true);
+        when(tournamentRepository.findByMatchId(matchupId)).thenReturn(Optional.of(sampleTournament()));
+        when(courtRepository.findById(courtId)).thenReturn(Optional.of(sampleCourt()));
+        when(scheduledMatchRepository.existsConflict(eq(courtId), eq(refereeId), any(), any())).thenReturn(true);
 
         ScheduleMatchService service = new ScheduleMatchService(tournamentRepository, courtRepository, scheduledMatchRepository);
 

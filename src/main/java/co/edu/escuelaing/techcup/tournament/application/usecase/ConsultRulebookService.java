@@ -10,6 +10,8 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.RulebookRet
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentRepositoryPort;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class ConsultRulebookService implements ConsultRulebookUseCase {
@@ -19,9 +21,9 @@ public class ConsultRulebookService implements ConsultRulebookUseCase {
 
 
     @Override
-    public RulebookResource consult(String tournamentId) {
+    public RulebookResource consult(UUID tournamentId) {
         Tournament tournament = tournamentRepository.findById(tournamentId)
-                .orElseThrow(() -> new TournamentNotFoundException(tournamentId));
+                .orElseThrow(() -> new TournamentNotFoundException(tournamentId.toString()));
 
         tournament.assertActive();
 

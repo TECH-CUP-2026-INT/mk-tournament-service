@@ -1,16 +1,15 @@
 package co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response;
 
-import co.edu.escuelaing.techcup.tournament.domain.model.Enrollment;
-
 import co.edu.escuelaing.techcup.tournament.domain.model.TournamentStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.UUID;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "Read-only summary of a finished tournament kept in the historical archive.")
 public record HistoricalTournamentResponse(
-        @Schema(description = "Tournament ID.", example = "abc123") String id,
+        @Schema(description = "Tournament ID.", example = "550e8400-e29b-41d4-a716-446655440000") UUID id,
         @Schema(description = "Tournament name.", example = "TechCup Football 2026") String name,
         @Schema(description = "Number of participating teams.", example = "8") int numberOfTeams,
         @Schema(description = "Enrollment fee, in Colombian pesos (COP).", example = "50000.00") BigDecimal cost,
@@ -18,6 +17,6 @@ public record HistoricalTournamentResponse(
         @Schema(description = "Tournament end date.", example = "2026-08-31") LocalDate endDate,
         @Schema(description = "Enrollment deadline.", example = "2026-07-25") LocalDate registrationDeadline,
         @Schema(description = "Final lifecycle status (always FINISHED).", example = "FINISHED") TournamentStatus status,
-        @Schema(description = "ID of the champion team, or null if none was assigned.", example = "team_xyz789")
-        String championTeamId
+        @Schema(description = "ID of the champion team, or null if none was assigned.", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+        UUID championTeamId
 ) {}

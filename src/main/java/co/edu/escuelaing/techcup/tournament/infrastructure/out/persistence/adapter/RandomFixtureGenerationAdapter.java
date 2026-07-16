@@ -43,7 +43,7 @@ public class RandomFixtureGenerationAdapter implements FixtureGenerationPort {
 
     @Override
     public List<Match> generateFixture(FixtureGenerationRequest request) {
-        List<String> shuffledTeams = new ArrayList<>(request.approvedTeamIds());
+        List<UUID> shuffledTeams = new ArrayList<>(request.approvedTeamIds());
         Collections.shuffle(shuffledTeams, random);
 
         return switch (request.format()) {
@@ -53,7 +53,7 @@ public class RandomFixtureGenerationAdapter implements FixtureGenerationPort {
         };
     }
 
-    private List<Match> generateBracketRound(List<String> teams) {
+    private List<Match> generateBracketRound(List<UUID> teams) {
         List<Match> matches = new ArrayList<>();
         int i = 0;
         while (i + 1 < teams.size()) {
@@ -63,7 +63,7 @@ public class RandomFixtureGenerationAdapter implements FixtureGenerationPort {
         return matches;
     }
 
-    private List<Match> generateRoundRobin(List<String> teams) {
+    private List<Match> generateRoundRobin(List<UUID> teams) {
         List<Match> matches = new ArrayList<>();
         for (int i = 0; i < teams.size(); i++) {
             for (int j = i + 1; j < teams.size(); j++) {
@@ -73,7 +73,7 @@ public class RandomFixtureGenerationAdapter implements FixtureGenerationPort {
         return matches;
     }
 
-    private List<Match> generateGroupPhase(List<String> teams) {
+    private List<Match> generateGroupPhase(List<UUID> teams) {
         List<Match> matches = new ArrayList<>();
         for (int start = 0; start < teams.size(); start += GROUP_SIZE) {
             int end = Math.min(start + GROUP_SIZE, teams.size());
@@ -82,7 +82,7 @@ public class RandomFixtureGenerationAdapter implements FixtureGenerationPort {
         return matches;
     }
 
-    private Match newMatch(String homeTeamId, String awayTeamId) {
-        return new Match(UUID.randomUUID().toString(), homeTeamId, awayTeamId, MatchStatus.PENDING);
+    private Match newMatch(UUID homeTeamId, UUID awayTeamId) {
+        return new Match(UUID.randomUUID(), homeTeamId, awayTeamId, MatchStatus.PENDING);
     }
 }

@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -28,14 +29,15 @@ class ViewRegisteredTeamsServiceTest {
 
     @Test
     void getTeams_whenTournamentHasTeams_returnsTeamList() {
-        Tournament tournament = new Tournament("t1", "Copa ECI", TournamentStatus.ACTIVE);
+        UUID tournamentId = UUID.randomUUID();
+        Tournament tournament = new Tournament(tournamentId, "Copa ECI", TournamentStatus.ACTIVE);
         tournament.setTeams(List.of(
-                new TeamRegistration("team1", "Los Tigres", RegistrationStatus.APPROVED),
-                new TeamRegistration("team2", "Los Leones", RegistrationStatus.APPROVED)
+                new TeamRegistration(UUID.randomUUID(), "Los Tigres", RegistrationStatus.APPROVED),
+                new TeamRegistration(UUID.randomUUID(), "Los Leones", RegistrationStatus.APPROVED)
         ));
-        when(tournamentRepository.findById("t1")).thenReturn(Optional.of(tournament));
+        when(tournamentRepository.findById(tournamentId)).thenReturn(Optional.of(tournament));
 
-        List<TeamRegistration> result = service.getTeams("t1");
+        List<TeamRegistration> result = service.getTeams(tournamentId);
 
         assertEquals(2, result.size());
         assertEquals("Los Tigres", result.get(0).getTeamName());
@@ -44,19 +46,21 @@ class ViewRegisteredTeamsServiceTest {
 
     @Test
     void getTeams_whenNoTeamsRegistered_returnsEmptyList() {
-        Tournament tournament = new Tournament("t1", "Copa ECI", TournamentStatus.ACTIVE);
+        UUID tournamentId = UUID.randomUUID();
+        Tournament tournament = new Tournament(tournamentId, "Copa ECI", TournamentStatus.ACTIVE);
         tournament.setTeams(List.of());
-        when(tournamentRepository.findById("t1")).thenReturn(Optional.of(tournament));
+        when(tournamentRepository.findById(tournamentId)).thenReturn(Optional.of(tournament));
 
-        List<TeamRegistration> result = service.getTeams("t1");
+        List<TeamRegistration> result = service.getTeams(tournamentId);
 
         assertTrue(result.isEmpty());
     }
 
     @Test
     void getTeams_whenTournamentNotFound_throwsTournamentNotFoundException() {
-        when(tournamentRepository.findById("unknown")).thenReturn(Optional.empty());
+        UUID unknown = UUID.randomUUID();
+        when(tournamentRepository.findById(unknown)).thenReturn(Optional.empty());
 
-        assertThrows(TournamentNotFoundException.class, () -> service.getTeams("unknown"));
+        assertThrows(TournamentNotFoundException.class, () -> service.getTeams(unknown));
     }
 }

@@ -1,27 +1,29 @@
 package co.edu.escuelaing.techcup.tournament.domain.model;
 
+import java.util.UUID;
+
 /**
  * Registro de un equipo en un torneo (vista legacy de nombre y estado; para el
  * flujo de inscripción con pago ver {@link Enrollment}).
  */
 public class TeamRegistration {
 
-    private String teamId;
+    private UUID teamId;
     private String teamName;
     private RegistrationStatus registrationStatus;
     private int points;
 
     public TeamRegistration() {}
 
-    public TeamRegistration(String teamId, String teamName, RegistrationStatus registrationStatus) {
+    public TeamRegistration(UUID teamId, String teamName, RegistrationStatus registrationStatus) {
         this.teamId = teamId;
         this.teamName = teamName;
         this.registrationStatus = registrationStatus;
         this.points = 0;
     }
 
-    public String getTeamId() { return teamId; }
-    public void setTeamId(String teamId) { this.teamId = teamId; }
+    public UUID getTeamId() { return teamId; }
+    public void setTeamId(UUID teamId) { this.teamId = teamId; }
 
     public String getTeamName() { return teamName; }
     public void setTeamName(String teamName) { this.teamName = teamName; }

@@ -7,6 +7,7 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.PlayerSanct
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.UUID;
 
 @Component
 public class PlayerSanctionRepositoryAdapter implements PlayerSanctionRepositoryPort {
@@ -27,7 +28,7 @@ public class PlayerSanctionRepositoryAdapter implements PlayerSanctionRepository
     }
 
     @Override
-    public List<PlayerSanction> findActiveByPlayerId(String playerId) {
+    public List<PlayerSanction> findActiveByPlayerId(UUID playerId) {
         return mongoRepository.findByPlayerIdAndMatchesRemainingGreaterThan(playerId, 0).stream()
                 .map(mapper::toDomain)
                 .toList();

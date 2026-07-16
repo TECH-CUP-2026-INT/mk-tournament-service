@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AttachRulebookService implements AttachRulebookUseCase {
 
+
     private final TournamentRepositoryPort tournamentRepository;
     private final RulebookStoragePort rulebookStorage;
 
@@ -22,7 +23,7 @@ public class AttachRulebookService implements AttachRulebookUseCase {
     @Override
     public Tournament attach(AttachRulebookCommand command) {
         Tournament tournament = tournamentRepository.findById(command.tournamentId())
-                .orElseThrow(() -> new TournamentNotFoundException(command.tournamentId()));
+                .orElseThrow(() -> new TournamentNotFoundException(command.tournamentId().toString()));
 
         validateFile(command.contentType(), command.sizeBytes());
 

@@ -13,6 +13,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 
+import java.util.UUID;
+
 @Tag(name = "Matches", description = "Scheduling matches and activating/inactivating them")
 public interface MatchControllerSwagger {
 
@@ -36,6 +38,6 @@ public interface MatchControllerSwagger {
     @ApiResponse(responseCode = "200", description = "Match activated or inactivated",
             content = @Content(schema = @Schema(implementation = MatchActivationResponse.class)))
     ResponseEntity<MatchActivationResponse> activation(
-            @Parameter(description = "Match ID", example = "m01") String matchId,
+            @Parameter(description = "Match ID", example = "550e8400-e29b-41d4-a716-446655440000") UUID matchId,
             MatchActivationRequest request);
 }

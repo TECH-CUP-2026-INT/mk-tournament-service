@@ -9,6 +9,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -20,7 +21,7 @@ public class RabbitTournamentEventPublisherAdapter implements TournamentEventPub
     private final RabbitTemplate rabbitTemplate;
 
     @Override
-    public void publishTournamentFinalized(String tournamentId) {
+    public void publishTournamentFinalized(UUID tournamentId) {
         try {
             rabbitTemplate.convertAndSend(RabbitMQConfig.TECHCUP_EXCHANGE, ROUTING_KEY_FINALIZED,
                     new TournamentFinalizedEvent(tournamentId, LocalDateTime.now()));
@@ -30,5 +31,5 @@ public class RabbitTournamentEventPublisherAdapter implements TournamentEventPub
     }
 
     /** Espejo del contrato acordado con Estadísticas (docs/rabbitmq-integration.md del Servicio de Estadísticas). */
-    private record TournamentFinalizedEvent(String tournamentId, LocalDateTime occurredAt) {}
+    private record TournamentFinalizedEvent(UUID tournamentId, LocalDateTime occurredAt) {}
 }

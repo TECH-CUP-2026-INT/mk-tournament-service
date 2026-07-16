@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -19,7 +21,7 @@ class RabbitTournamentEventPublisherAdapterTest {
         RabbitTemplate rabbitTemplate = mock(RabbitTemplate.class);
         RabbitTournamentEventPublisherAdapter adapter = new RabbitTournamentEventPublisherAdapter(rabbitTemplate);
 
-        adapter.publishTournamentFinalized("t1");
+        adapter.publishTournamentFinalized(UUID.randomUUID());
 
         verify(rabbitTemplate).convertAndSend(
                 eq(RabbitMQConfig.TECHCUP_EXCHANGE), eq("techcup.tournament.event.finalized"), any(Object.class));
@@ -33,6 +35,6 @@ class RabbitTournamentEventPublisherAdapterTest {
 
         RabbitTournamentEventPublisherAdapter adapter = new RabbitTournamentEventPublisherAdapter(rabbitTemplate);
 
-        assertDoesNotThrow(() -> adapter.publishTournamentFinalized("t1"));
+        assertDoesNotThrow(() -> adapter.publishTournamentFinalized(UUID.randomUUID()));
     }
 }

@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -24,9 +25,9 @@ import static org.mockito.Mockito.when;
 
 class EditTournamentServiceTest {
 
-    private Tournament sampleTournament(TournamentStatus status) {
+    private Tournament sampleTournament(UUID id, TournamentStatus status) {
         return Tournament.reconstruct(
-                "1", "Copa Enero", 8, BigDecimal.valueOf(50000),
+                id, "Copa Enero", 8, BigDecimal.valueOf(50000),
                 LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 20), LocalDate.of(2026, 2, 20),
                 status
         );
@@ -34,16 +35,17 @@ class EditTournamentServiceTest {
 
     @Test
     void edit_camposValidosEnEstadoActivo_actualizaYGuarda() {
+        UUID id = UUID.randomUUID();
         TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
-        Tournament tournament = sampleTournament(TournamentStatus.ACTIVE);
+        Tournament tournament = sampleTournament(id, TournamentStatus.ACTIVE);
 
-        when(repositoryMock.findById("1")).thenReturn(Optional.of(tournament));
+        when(repositoryMock.findById(id)).thenReturn(Optional.of(tournament));
         when(repositoryMock.save(tournament)).thenReturn(tournament);
 
         EditTournamentService service = new EditTournamentService(repositoryMock);
 
         EditTournamentCommand command = new EditTournamentCommand(
-                "1", "Copa Febrero", TournamentType.LIGHTNING, TournamentFormat.GROUPS,
+                id, "Copa Febrero", TournamentType.LIGHTNING, TournamentFormat.GROUPS,
                 null, null, null, null, null, LocalTime.of(9, 0), LocalTime.of(18, 0)
         );
 
@@ -57,16 +59,17 @@ class EditTournamentServiceTest {
 
     @Test
     void edit_nombreEnEstadoNoActivoSinTocarTipo_actualizaYGuarda() {
+        UUID id = UUID.randomUUID();
         TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
-        Tournament tournament = sampleTournament(TournamentStatus.IN_PROGRESS);
+        Tournament tournament = sampleTournament(id, TournamentStatus.IN_PROGRESS);
 
-        when(repositoryMock.findById("1")).thenReturn(Optional.of(tournament));
+        when(repositoryMock.findById(id)).thenReturn(Optional.of(tournament));
         when(repositoryMock.save(tournament)).thenReturn(tournament);
 
         EditTournamentService service = new EditTournamentService(repositoryMock);
 
         EditTournamentCommand command = new EditTournamentCommand(
-                "1", "Copa Febrero", null, null, null, null, null, null, null, null, null
+                id, "Copa Febrero", null, null, null, null, null, null, null, null, null
         );
 
         Tournament result = service.edit(command);
@@ -77,14 +80,15 @@ class EditTournamentServiceTest {
 
     @Test
     void edit_tipoEnEstadoNoActivo_lanzaTournamentCannotBeEditedException() {
+        UUID id = UUID.randomUUID();
         TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
-        Tournament tournament = sampleTournament(TournamentStatus.IN_PROGRESS);
-        when(repositoryMock.findById("1")).thenReturn(Optional.of(tournament));
+        Tournament tournament = sampleTournament(id, TournamentStatus.IN_PROGRESS);
+        when(repositoryMock.findById(id)).thenReturn(Optional.of(tournament));
 
         EditTournamentService service = new EditTournamentService(repositoryMock);
 
         EditTournamentCommand command = new EditTournamentCommand(
-                "1", null, TournamentType.LIGHTNING, null, null, null, null, null, null, null, null
+                id, null, TournamentType.LIGHTNING, null, null, null, null, null, null, null, null
         );
 
         assertThrows(TournamentCannotBeEditedException.class, () -> service.edit(command));
@@ -92,13 +96,14 @@ class EditTournamentServiceTest {
 
     @Test
     void edit_torneoNoExiste_lanzaTournamentNotFoundException() {
+        UUID id = UUID.randomUUID();
         TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
-        when(repositoryMock.findById("99")).thenReturn(Optional.empty());
+        when(repositoryMock.findById(id)).thenReturn(Optional.empty());
 
         EditTournamentService service = new EditTournamentService(repositoryMock);
 
         EditTournamentCommand command = new EditTournamentCommand(
-                "99", "Nuevo Nombre", null, null, null, null, null, null, null, null, null
+                id, "Nuevo Nombre", null, null, null, null, null, null, null, null, null
         );
 
         assertThrows(TournamentNotFoundException.class, () -> service.edit(command));
@@ -106,14 +111,15 @@ class EditTournamentServiceTest {
 
     @Test
     void edit_torneoFinalizado_lanzaTournamentCannotBeEditedException() {
+        UUID id = UUID.randomUUID();
         TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
-        Tournament tournament = sampleTournament(TournamentStatus.FINISHED);
-        when(repositoryMock.findById("1")).thenReturn(Optional.of(tournament));
+        Tournament tournament = sampleTournament(id, TournamentStatus.FINISHED);
+        when(repositoryMock.findById(id)).thenReturn(Optional.of(tournament));
 
         EditTournamentService service = new EditTournamentService(repositoryMock);
 
         EditTournamentCommand command = new EditTournamentCommand(
-                "1", "Nuevo Nombre", null, null, null, null, null, null, null, null, null
+                id, "Nuevo Nombre", null, null, null, null, null, null, null, null, null
         );
 
         assertThrows(TournamentCannotBeEditedException.class, () -> service.edit(command));
@@ -121,14 +127,15 @@ class EditTournamentServiceTest {
 
     @Test
     void edit_nombreVacio_lanzaInvalidTournamentDataException() {
+        UUID id = UUID.randomUUID();
         TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
-        Tournament tournament = sampleTournament(TournamentStatus.ACTIVE);
-        when(repositoryMock.findById("1")).thenReturn(Optional.of(tournament));
+        Tournament tournament = sampleTournament(id, TournamentStatus.ACTIVE);
+        when(repositoryMock.findById(id)).thenReturn(Optional.of(tournament));
 
         EditTournamentService service = new EditTournamentService(repositoryMock);
 
         EditTournamentCommand command = new EditTournamentCommand(
-                "1", " ", null, null, null, null, null, null, null, null, null
+                id, " ", null, null, null, null, null, null, null, null, null
         );
 
         assertThrows(InvalidTournamentDataException.class, () -> service.edit(command));

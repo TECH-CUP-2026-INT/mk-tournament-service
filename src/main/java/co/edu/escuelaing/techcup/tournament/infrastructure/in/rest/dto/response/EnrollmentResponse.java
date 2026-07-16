@@ -4,11 +4,12 @@ import co.edu.escuelaing.techcup.tournament.domain.model.EnrollmentStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Schema(description = "Result of enrolling a team in a tournament.")
 public record EnrollmentResponse(
-        @Schema(description = "Unique enrollment ID.", example = "enr_abc123")
-        String enrollmentId,
+        @Schema(description = "Unique enrollment ID.", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+        UUID enrollmentId,
         @Schema(description = "Enrollment status: RESERVED, PENDING_PAYMENT, ENROLLED, REJECTED or EXPIRED.",
                 example = "RESERVED")
         EnrollmentStatus status,

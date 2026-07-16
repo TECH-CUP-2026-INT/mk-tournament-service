@@ -7,6 +7,7 @@ import org.mapstruct.factory.Mappers;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -16,30 +17,38 @@ class ScheduledMatchPersistenceMapperTest {
 
     @Test
     void toDomain_convierteTodosLosCampos() {
+        UUID id = UUID.randomUUID();
+        UUID matchupId = UUID.randomUUID();
+        UUID courtId = UUID.randomUUID();
+        UUID refereeId = UUID.randomUUID();
         ScheduledMatchDocument document = new ScheduledMatchDocument(
-                "sm1", "m01", "court-1", "ref-1", LocalDate.of(2026, 8, 5), LocalTime.of(9, 0));
+                id, matchupId, courtId, refereeId, LocalDate.of(2026, 8, 5), LocalTime.of(9, 0));
 
         ScheduledMatch scheduledMatch = mapper.toDomain(document);
 
-        assertEquals("sm1", scheduledMatch.getId());
-        assertEquals("m01", scheduledMatch.getMatchupId());
-        assertEquals("court-1", scheduledMatch.getCourtId());
-        assertEquals("ref-1", scheduledMatch.getRefereeId());
+        assertEquals(id, scheduledMatch.getId());
+        assertEquals(matchupId, scheduledMatch.getMatchupId());
+        assertEquals(courtId, scheduledMatch.getCourtId());
+        assertEquals(refereeId, scheduledMatch.getRefereeId());
         assertEquals(LocalDate.of(2026, 8, 5), scheduledMatch.getMatchDate());
         assertEquals(LocalTime.of(9, 0), scheduledMatch.getMatchTime());
     }
 
     @Test
     void toDocument_convierteTodosLosCampos() {
+        UUID id = UUID.randomUUID();
+        UUID matchupId = UUID.randomUUID();
+        UUID courtId = UUID.randomUUID();
+        UUID refereeId = UUID.randomUUID();
         ScheduledMatch scheduledMatch = ScheduledMatch.reconstruct(
-                "sm1", "m01", "court-1", "ref-1", LocalDate.of(2026, 8, 5), LocalTime.of(9, 0));
+                id, matchupId, courtId, refereeId, LocalDate.of(2026, 8, 5), LocalTime.of(9, 0));
 
         ScheduledMatchDocument document = mapper.toDocument(scheduledMatch);
 
-        assertEquals("sm1", document.getId());
-        assertEquals("m01", document.getMatchupId());
-        assertEquals("court-1", document.getCourtId());
-        assertEquals("ref-1", document.getRefereeId());
+        assertEquals(id, document.getId());
+        assertEquals(matchupId, document.getMatchupId());
+        assertEquals(courtId, document.getCourtId());
+        assertEquals(refereeId, document.getRefereeId());
         assertEquals(LocalDate.of(2026, 8, 5), document.getMatchDate());
         assertEquals(LocalTime.of(9, 0), document.getMatchTime());
     }

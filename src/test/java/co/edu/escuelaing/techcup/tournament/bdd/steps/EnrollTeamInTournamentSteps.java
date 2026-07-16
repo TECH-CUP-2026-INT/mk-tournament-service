@@ -26,10 +26,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 public class EnrollTeamInTournamentSteps {
@@ -56,45 +56,50 @@ public class EnrollTeamInTournamentSteps {
         thrownException = null;
     }
 
+    private static UUID toUuid(String raw) {
+        return UUID.nameUUIDFromBytes(raw.getBytes());
+    }
+
     @Given("an enrollment tournament {string} exists in status {string} with {int} slots and {int} reservations")
     public void anEnrollmentTournamentExists(String id, String status, int slots, int reservations) {
         List<Enrollment> seeded = new ArrayList<>();
         for (int i = 0; i < reservations; i++) {
-            seeded.add(new Enrollment("seed-team-" + i, "Equipo Semilla " + i, EnrollmentStatus.RESERVED));
+            seeded.add(new Enrollment(toUuid("seed-team-" + i), "Equipo Semilla " + i, EnrollmentStatus.RESERVED));
         }
+        UUID tournamentId = toUuid(id);
         Tournament tournament = Tournament.reconstruct(
-                id, "Torneo de Prueba", TournamentType.NORMAL, TournamentFormat.BRACKETS,
+                tournamentId, "Torneo de Prueba", TournamentType.NORMAL, TournamentFormat.BRACKETS,
                 slots, BigDecimal.valueOf(50000),
                 LocalDate.now().plusDays(10), LocalDate.now().plusDays(20), LocalDate.now().plusDays(1),
                 null, null, TournamentStatus.valueOf(status),
                 List.of(), List.of(), null, null, false, true, seeded, null
         );
         tournaments.put(id, tournament);
-        when(repository.findById(id)).thenReturn(Optional.of(tournament));
+        when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
     }
 
     @Given("the team {string} has {int} registered players named {string}")
     public void theTeamHasRegisteredPlayers(String teamId, int playerCount, String teamName) {
-        when(teamServiceClient.getTeamInfo(teamId)).thenReturn(
+        when(teamServiceClient.getTeamInfo(toUuid(teamId))).thenReturn(
                 new TeamServiceClientPort.TeamInfo(teamName, playerCount));
     }
 
     @Given("the payment service accepts the order creation")
     public void thePaymentServiceAcceptsTheOrderCreation() {
-        when(paymentServiceClient.createOrder(anyString(), anyString(), anyString(), any()))
+        when(paymentServiceClient.createOrder(any(UUID.class), any(UUID.class), any(UUID.class), any()))
                 .thenReturn(new PaymentServiceClientPort.PaymentOrderReference("po-1", null));
     }
 
     @Given("the payment service fails to create the order")
     public void thePaymentServiceFailsToCreateTheOrder() {
-        when(paymentServiceClient.createOrder(anyString(), anyString(), anyString(), any()))
-                .thenThrow(new PaymentOrderCreationFailedException("enr-x", new RuntimeException("timeout")));
+        when(paymentServiceClient.createOrder(any(UUID.class), any(UUID.class), any(UUID.class), any()))
+                .thenThrow(new PaymentOrderCreationFailedException(UUID.randomUUID(), new RuntimeException("timeout")));
     }
 
     @When("the captain enrolls team {string} in tournament {string}")
     public void theCaptainEnrollsTeamInTournament(String teamId, String tournamentId) {
         try {
-            result = service.enrollTeam(tournamentId, teamId);
+            result = service.enrollTeam(toUuid(tournamentId), toUuid(teamId));
         } catch (Exception e) {
             thrownException = e;
         }
@@ -130,6 +135,7 @@ public class EnrollTeamInTournamentSteps {
     @Then("no reservation should remain for team {string} in tournament {string}")
     public void noReservationShouldRemainForTeamInTournament(String teamId, String tournamentId) {
         Tournament tournament = tournaments.get(tournamentId);
-        assertTrue(tournament.getEnrollments().stream().noneMatch(e -> e.getTeamId().equals(teamId)));
+        UUID teamUuid = toUuid(teamId);
+        assertTrue(tournament.getEnrollments().stream().noneMatch(e -> e.getTeamId().equals(teamUuid)));
     }
 }

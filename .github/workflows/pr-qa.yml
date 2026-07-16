@@ -3,7 +3,7 @@ name: Tournament Service - CI (PR to qa)
 on:
   pull_request:
     branches:
-      - main
+      - qa
 
 jobs:
   build-test-analyze:

@@ -8,6 +8,8 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.PlayerSanct
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.SanctionNotificationPort;
 import org.junit.jupiter.api.Test;
 
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -22,6 +24,7 @@ class ApplySanctionServiceTest {
 
     @Test
     void apply_redCard_guardaYNotifica() {
+        UUID playerId = UUID.randomUUID();
         PlayerSanctionRepositoryPort repository = mock(PlayerSanctionRepositoryPort.class);
         SanctionNotificationPort notificationPort = mock(SanctionNotificationPort.class);
 
@@ -29,23 +32,24 @@ class ApplySanctionServiceTest {
 
         ApplySanctionService service = new ApplySanctionService(repository, notificationPort);
 
-        PlayerSanction result = service.apply(new ApplySanctionCommand("p1", SanctionType.RED_CARD, null));
+        PlayerSanction result = service.apply(new ApplySanctionCommand(playerId, SanctionType.RED_CARD, null));
 
-        assertEquals("p1", result.getPlayerId());
+        assertEquals(playerId, result.getPlayerId());
         assertEquals(1, result.getMatchesRemaining());
         verify(repository).save(any());
-        verify(notificationPort).notifyPlayerSanctioned(eq("p1"), eq(SanctionType.RED_CARD), eq(1));
+        verify(notificationPort).notifyPlayerSanctioned(eq(playerId), eq(SanctionType.RED_CARD), eq(1));
     }
 
     @Test
     void apply_conductSinMatchesSuspended_lanzaExceptionSinGuardarNiNotificar() {
+        UUID playerId = UUID.randomUUID();
         PlayerSanctionRepositoryPort repository = mock(PlayerSanctionRepositoryPort.class);
         SanctionNotificationPort notificationPort = mock(SanctionNotificationPort.class);
 
         ApplySanctionService service = new ApplySanctionService(repository, notificationPort);
 
         assertThrows(InvalidSanctionDataException.class,
-                () -> service.apply(new ApplySanctionCommand("p1", SanctionType.CONDUCT, null)));
+                () -> service.apply(new ApplySanctionCommand(playerId, SanctionType.CONDUCT, null)));
 
         verify(repository, never()).save(any());
         verify(notificationPort, never()).notifyPlayerSanctioned(any(), any(), anyInt());

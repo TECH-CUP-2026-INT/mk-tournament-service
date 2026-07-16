@@ -5,6 +5,7 @@ import co.edu.escuelaing.techcup.tournament.domain.model.ScheduledMatch;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Puerto de persistencia para partidos programados (fecha, cancha, árbitro).
@@ -12,7 +13,7 @@ import java.util.Optional;
 public interface ScheduledMatchRepositoryPort {
     ScheduledMatch save(ScheduledMatch scheduledMatch);
 
-    boolean existsConflict(String courtId, String refereeId, LocalDate matchDate, LocalTime matchTime);
+    boolean existsConflict(UUID courtId, UUID refereeId, LocalDate matchDate, LocalTime matchTime);
 
-    Optional<ScheduledMatch> findByMatchupId(String matchupId);
+    Optional<ScheduledMatch> findByMatchupId(UUID matchupId);
 }

@@ -9,6 +9,8 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.AssignChampi
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentRepositoryPort;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 /**
  * Punto de integración pendiente: asume que el partido final ya quedó
  * finalizado (marcador y, si hubo empate, resultado de penales) por una
@@ -27,7 +29,7 @@ public class AssignChampionService implements AssignChampionUseCase {
 
 
     @Override
-    public ChampionAssignment assignChampion(String tournamentId, String matchId) {
+    public ChampionAssignment assignChampion(UUID tournamentId, UUID matchId) {
         Tournament tournament = repository.findById(tournamentId)
                 .orElseThrow(() -> new TournamentNotFoundException(
                         "No se encontro un torneo con id " + tournamentId));

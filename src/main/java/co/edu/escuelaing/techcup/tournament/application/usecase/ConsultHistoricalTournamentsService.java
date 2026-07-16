@@ -10,6 +10,7 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentR
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -24,7 +25,7 @@ public class ConsultHistoricalTournamentsService implements ConsultHistoricalTou
     }
 
     @Override
-    public Tournament findById(String tournamentId) {
+    public Tournament findById(UUID tournamentId) {
         return tournamentRepository.findByIdAndStatus(tournamentId, TournamentStatus.FINISHED)
                 .orElseThrow(() -> new HistoricalTournamentNotFoundException(tournamentId));
     }

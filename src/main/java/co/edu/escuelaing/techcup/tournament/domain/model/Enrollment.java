@@ -11,8 +11,8 @@ import java.util.UUID;
  */
 public class Enrollment {
 
-    private String enrollmentId;
-    private String teamId;
+    private UUID enrollmentId;
+    private UUID teamId;
     private String teamName;
     private EnrollmentStatus status;
     private int points;
@@ -21,11 +21,11 @@ public class Enrollment {
 
     public Enrollment() {}
 
-    public Enrollment(String teamId, String teamName, EnrollmentStatus status) {
-        this(UUID.randomUUID().toString(), teamId, teamName, status, null, null);
+    public Enrollment(UUID teamId, String teamName, EnrollmentStatus status) {
+        this(UUID.randomUUID(), teamId, teamName, status, null, null);
     }
 
-    public Enrollment(String enrollmentId, String teamId, String teamName, EnrollmentStatus status,
+    public Enrollment(UUID enrollmentId, UUID teamId, String teamName, EnrollmentStatus status,
                        LocalDateTime confirmationDate, LocalDateTime reservationExpiresAt) {
         this.enrollmentId = enrollmentId;
         this.teamId = teamId;
@@ -36,11 +36,11 @@ public class Enrollment {
         this.reservationExpiresAt = reservationExpiresAt;
     }
 
-    public String getEnrollmentId() { return enrollmentId; }
-    public void setEnrollmentId(String enrollmentId) { this.enrollmentId = enrollmentId; }
+    public UUID getEnrollmentId() { return enrollmentId; }
+    public void setEnrollmentId(UUID enrollmentId) { this.enrollmentId = enrollmentId; }
 
-    public String getTeamId() { return teamId; }
-    public void setTeamId(String teamId) { this.teamId = teamId; }
+    public UUID getTeamId() { return teamId; }
+    public void setTeamId(UUID teamId) { this.teamId = teamId; }
 
     public String getTeamName() { return teamName; }
     public void setTeamName(String teamName) { this.teamName = teamName; }

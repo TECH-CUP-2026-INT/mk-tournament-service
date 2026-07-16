@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -176,7 +177,7 @@ class TournamentTest {
     @Test
     void finish_whenInProgressAndEndDateReached_setsStatusFinished() {
         Tournament tournament = Tournament.reconstruct(
-                "1", "Copa Enero", 8, BigDecimal.valueOf(50000),
+                UUID.randomUUID(), "Copa Enero", 8, BigDecimal.valueOf(50000),
                 LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 10), LocalDate.of(2026, 2, 20),
                 TournamentStatus.IN_PROGRESS
         );
@@ -189,7 +190,7 @@ class TournamentTest {
     @Test
     void finish_whenNotInProgress_throwsException() {
         Tournament tournament = Tournament.reconstruct(
-                "1", "Copa Enero", 8, BigDecimal.valueOf(50000),
+                UUID.randomUUID(), "Copa Enero", 8, BigDecimal.valueOf(50000),
                 LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 10), LocalDate.of(2026, 2, 20),
                 TournamentStatus.DRAFT
         );
@@ -205,7 +206,7 @@ class TournamentTest {
     @Test
     void finish_whenEndDateNotReached_throwsException() {
         Tournament tournament = Tournament.reconstruct(
-                "1", "Copa Enero", 8, BigDecimal.valueOf(50000),
+                UUID.randomUUID(), "Copa Enero", 8, BigDecimal.valueOf(50000),
                 LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 20), LocalDate.of(2026, 2, 20),
                 TournamentStatus.IN_PROGRESS
         );
@@ -221,7 +222,7 @@ class TournamentTest {
     @Test
     void finish_whenAlreadyFinished_throwsException() {
         Tournament tournament = Tournament.reconstruct(
-                "1", "Copa Enero", 8, BigDecimal.valueOf(50000),
+                UUID.randomUUID(), "Copa Enero", 8, BigDecimal.valueOf(50000),
                 LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 10), LocalDate.of(2026, 2, 20),
                 TournamentStatus.FINISHED
         );

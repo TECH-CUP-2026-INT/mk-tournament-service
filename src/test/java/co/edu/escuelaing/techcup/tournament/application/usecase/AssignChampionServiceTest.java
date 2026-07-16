@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -27,74 +28,88 @@ class AssignChampionServiceTest {
 
     @Test
     void assignChampion_whenNoTie_persistsChampionByRegulationTime() {
+        UUID tournamentId = UUID.randomUUID();
+        UUID matchId = UUID.randomUUID();
+        UUID homeTeamId = UUID.randomUUID();
+        UUID awayTeamId = UUID.randomUUID();
         TournamentRepositoryPort repository = mock(TournamentRepositoryPort.class);
-        Match finalMatch = new Match("final-1", "home", "away", MatchStatus.FINISHED,
+        Match finalMatch = new Match(matchId, homeTeamId, awayTeamId, MatchStatus.FINISHED,
                 true, 3, 1, null);
         Tournament tournament = Tournament.reconstruct(
-                "t1", "TechCup", 4, BigDecimal.ZERO,
+                tournamentId, "TechCup", 4, BigDecimal.ZERO,
                 LocalDate.now().plusDays(2), LocalDate.now().plusDays(10), LocalDate.now(),
                 TournamentStatus.IN_PROGRESS, new ArrayList<>(), new ArrayList<>(List.of(finalMatch))
         );
 
-        when(repository.findById("t1")).thenReturn(Optional.of(tournament));
+        when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
         when(repository.save(tournament)).thenReturn(tournament);
 
         AssignChampionService service = new AssignChampionService(repository);
-        ChampionAssignment result = service.assignChampion("t1", "final-1");
+        ChampionAssignment result = service.assignChampion(tournamentId, matchId);
 
-        assertEquals("home", result.championTeamId());
+        assertEquals(homeTeamId, result.championTeamId());
         assertEquals(ChampionResolution.REGULATION_TIME, result.resolution());
         verify(repository).save(tournament);
     }
 
     @Test
     void assignChampion_whenTieWithPenalties_persistsChampionByPenalties() {
+        UUID tournamentId = UUID.randomUUID();
+        UUID matchId = UUID.randomUUID();
+        UUID homeTeamId = UUID.randomUUID();
+        UUID awayTeamId = UUID.randomUUID();
         TournamentRepositoryPort repository = mock(TournamentRepositoryPort.class);
-        Match finalMatch = new Match("final-1", "home", "away", MatchStatus.FINISHED,
-                true, 2, 2, "away");
+        Match finalMatch = new Match(matchId, homeTeamId, awayTeamId, MatchStatus.FINISHED,
+                true, 2, 2, awayTeamId);
         Tournament tournament = Tournament.reconstruct(
-                "t1", "TechCup", 4, BigDecimal.ZERO,
+                tournamentId, "TechCup", 4, BigDecimal.ZERO,
                 LocalDate.now().plusDays(2), LocalDate.now().plusDays(10), LocalDate.now(),
                 TournamentStatus.IN_PROGRESS, new ArrayList<>(), new ArrayList<>(List.of(finalMatch))
         );
 
-        when(repository.findById("t1")).thenReturn(Optional.of(tournament));
+        when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
         when(repository.save(tournament)).thenReturn(tournament);
 
         AssignChampionService service = new AssignChampionService(repository);
-        ChampionAssignment result = service.assignChampion("t1", "final-1");
+        ChampionAssignment result = service.assignChampion(tournamentId, matchId);
 
-        assertEquals("away", result.championTeamId());
+        assertEquals(awayTeamId, result.championTeamId());
         assertEquals(ChampionResolution.PENALTIES, result.resolution());
     }
 
     @Test
     void assignChampion_whenTieWithoutPenalties_throwsPendingPenalties() {
+        UUID tournamentId = UUID.randomUUID();
+        UUID matchId = UUID.randomUUID();
+        UUID homeTeamId = UUID.randomUUID();
+        UUID awayTeamId = UUID.randomUUID();
         TournamentRepositoryPort repository = mock(TournamentRepositoryPort.class);
-        Match finalMatch = new Match("final-1", "home", "away", MatchStatus.FINISHED,
+        Match finalMatch = new Match(matchId, homeTeamId, awayTeamId, MatchStatus.FINISHED,
                 true, 1, 1, null);
         Tournament tournament = Tournament.reconstruct(
-                "t1", "TechCup", 4, BigDecimal.ZERO,
+                tournamentId, "TechCup", 4, BigDecimal.ZERO,
                 LocalDate.now().plusDays(2), LocalDate.now().plusDays(10), LocalDate.now(),
                 TournamentStatus.IN_PROGRESS, new ArrayList<>(), new ArrayList<>(List.of(finalMatch))
         );
 
-        when(repository.findById("t1")).thenReturn(Optional.of(tournament));
+        when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
 
         AssignChampionService service = new AssignChampionService(repository);
 
         assertThrows(ChampionPendingPenaltiesException.class,
-                () -> service.assignChampion("t1", "final-1"));
+                () -> service.assignChampion(tournamentId, matchId));
     }
 
     @Test
     void assignChampion_whenTournamentNotFound_throwsException() {
+        UUID tournamentId = UUID.randomUUID();
+        UUID matchId = UUID.randomUUID();
         TournamentRepositoryPort repository = mock(TournamentRepositoryPort.class);
-        when(repository.findById("missing")).thenReturn(Optional.empty());
+        when(repository.findById(tournamentId)).thenReturn(Optional.empty());
 
         AssignChampionService service = new AssignChampionService(repository);
 
         assertThrows(TournamentNotFoundException.class,
-                () -> service.assignChampion("missing", "final-1"));
+                () -> service.assignChampion(tournamentId, matchId));
     }
 }

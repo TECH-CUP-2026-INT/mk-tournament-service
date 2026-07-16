@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -19,7 +20,7 @@ class TournamentInactivationTest {
 
     private Tournament sampleTournament(TournamentStatus status) {
         return Tournament.reconstruct(
-                "1", "Copa Enero", 8, BigDecimal.valueOf(50000),
+                UUID.randomUUID(), "Copa Enero", 8, BigDecimal.valueOf(50000),
                 LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 20), LocalDate.of(2026, 2, 20),
                 status
         );
