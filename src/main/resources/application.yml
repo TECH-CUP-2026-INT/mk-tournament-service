@@ -4,6 +4,14 @@ spring:
   data:
     mongodb:
       uri: ${SPRING_DATA_MONGODB_URI}
+  rabbitmq:
+    host: toucan.lmq.cloudamqp.com
+    port: 5671
+    username: exdntvvm
+    password: ${RABBITMQ_PASS:}
+    virtual-host: exdntvvm
+    ssl:
+      enabled: true
 
 # TC-109: URL del Payment Service (aun no desplegado en este entorno); las
 # llamadas a GET /payment-orders/{enrollmentId} caen a UNKNOWN por timeout hasta que exista.
