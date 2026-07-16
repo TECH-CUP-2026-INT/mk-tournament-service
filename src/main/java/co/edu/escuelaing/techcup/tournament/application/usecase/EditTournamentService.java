@@ -18,7 +18,7 @@ public class EditTournamentService implements EditTournamentUseCase {
     @Override
     public Tournament edit(EditTournamentCommand command) {
         Tournament tournament = tournamentRepository.findById(command.tournamentId())
-                .orElseThrow(() -> new TournamentNotFoundException(command.tournamentId()));
+                .orElseThrow(() -> new TournamentNotFoundException(command.tournamentId().toString()));
 
         tournament.update(
                 command.name(),

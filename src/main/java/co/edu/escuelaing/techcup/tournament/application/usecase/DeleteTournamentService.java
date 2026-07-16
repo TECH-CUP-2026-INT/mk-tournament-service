@@ -10,6 +10,8 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.DeleteTourna
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentRepositoryPort;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class DeleteTournamentService implements DeleteTournamentUseCase {
@@ -18,9 +20,9 @@ public class DeleteTournamentService implements DeleteTournamentUseCase {
 
 
     @Override
-    public void delete(String tournamentId) {
+    public void delete(UUID tournamentId) {
         Tournament tournament = repository.findById(tournamentId)
-                .orElseThrow(() -> new TournamentNotFoundException(tournamentId));
+                .orElseThrow(() -> new TournamentNotFoundException(tournamentId.toString()));
 
         if (tournament.getStatus() != TournamentStatus.FINISHED) {
             throw new TournamentCannotBeDeletedException(tournamentId, tournament.getStatus());

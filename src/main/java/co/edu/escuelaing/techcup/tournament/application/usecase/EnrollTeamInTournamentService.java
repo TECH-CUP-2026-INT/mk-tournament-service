@@ -13,6 +13,8 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentR
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class EnrollTeamInTournamentService implements EnrollTeamInTournamentUseCase {
@@ -25,7 +27,7 @@ public class EnrollTeamInTournamentService implements EnrollTeamInTournamentUseC
 
 
     @Override
-    public Enrollment enrollTeam(String tournamentId, String teamId) {
+    public Enrollment enrollTeam(UUID tournamentId, UUID teamId) {
         TeamServiceClientPort.TeamInfo teamInfo = teamServiceClient.getTeamInfo(teamId);
 
         ReservationResult reservation = reserveSlot(tournamentId, teamId, teamInfo);
@@ -41,11 +43,11 @@ public class EnrollTeamInTournamentService implements EnrollTeamInTournamentUseC
         return reservation.enrollment();
     }
 
-    private ReservationResult reserveSlot(String tournamentId, String teamId, TeamServiceClientPort.TeamInfo teamInfo) {
+    private ReservationResult reserveSlot(UUID tournamentId, UUID teamId, TeamServiceClientPort.TeamInfo teamInfo) {
         OptimisticLockingFailureException lastFailure = null;
         for (int attempt = 1; attempt <= MAX_SAVE_ATTEMPTS; attempt++) {
             Tournament tournament = tournamentRepository.findById(tournamentId)
-                    .orElseThrow(() -> new TournamentNotFoundException(tournamentId));
+                    .orElseThrow(() -> new TournamentNotFoundException(tournamentId.toString()));
 
             Enrollment enrollment = tournament.enrollTeam(teamId, teamInfo.teamName(), teamInfo.rosterSize());
 
@@ -61,7 +63,7 @@ public class EnrollTeamInTournamentService implements EnrollTeamInTournamentUseC
 
     private record ReservationResult(Enrollment enrollment, java.math.BigDecimal cost) {}
 
-    private void revertReservation(String tournamentId, String enrollmentId) {
+    private void revertReservation(UUID tournamentId, UUID enrollmentId) {
         tournamentRepository.findById(tournamentId).ifPresent(tournament -> {
             tournament.getEnrollments().removeIf(e -> e.getEnrollmentId().equals(enrollmentId));
             tournamentRepository.save(tournament);

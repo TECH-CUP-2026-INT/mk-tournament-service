@@ -8,6 +8,8 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.RemoveTeamUs
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentRepositoryPort;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class RemoveTeamService implements RemoveTeamUseCase {
@@ -16,7 +18,7 @@ public class RemoveTeamService implements RemoveTeamUseCase {
 
 
     @Override
-    public Tournament remove(String tournamentId, String teamId, RemovalReason reason) {
+    public Tournament remove(UUID tournamentId, UUID teamId, RemovalReason reason) {
         Tournament tournament = repository.findById(tournamentId)
                 .orElseThrow(() -> new IllegalArgumentException("Torneo no encontrado: " + tournamentId));
         tournament.removeTeam(teamId, reason);

@@ -12,6 +12,7 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentR
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -22,9 +23,9 @@ public class GetEnrolledTeamsService implements GetEnrolledTeamsUseCase {
 
 
     @Override
-    public EnrolledTeamsView getEnrolledTeams(String tournamentId) {
+    public EnrolledTeamsView getEnrolledTeams(UUID tournamentId) {
         Tournament tournament = tournamentRepository.findById(tournamentId)
-                .orElseThrow(() -> new TournamentNotFoundException(tournamentId));
+                .orElseThrow(() -> new TournamentNotFoundException(tournamentId.toString()));
 
         List<Enrollment> enrolled = tournament.getEnrollments().stream()
                 .filter(e -> e.getStatus() == EnrollmentStatus.ENROLLED)

@@ -24,7 +24,7 @@ public class RegisterCourtService implements RegisterCourtUseCase {
     @Override
     public Court register(RegisterCourtCommand command) {
         Tournament tournament = tournamentRepository.findById(command.tournamentId())
-                .orElseThrow(() -> new TournamentNotFoundException(command.tournamentId()));
+                .orElseThrow(() -> new TournamentNotFoundException(command.tournamentId().toString()));
         tournament.assertActive();
 
         Court court = Court.create(command.tournamentId(), command.section(), command.description());

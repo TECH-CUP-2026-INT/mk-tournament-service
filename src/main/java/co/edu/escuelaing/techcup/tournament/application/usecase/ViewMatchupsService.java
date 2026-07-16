@@ -10,6 +10,7 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ViewMatchups
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -19,9 +20,9 @@ public class ViewMatchupsService implements ViewMatchupsUseCase {
 
 
     @Override
-    public List<Match> getMatchups(String tournamentId) {
+    public List<Match> getMatchups(UUID tournamentId) {
         Tournament tournament = tournamentRepository.findById(tournamentId)
-                .orElseThrow(() -> new TournamentNotFoundException(tournamentId));
+                .orElseThrow(() -> new TournamentNotFoundException(tournamentId.toString()));
         tournament.assertActive();
         return tournament.getMatches();
     }

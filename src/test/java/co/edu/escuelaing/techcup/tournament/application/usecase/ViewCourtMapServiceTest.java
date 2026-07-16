@@ -20,6 +20,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -29,9 +30,11 @@ import static org.mockito.Mockito.when;
 
 class ViewCourtMapServiceTest {
 
+    private final UUID tournamentId = UUID.randomUUID();
+
     private Tournament sampleTournament(List<Match> matches) {
         return Tournament.reconstruct(
-                "t1", "TechCup", 4, BigDecimal.ZERO,
+                tournamentId, "TechCup", 4, BigDecimal.ZERO,
                 LocalDate.now().plusDays(2), LocalDate.now().plusDays(10), LocalDate.now(),
                 TournamentStatus.IN_PROGRESS, new ArrayList<>(), new ArrayList<>(matches)
         );
@@ -44,18 +47,19 @@ class ViewCourtMapServiceTest {
         ScheduledMatchRepositoryPort scheduledMatchRepository = mock(ScheduledMatchRepositoryPort.class);
 
         Tournament tournament = sampleTournament(List.of());
-        Court court = Court.reconstruct("c1", "t1", CourtSection.CANCHA_1, "Main court", null, null);
+        UUID courtId = UUID.randomUUID();
+        Court court = Court.reconstruct(courtId, tournamentId, CourtSection.CANCHA_1, "Main court", null, null);
 
-        when(tournamentRepository.findById("t1")).thenReturn(Optional.of(tournament));
-        when(courtRepository.findAllByTournamentId("t1")).thenReturn(List.of(court));
+        when(tournamentRepository.findById(tournamentId)).thenReturn(Optional.of(tournament));
+        when(courtRepository.findAllByTournamentId(tournamentId)).thenReturn(List.of(court));
 
         ViewCourtMapService service = new ViewCourtMapService(tournamentRepository, courtRepository, scheduledMatchRepository);
-        List<CourtMapEntry> result = service.getCourtMap("t1");
+        List<CourtMapEntry> result = service.getCourtMap(tournamentId);
 
         assertEquals(1, result.size());
         assertNull(result.get(0).match());
         assertNull(result.get(0).scheduledMatch());
-        assertEquals("c1", result.get(0).court().getId());
+        assertEquals(courtId, result.get(0).court().getId());
     }
 
     @Test
@@ -64,21 +68,23 @@ class ViewCourtMapServiceTest {
         CourtRepositoryPort courtRepository = mock(CourtRepositoryPort.class);
         ScheduledMatchRepositoryPort scheduledMatchRepository = mock(ScheduledMatchRepositoryPort.class);
 
-        Match match = new Match("m1", "home", "away", MatchStatus.PENDING);
+        UUID matchId = UUID.randomUUID();
+        UUID courtId = UUID.randomUUID();
+        Match match = new Match(matchId, UUID.randomUUID(), UUID.randomUUID(), MatchStatus.PENDING);
         Tournament tournament = sampleTournament(List.of(match));
-        Court court = Court.reconstruct("c1", "t1", CourtSection.CANCHA_1, "Main court", null, "m1");
+        Court court = Court.reconstruct(courtId, tournamentId, CourtSection.CANCHA_1, "Main court", null, matchId);
         ScheduledMatch scheduledMatch = ScheduledMatch.reconstruct(
-                "sm1", "m1", "c1", "ref-1", LocalDate.of(2026, 8, 5), LocalTime.of(9, 0));
+                UUID.randomUUID(), matchId, courtId, UUID.randomUUID(), LocalDate.of(2026, 8, 5), LocalTime.of(9, 0));
 
-        when(tournamentRepository.findById("t1")).thenReturn(Optional.of(tournament));
-        when(courtRepository.findAllByTournamentId("t1")).thenReturn(List.of(court));
-        when(scheduledMatchRepository.findByMatchupId("m1")).thenReturn(Optional.of(scheduledMatch));
+        when(tournamentRepository.findById(tournamentId)).thenReturn(Optional.of(tournament));
+        when(courtRepository.findAllByTournamentId(tournamentId)).thenReturn(List.of(court));
+        when(scheduledMatchRepository.findByMatchupId(matchId)).thenReturn(Optional.of(scheduledMatch));
 
         ViewCourtMapService service = new ViewCourtMapService(tournamentRepository, courtRepository, scheduledMatchRepository);
-        List<CourtMapEntry> result = service.getCourtMap("t1");
+        List<CourtMapEntry> result = service.getCourtMap(tournamentId);
 
         assertEquals(1, result.size());
-        assertEquals("m1", result.get(0).match().getMatchId());
+        assertEquals(matchId, result.get(0).match().getMatchId());
         assertEquals(LocalDate.of(2026, 8, 5), result.get(0).scheduledMatch().getMatchDate());
     }
 
@@ -88,10 +94,11 @@ class ViewCourtMapServiceTest {
         CourtRepositoryPort courtRepository = mock(CourtRepositoryPort.class);
         ScheduledMatchRepositoryPort scheduledMatchRepository = mock(ScheduledMatchRepositoryPort.class);
 
-        when(tournamentRepository.findById("missing")).thenReturn(Optional.empty());
+        UUID missing = UUID.randomUUID();
+        when(tournamentRepository.findById(missing)).thenReturn(Optional.empty());
 
         ViewCourtMapService service = new ViewCourtMapService(tournamentRepository, courtRepository, scheduledMatchRepository);
 
-        assertThrows(TournamentNotFoundException.class, () -> service.getCourtMap("missing"));
+        assertThrows(TournamentNotFoundException.class, () -> service.getCourtMap(missing));
     }
 }

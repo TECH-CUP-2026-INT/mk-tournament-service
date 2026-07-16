@@ -13,6 +13,7 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentR
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -23,13 +24,13 @@ public class StartTournamentPreparationService implements StartTournamentPrepara
 
 
     @Override
-    public Tournament startPreparation(String tournamentId) {
+    public Tournament startPreparation(UUID tournamentId) {
         Tournament tournament = repository.findById(tournamentId)
-                .orElseThrow(() -> new TournamentNotFoundException(tournamentId));
+                .orElseThrow(() -> new TournamentNotFoundException(tournamentId.toString()));
 
         tournament.validateReadyForPreparation();
 
-        List<String> enrolledTeamIds = tournament.getEnrollments().stream()
+        List<UUID> enrolledTeamIds = tournament.getEnrollments().stream()
                 .filter(team -> team.getStatus() == EnrollmentStatus.ENROLLED)
                 .map(team -> team.getTeamId())
                 .toList();

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Component
 public class TournamentRepositoryAdapter implements TournamentRepositoryPort {
@@ -30,12 +31,12 @@ public class TournamentRepositoryAdapter implements TournamentRepositoryPort {
     }
 
     @Override
-    public Optional<Tournament> findById(String id) {
+    public Optional<Tournament> findById(UUID id) {
         return mongoRepository.findById(id).map(mapper::toDomain);
     }
 
     @Override
-    public void deleteById(String id) {
+    public void deleteById(UUID id) {
         mongoRepository.deleteById(id);
     }
 
@@ -47,13 +48,13 @@ public class TournamentRepositoryAdapter implements TournamentRepositoryPort {
     }
 
     @Override
-    public Optional<Tournament> findByIdAndStatus(String id, TournamentStatus status) {
+    public Optional<Tournament> findByIdAndStatus(UUID id, TournamentStatus status) {
         return mongoRepository.findByIdAndStatus(id, status.name())
                 .map(mapper::toDomain);
     }
 
     @Override
-    public Optional<Tournament> findByMatchId(String matchId) {
+    public Optional<Tournament> findByMatchId(UUID matchId) {
         return mongoRepository.findByMatchesMatchId(matchId)
                 .map(mapper::toDomain);
     }

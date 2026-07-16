@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -13,8 +14,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class EnrollmentDocument {
 
-    private String enrollmentId;
-    private String teamId;
+    private UUID enrollmentId;
+    private UUID teamId;
     private String teamName;
     private String status;
     private int points;

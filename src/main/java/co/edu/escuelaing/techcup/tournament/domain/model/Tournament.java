@@ -57,14 +57,15 @@ public class Tournament extends AggregateRoot {
     private List<TeamRegistration> teams;
     private List<Enrollment> enrollments;
     private List<Match> matches;
+    // GridFS ObjectId (hex string, no es formato UUID) — ver GridFsRulebookStorageAdapter.
     private String rulebookFileId;
-    private String championTeamId;
+    private UUID championTeamId;
     private ChampionResolution championResolution;
     private boolean paused;
     private boolean active = true;
     private Long version;
 
-    private Tournament(String id, String name, TournamentType type, TournamentFormat format,
+    private Tournament(UUID id, String name, TournamentType type, TournamentFormat format,
                        int numberOfTeams, BigDecimal cost,
                        LocalDate startDate, LocalDate endDate, LocalDate registrationDeadline,
                        LocalTime matchStartTime, LocalTime matchEndTime,
@@ -86,7 +87,7 @@ public class Tournament extends AggregateRoot {
         this.matches = new ArrayList<>();
     }
 
-    public Tournament(String id, String name, TournamentStatus status) {
+    public Tournament(UUID id, String name, TournamentStatus status) {
         this(id, name, TournamentType.NORMAL, TournamentFormat.BRACKETS, 0, BigDecimal.ZERO,
                 null, null, null, null, null, status);
     }
@@ -116,7 +117,7 @@ public class Tournament extends AggregateRoot {
 
         LocalDate effectiveEndDate = type == TournamentType.LIGHTNING ? startDate : endDate;
 
-        return new Tournament(UUID.randomUUID().toString(), name, type, format, numberOfTeams, cost, startDate,
+        return new Tournament(UUID.randomUUID(), name, type, format, numberOfTeams, cost, startDate,
                 effectiveEndDate, registrationDeadline, matchStartTime, matchEndTime,
                 TournamentStatus.ACTIVE);
     }
@@ -125,14 +126,14 @@ public class Tournament extends AggregateRoot {
      * Reconstruye un torneo desde la base de datos sin aplicar
      * reglas de creación ni forzar el estado.
      */
-    public static Tournament reconstruct(String id, String name, TournamentType type, TournamentFormat format,
+    public static Tournament reconstruct(UUID id, String name, TournamentType type, TournamentFormat format,
                                          int numberOfTeams, BigDecimal cost,
                                          LocalDate startDate, LocalDate endDate,
                                          LocalDate registrationDeadline,
                                          LocalTime matchStartTime, LocalTime matchEndTime,
                                          TournamentStatus status,
                                          List<TeamRegistration> teams, List<Match> matches,
-                                         String championTeamId, ChampionResolution championResolution,
+                                         UUID championTeamId, ChampionResolution championResolution,
                                          boolean paused, boolean active, List<Enrollment> enrollments, Long version) {
         Tournament t = new Tournament(id, name, type, format, numberOfTeams, cost, startDate, endDate,
                 registrationDeadline, matchStartTime, matchEndTime, status);
@@ -151,14 +152,14 @@ public class Tournament extends AggregateRoot {
      * Sobrecarga de compatibilidad: reconstruye sin lista de Enrollment
      * (torneos anteriores a TC-109, o llamadas que no necesitan el estado de pago).
      */
-    public static Tournament reconstruct(String id, String name, TournamentType type, TournamentFormat format,
+    public static Tournament reconstruct(UUID id, String name, TournamentType type, TournamentFormat format,
                                          int numberOfTeams, BigDecimal cost,
                                          LocalDate startDate, LocalDate endDate,
                                          LocalDate registrationDeadline,
                                          LocalTime matchStartTime, LocalTime matchEndTime,
                                          TournamentStatus status,
                                          List<TeamRegistration> teams, List<Match> matches,
-                                         String championTeamId, ChampionResolution championResolution,
+                                         UUID championTeamId, ChampionResolution championResolution,
                                          boolean paused, boolean active) {
         return reconstruct(id, name, type, format, numberOfTeams, cost, startDate, endDate, registrationDeadline,
                 matchStartTime, matchEndTime, status, teams, matches, championTeamId, championResolution,
@@ -169,14 +170,14 @@ public class Tournament extends AggregateRoot {
      * Sobrecarga de compatibilidad: reconstruye sin dato de inactivación
      * (torneos anteriores a TCF-154, se asumen activos).
      */
-    public static Tournament reconstruct(String id, String name, TournamentType type, TournamentFormat format,
+    public static Tournament reconstruct(UUID id, String name, TournamentType type, TournamentFormat format,
                                          int numberOfTeams, BigDecimal cost,
                                          LocalDate startDate, LocalDate endDate,
                                          LocalDate registrationDeadline,
                                          LocalTime matchStartTime, LocalTime matchEndTime,
                                          TournamentStatus status,
                                          List<TeamRegistration> teams, List<Match> matches,
-                                         String championTeamId, ChampionResolution championResolution,
+                                         UUID championTeamId, ChampionResolution championResolution,
                                          boolean paused) {
         return reconstruct(id, name, type, format, numberOfTeams, cost, startDate, endDate, registrationDeadline,
                 matchStartTime, matchEndTime, status, teams, matches, championTeamId, championResolution, paused, true);
@@ -186,14 +187,14 @@ public class Tournament extends AggregateRoot {
      * Sobrecarga de compatibilidad: reconstruye sin dato de pausa
      * (torneos anteriores a TCF-153, se asumen no pausados).
      */
-    public static Tournament reconstruct(String id, String name, TournamentType type, TournamentFormat format,
+    public static Tournament reconstruct(UUID id, String name, TournamentType type, TournamentFormat format,
                                          int numberOfTeams, BigDecimal cost,
                                          LocalDate startDate, LocalDate endDate,
                                          LocalDate registrationDeadline,
                                          LocalTime matchStartTime, LocalTime matchEndTime,
                                          TournamentStatus status,
                                          List<TeamRegistration> teams, List<Match> matches,
-                                         String championTeamId, ChampionResolution championResolution) {
+                                         UUID championTeamId, ChampionResolution championResolution) {
         return reconstruct(id, name, type, format, numberOfTeams, cost, startDate, endDate, registrationDeadline,
                 matchStartTime, matchEndTime, status, teams, matches, championTeamId, championResolution, false);
     }
@@ -202,17 +203,17 @@ public class Tournament extends AggregateRoot {
      * Sobrecarga de compatibilidad: reconstruye sin tipo/formato/horas de partido
      * ni datos de campeón (torneos anteriores a TCF-52 o pruebas que no los necesitan).
      */
-    public static Tournament reconstruct(String id, String name, int numberOfTeams, BigDecimal cost,
+    public static Tournament reconstruct(UUID id, String name, int numberOfTeams, BigDecimal cost,
                                          LocalDate startDate, LocalDate endDate,
                                          LocalDate registrationDeadline, TournamentStatus status,
                                          List<TeamRegistration> teams, List<Match> matches,
-                                         String championTeamId, ChampionResolution championResolution) {
+                                         UUID championTeamId, ChampionResolution championResolution) {
         return reconstruct(id, name, TournamentType.NORMAL, TournamentFormat.BRACKETS, numberOfTeams, cost,
                 startDate, endDate, registrationDeadline, null, null, status, teams, matches,
                 championTeamId, championResolution);
     }
 
-    public static Tournament reconstruct(String id, String name, int numberOfTeams, BigDecimal cost,
+    public static Tournament reconstruct(UUID id, String name, int numberOfTeams, BigDecimal cost,
                                          LocalDate startDate, LocalDate endDate,
                                          LocalDate registrationDeadline, TournamentStatus status,
                                          List<TeamRegistration> teams, List<Match> matches) {
@@ -224,7 +225,7 @@ public class Tournament extends AggregateRoot {
      * Sobrecarga de compatibilidad: reconstruye sin equipos ni partidos
      * (torneos que aún no tienen inscripciones/llaves generadas).
      */
-    public static Tournament reconstruct(String id, String name, int numberOfTeams, BigDecimal cost,
+    public static Tournament reconstruct(UUID id, String name, int numberOfTeams, BigDecimal cost,
                                          LocalDate startDate, LocalDate endDate,
                                          LocalDate registrationDeadline, TournamentStatus status) {
         return reconstruct(id, name, numberOfTeams, cost, startDate, endDate,
@@ -255,7 +256,7 @@ public class Tournament extends AggregateRoot {
                 .count();
     }
 
-    public List<Match> removeTeam(String teamId, RemovalReason reason) {
+    public List<Match> removeTeam(UUID teamId, RemovalReason reason) {
         assertActive();
         if (status != TournamentStatus.ACTIVE && status != TournamentStatus.IN_PROGRESS)
             throw new TeamRemovalNotAllowedException("Solo se puede remover equipos en torneos Activos o En Progreso");
@@ -284,7 +285,7 @@ public class Tournament extends AggregateRoot {
      * (startPreparation() solo toma equipos con estado Aprobado). Es una acción
      * permanente, a diferencia de la inactivación del torneo.
      */
-    public void disqualifyTeam(String teamId, DisqualificationReason reason) {
+    public void disqualifyTeam(UUID teamId, DisqualificationReason reason) {
         assertActive();
         if (reason == null) {
             throw new TeamDisqualificationNotAllowedException("El motivo de descalificación es obligatorio");
@@ -311,7 +312,7 @@ public class Tournament extends AggregateRoot {
      * (ver EnrollTeamInTournamentService, que consulta el Team Service para el roster
      * y llama al Payment Service inmediatamente después de que este método retorna).
      */
-    public Enrollment enrollTeam(String teamId, String teamName, int rosterSize) {
+    public Enrollment enrollTeam(UUID teamId, String teamName, int rosterSize) {
         assertActive();
         if (status != TournamentStatus.ACTIVE) {
             throw new TournamentNotActiveForEnrollmentException(
@@ -343,7 +344,7 @@ public class Tournament extends AggregateRoot {
      * TC-44: inactiva un equipo dentro del torneo. Es una medida administrativa
      * temporal; no implica descalificación ni eliminación del equipo.
      */
-    public void inactivateTeam(String teamId) {
+    public void inactivateTeam(UUID teamId) {
         assertActive();
 
         TeamRegistration team = teams.stream()
@@ -538,7 +539,7 @@ public class Tournament extends AggregateRoot {
      * pasa a estado Finalizado. Si hay empate en tiempo reglamentario, espera
      * el resultado de penales registrado en el partido.
      */
-    public ChampionAssignment assignChampionWhenFinalMatchFinished(String matchId) {
+    public ChampionAssignment assignChampionWhenFinalMatchFinished(UUID matchId) {
         assertActive();
         Match match = findMatch(matchId);
 
@@ -551,7 +552,7 @@ public class Tournament extends AggregateRoot {
                     "Solo se asigna campeón cuando el partido final está Finalizado");
         }
 
-        String winnerTeamId = match.resolveChampionTeamId();
+        UUID winnerTeamId = match.resolveChampionTeamId();
         if (winnerTeamId == null) {
             throw new ChampionPendingPenaltiesException(matchId);
         }
@@ -572,13 +573,13 @@ public class Tournament extends AggregateRoot {
      * reglamentario (ver {@link #assignChampionWhenFinalMatchFinished}, que
      * exige este dato ya cargado para resolver al campeón en ese caso).
      */
-    public void recordPenaltyShootoutWinner(String matchId, String winnerTeamId) {
+    public void recordPenaltyShootoutWinner(UUID matchId, UUID winnerTeamId) {
         assertActive();
         Match match = findMatch(matchId);
         match.recordPenaltyShootoutWinner(winnerTeamId);
     }
 
-    private Match findMatch(String matchId) {
+    private Match findMatch(UUID matchId) {
         return matches.stream()
                 .filter(m -> m.getMatchId().equals(matchId))
                 .findFirst()
@@ -659,7 +660,7 @@ public class Tournament extends AggregateRoot {
     public void setMatches(List<Match> matches) { this.matches = matches; }
     public String getRulebookFileId() { return rulebookFileId; }
     public void setRulebookFileId(String rulebookFileId) { this.rulebookFileId = rulebookFileId; }
-    public String getChampionTeamId() { return championTeamId; }
+    public UUID getChampionTeamId() { return championTeamId; }
     public ChampionResolution getChampionResolution() { return championResolution; }
     public boolean isPaused() { return paused; }
     public boolean isActive() { return active; }

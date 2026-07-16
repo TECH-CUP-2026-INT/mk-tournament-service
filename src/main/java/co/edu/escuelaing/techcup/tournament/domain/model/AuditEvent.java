@@ -22,7 +22,7 @@ public class AuditEvent extends AggregateRoot {
     private final String actionType;
     private final String affectedEntityId;
 
-    private AuditEvent(String id, Instant timestamp, String actor, String actionType, String affectedEntityId) {
+    private AuditEvent(UUID id, Instant timestamp, String actor, String actionType, String affectedEntityId) {
         super(id);
         this.timestamp = timestamp;
         this.actor = actor;
@@ -31,10 +31,10 @@ public class AuditEvent extends AggregateRoot {
     }
 
     public static AuditEvent create(String actor, String actionType, String affectedEntityId) {
-        return new AuditEvent(UUID.randomUUID().toString(), Instant.now(), actor, actionType, affectedEntityId);
+        return new AuditEvent(UUID.randomUUID(), Instant.now(), actor, actionType, affectedEntityId);
     }
 
-    public static AuditEvent reconstruct(String id, Instant timestamp, String actor,
+    public static AuditEvent reconstruct(UUID id, Instant timestamp, String actor,
                                          String actionType, String affectedEntityId) {
         return new AuditEvent(id, timestamp, actor, actionType, affectedEntityId);
     }

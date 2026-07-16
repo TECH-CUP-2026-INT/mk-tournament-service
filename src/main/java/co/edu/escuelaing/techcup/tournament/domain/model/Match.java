@@ -4,6 +4,8 @@ import co.edu.escuelaing.techcup.tournament.domain.exception.ChampionAssignmentN
 import co.edu.escuelaing.techcup.tournament.domain.exception.MatchActivationNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.MatchInactiveException;
 
+import java.util.UUID;
+
 /**
  * Enfrentamiento generado en el fixture del torneo (quién juega contra quién),
  * con su resultado y estado. No incluye fecha/cancha/árbitro — eso lo modela
@@ -11,30 +13,30 @@ import co.edu.escuelaing.techcup.tournament.domain.exception.MatchInactiveExcept
  */
 public class Match {
 
-    private String matchId;
-    private String homeTeamId;
-    private String awayTeamId;
+    private UUID matchId;
+    private UUID homeTeamId;
+    private UUID awayTeamId;
     private MatchStatus status;
     private boolean finalMatch;
     private int homeScore;
     private int awayScore;
-    private String penaltyShootoutWinnerTeamId;
+    private UUID penaltyShootoutWinnerTeamId;
     private boolean active = true;
 
     public Match() {}
 
-    public Match(String matchId, String homeTeamId, String awayTeamId, MatchStatus status) {
+    public Match(UUID matchId, UUID homeTeamId, UUID awayTeamId, MatchStatus status) {
         this(matchId, homeTeamId, awayTeamId, status, false, 0, 0, null, true);
     }
 
-    public Match(String matchId, String homeTeamId, String awayTeamId, MatchStatus status,
-                 boolean finalMatch, int homeScore, int awayScore, String penaltyShootoutWinnerTeamId) {
+    public Match(UUID matchId, UUID homeTeamId, UUID awayTeamId, MatchStatus status,
+                 boolean finalMatch, int homeScore, int awayScore, UUID penaltyShootoutWinnerTeamId) {
         this(matchId, homeTeamId, awayTeamId, status, finalMatch, homeScore, awayScore,
                 penaltyShootoutWinnerTeamId, true);
     }
 
-    public Match(String matchId, String homeTeamId, String awayTeamId, MatchStatus status,
-                 boolean finalMatch, int homeScore, int awayScore, String penaltyShootoutWinnerTeamId,
+    public Match(UUID matchId, UUID homeTeamId, UUID awayTeamId, MatchStatus status,
+                 boolean finalMatch, int homeScore, int awayScore, UUID penaltyShootoutWinnerTeamId,
                  boolean active) {
         this.matchId = matchId;
         this.homeTeamId = homeTeamId;
@@ -47,7 +49,7 @@ public class Match {
         this.active = active;
     }
 
-    public boolean involvesteam(String teamId) {
+    public boolean involvesteam(UUID teamId) {
         return teamId.equals(homeTeamId) || teamId.equals(awayTeamId);
     }
 
@@ -123,7 +125,7 @@ public class Match {
     /**
      * Registra el ganador de la tanda de penales (integración pendiente con módulo de arbitraje).
      */
-    public void recordPenaltyShootoutWinner(String winnerTeamId) {
+    public void recordPenaltyShootoutWinner(UUID winnerTeamId) {
         assertActive();
         if (!isTiedInRegulation()) {
             throw new ChampionAssignmentNotAllowedException(
@@ -136,7 +138,7 @@ public class Match {
         this.penaltyShootoutWinnerTeamId = winnerTeamId;
     }
 
-    public String resolveChampionTeamId() {
+    public UUID resolveChampionTeamId() {
         if (!isFinished()) {
             throw new ChampionAssignmentNotAllowedException(
                     "El partido debe estar finalizado para resolver al campeón");
@@ -153,14 +155,14 @@ public class Match {
         return penaltyShootoutWinnerTeamId;
     }
 
-    public String getMatchId() { return matchId; }
-    public void setMatchId(String matchId) { this.matchId = matchId; }
+    public UUID getMatchId() { return matchId; }
+    public void setMatchId(UUID matchId) { this.matchId = matchId; }
 
-    public String getHomeTeamId() { return homeTeamId; }
-    public void setHomeTeamId(String homeTeamId) { this.homeTeamId = homeTeamId; }
+    public UUID getHomeTeamId() { return homeTeamId; }
+    public void setHomeTeamId(UUID homeTeamId) { this.homeTeamId = homeTeamId; }
 
-    public String getAwayTeamId() { return awayTeamId; }
-    public void setAwayTeamId(String awayTeamId) { this.awayTeamId = awayTeamId; }
+    public UUID getAwayTeamId() { return awayTeamId; }
+    public void setAwayTeamId(UUID awayTeamId) { this.awayTeamId = awayTeamId; }
 
     public MatchStatus getStatus() { return status; }
     public void setStatus(MatchStatus status) { this.status = status; }
@@ -173,8 +175,8 @@ public class Match {
     public int getAwayScore() { return awayScore; }
     public void setAwayScore(int awayScore) { this.awayScore = awayScore; }
 
-    public String getPenaltyShootoutWinnerTeamId() { return penaltyShootoutWinnerTeamId; }
-    public void setPenaltyShootoutWinnerTeamId(String penaltyShootoutWinnerTeamId) {
+    public UUID getPenaltyShootoutWinnerTeamId() { return penaltyShootoutWinnerTeamId; }
+    public void setPenaltyShootoutWinnerTeamId(UUID penaltyShootoutWinnerTeamId) {
         this.penaltyShootoutWinnerTeamId = penaltyShootoutWinnerTeamId;
     }
 }

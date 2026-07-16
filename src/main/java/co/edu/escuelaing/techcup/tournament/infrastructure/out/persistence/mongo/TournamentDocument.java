@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.UUID;
 
 @Document(collection = "tournaments")
 @Getter
@@ -21,7 +22,7 @@ import java.util.List;
 public class TournamentDocument {
 
     @Id
-    private String id;
+    private UUID id;
     private String name;
     private String type;
     private String format;
@@ -33,8 +34,9 @@ public class TournamentDocument {
     private LocalTime matchStartTime;
     private LocalTime matchEndTime;
     private String status;
+    // GridFS ObjectId (hex string, no es formato UUID).
     private String rulebookFileId;
-    private String championTeamId;
+    private UUID championTeamId;
     private String championResolution;
     private List<TeamRegistrationDocument> teams;
     private List<MatchDocument> matches;
