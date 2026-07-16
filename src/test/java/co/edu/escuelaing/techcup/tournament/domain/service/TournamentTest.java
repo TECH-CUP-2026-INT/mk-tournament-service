@@ -22,14 +22,13 @@ class TournamentTest {
 
     @Test
     void create_withValidNormalData_createsTournamentInActiveStatus() {
-        Tournament tournament = Tournament.create(
-                "Copa Enero", TournamentType.NORMAL, TournamentFormat.BRACKETS,
-                8, BigDecimal.valueOf(50000),
-                LocalDate.of(2026, 3, 1),
-                LocalDate.of(2026, 3, 20),
-                LocalDate.of(2026, 2, 20),
-                null, null
-        );
+        Tournament tournament = Tournament.builder()
+                .name("Copa Enero").type(TournamentType.NORMAL).format(TournamentFormat.BRACKETS)
+                .numberOfTeams(8).cost(BigDecimal.valueOf(50000))
+                .startDate(LocalDate.of(2026, 3, 1))
+                .endDate(LocalDate.of(2026, 3, 20))
+                .registrationDeadline(LocalDate.of(2026, 2, 20))
+                .create();
 
         assertEquals("Copa Enero", tournament.getName());
         assertEquals(TournamentStatus.ACTIVE, tournament.getStatus());
@@ -37,14 +36,13 @@ class TournamentTest {
 
     @Test
     void create_withValidLightningData_derivesEndDateFromStartDate() {
-        Tournament tournament = Tournament.create(
-                "Copa Relámpago", TournamentType.LIGHTNING, TournamentFormat.GROUPS,
-                8, BigDecimal.valueOf(50000),
-                LocalDate.of(2026, 3, 1),
-                null,
-                LocalDate.of(2026, 2, 20),
-                LocalTime.of(9, 0), LocalTime.of(18, 0)
-        );
+        Tournament tournament = Tournament.builder()
+                .name("Copa Relámpago").type(TournamentType.LIGHTNING).format(TournamentFormat.GROUPS)
+                .numberOfTeams(8).cost(BigDecimal.valueOf(50000))
+                .startDate(LocalDate.of(2026, 3, 1))
+                .registrationDeadline(LocalDate.of(2026, 2, 20))
+                .matchStartTime(LocalTime.of(9, 0)).matchEndTime(LocalTime.of(18, 0))
+                .create();
 
         assertEquals(TournamentStatus.ACTIVE, tournament.getStatus());
         assertEquals(LocalDate.of(2026, 3, 1), tournament.getEndDate());
@@ -53,70 +51,70 @@ class TournamentTest {
     @Test
     void create_lightningWithoutTimes_throwsException() {
         assertThrows(InvalidTournamentDataException.class,
-                () -> Tournament.create(
-                        "Copa Relámpago", TournamentType.LIGHTNING, TournamentFormat.GROUPS,
-                        8, BigDecimal.valueOf(50000),
-                        LocalDate.of(2026, 3, 1), null, LocalDate.of(2026, 2, 20),
-                        null, null
-                ));
+                () -> Tournament.builder()
+                        .name("Copa Relámpago").type(TournamentType.LIGHTNING).format(TournamentFormat.GROUPS)
+                        .numberOfTeams(8).cost(BigDecimal.valueOf(50000))
+                        .startDate(LocalDate.of(2026, 3, 1))
+                        .registrationDeadline(LocalDate.of(2026, 2, 20))
+                        .create());
     }
 
     @Test
     void create_lightningWithEndTimeNotAfterStartTime_throwsException() {
         assertThrows(InvalidTournamentDateRangeException.class,
-                () -> Tournament.create(
-                        "Copa Relámpago", TournamentType.LIGHTNING, TournamentFormat.GROUPS,
-                        8, BigDecimal.valueOf(50000),
-                        LocalDate.of(2026, 3, 1), null, LocalDate.of(2026, 2, 20),
-                        LocalTime.of(18, 0), LocalTime.of(9, 0)
-                ));
+                () -> Tournament.builder()
+                        .name("Copa Relámpago").type(TournamentType.LIGHTNING).format(TournamentFormat.GROUPS)
+                        .numberOfTeams(8).cost(BigDecimal.valueOf(50000))
+                        .startDate(LocalDate.of(2026, 3, 1))
+                        .registrationDeadline(LocalDate.of(2026, 2, 20))
+                        .matchStartTime(LocalTime.of(18, 0)).matchEndTime(LocalTime.of(9, 0))
+                        .create());
     }
 
     @Test
     void create_normalWithoutEndDate_throwsException() {
         assertThrows(InvalidTournamentDataException.class,
-                () -> Tournament.create(
-                        "Copa Enero", TournamentType.NORMAL, TournamentFormat.BRACKETS,
-                        8, BigDecimal.valueOf(50000),
-                        LocalDate.of(2026, 3, 1), null, LocalDate.of(2026, 2, 20),
-                        null, null
-                ));
+                () -> Tournament.builder()
+                        .name("Copa Enero").type(TournamentType.NORMAL).format(TournamentFormat.BRACKETS)
+                        .numberOfTeams(8).cost(BigDecimal.valueOf(50000))
+                        .startDate(LocalDate.of(2026, 3, 1))
+                        .registrationDeadline(LocalDate.of(2026, 2, 20))
+                        .create());
     }
 
     @Test
     void create_withNullType_throwsException() {
         assertThrows(InvalidTournamentDataException.class,
-                () -> Tournament.create(
-                        "Copa Enero", null, TournamentFormat.BRACKETS,
-                        8, BigDecimal.valueOf(50000),
-                        LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 20), LocalDate.of(2026, 2, 20),
-                        null, null
-                ));
+                () -> Tournament.builder()
+                        .name("Copa Enero").type(null).format(TournamentFormat.BRACKETS)
+                        .numberOfTeams(8).cost(BigDecimal.valueOf(50000))
+                        .startDate(LocalDate.of(2026, 3, 1)).endDate(LocalDate.of(2026, 3, 20))
+                        .registrationDeadline(LocalDate.of(2026, 2, 20))
+                        .create());
     }
 
     @Test
     void create_withNullFormat_throwsException() {
         assertThrows(InvalidTournamentDataException.class,
-                () -> Tournament.create(
-                        "Copa Enero", TournamentType.NORMAL, null,
-                        8, BigDecimal.valueOf(50000),
-                        LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 20), LocalDate.of(2026, 2, 20),
-                        null, null
-                ));
+                () -> Tournament.builder()
+                        .name("Copa Enero").type(TournamentType.NORMAL).format(null)
+                        .numberOfTeams(8).cost(BigDecimal.valueOf(50000))
+                        .startDate(LocalDate.of(2026, 3, 1)).endDate(LocalDate.of(2026, 3, 20))
+                        .registrationDeadline(LocalDate.of(2026, 2, 20))
+                        .create());
     }
 
     @Test
     void create_whenStartDateIsNotAfterRegistrationDeadline_throwsException() {
         InvalidTournamentDateRangeException exception = assertThrows(
                 InvalidTournamentDateRangeException.class,
-                () -> Tournament.create(
-                        "Copa Enero", TournamentType.NORMAL, TournamentFormat.BRACKETS,
-                        8, BigDecimal.valueOf(50000),
-                        LocalDate.of(2026, 3, 1),
-                        LocalDate.of(2026, 3, 20),
-                        LocalDate.of(2026, 3, 1), // igual a startDate, no es anterior
-                        null, null
-                )
+                () -> Tournament.builder()
+                        .name("Copa Enero").type(TournamentType.NORMAL).format(TournamentFormat.BRACKETS)
+                        .numberOfTeams(8).cost(BigDecimal.valueOf(50000))
+                        .startDate(LocalDate.of(2026, 3, 1))
+                        .endDate(LocalDate.of(2026, 3, 20))
+                        .registrationDeadline(LocalDate.of(2026, 3, 1)) // igual a startDate, no es anterior
+                        .create()
         );
 
         assertEquals("La fecha de inicio debe ser posterior a la fecha de cierre de inscripciones",
@@ -127,14 +125,13 @@ class TournamentTest {
     void create_whenEndDateIsBeforeStartDate_throwsException() {
         InvalidTournamentDateRangeException exception = assertThrows(
                 InvalidTournamentDateRangeException.class,
-                () -> Tournament.create(
-                        "Copa Enero", TournamentType.NORMAL, TournamentFormat.BRACKETS,
-                        8, BigDecimal.valueOf(50000),
-                        LocalDate.of(2026, 3, 10),
-                        LocalDate.of(2026, 3, 5), // antes que startDate
-                        LocalDate.of(2026, 2, 20),
-                        null, null
-                )
+                () -> Tournament.builder()
+                        .name("Copa Enero").type(TournamentType.NORMAL).format(TournamentFormat.BRACKETS)
+                        .numberOfTeams(8).cost(BigDecimal.valueOf(50000))
+                        .startDate(LocalDate.of(2026, 3, 10))
+                        .endDate(LocalDate.of(2026, 3, 5)) // antes que startDate
+                        .registrationDeadline(LocalDate.of(2026, 2, 20))
+                        .create()
         );
 
         assertEquals("La fecha de fin debe ser posterior o igual a la fecha de inicio",
@@ -144,43 +141,44 @@ class TournamentTest {
     @Test
     void create_withBlankName_throwsException() {
         assertThrows(InvalidTournamentDataException.class,
-                () -> Tournament.create(
-                        " ", TournamentType.NORMAL, TournamentFormat.BRACKETS,
-                        8, BigDecimal.valueOf(50000),
-                        LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 20), LocalDate.of(2026, 2, 20),
-                        null, null
-                ));
+                () -> Tournament.builder()
+                        .name(" ").type(TournamentType.NORMAL).format(TournamentFormat.BRACKETS)
+                        .numberOfTeams(8).cost(BigDecimal.valueOf(50000))
+                        .startDate(LocalDate.of(2026, 3, 1)).endDate(LocalDate.of(2026, 3, 20))
+                        .registrationDeadline(LocalDate.of(2026, 2, 20))
+                        .create());
     }
 
     @Test
     void create_withFewerThanMinimumTeams_throwsException() {
         assertThrows(InvalidTournamentDataException.class,
-                () -> Tournament.create(
-                        "Copa Enero", TournamentType.NORMAL, TournamentFormat.BRACKETS,
-                        1, BigDecimal.valueOf(50000),
-                        LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 20), LocalDate.of(2026, 2, 20),
-                        null, null
-                ));
+                () -> Tournament.builder()
+                        .name("Copa Enero").type(TournamentType.NORMAL).format(TournamentFormat.BRACKETS)
+                        .numberOfTeams(1).cost(BigDecimal.valueOf(50000))
+                        .startDate(LocalDate.of(2026, 3, 1)).endDate(LocalDate.of(2026, 3, 20))
+                        .registrationDeadline(LocalDate.of(2026, 2, 20))
+                        .create());
     }
 
     @Test
     void create_withNegativeCost_throwsException() {
         assertThrows(InvalidTournamentDataException.class,
-                () -> Tournament.create(
-                        "Copa Enero", TournamentType.NORMAL, TournamentFormat.BRACKETS,
-                        8, BigDecimal.valueOf(-1),
-                        LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 20), LocalDate.of(2026, 2, 20),
-                        null, null
-                ));
+                () -> Tournament.builder()
+                        .name("Copa Enero").type(TournamentType.NORMAL).format(TournamentFormat.BRACKETS)
+                        .numberOfTeams(8).cost(BigDecimal.valueOf(-1))
+                        .startDate(LocalDate.of(2026, 3, 1)).endDate(LocalDate.of(2026, 3, 20))
+                        .registrationDeadline(LocalDate.of(2026, 2, 20))
+                        .create());
     }
 
     @Test
     void finish_whenInProgressAndEndDateReached_setsStatusFinished() {
-        Tournament tournament = Tournament.reconstruct(
-                UUID.randomUUID(), "Copa Enero", 8, BigDecimal.valueOf(50000),
-                LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 10), LocalDate.of(2026, 2, 20),
-                TournamentStatus.IN_PROGRESS
-        );
+        Tournament tournament = Tournament.builder()
+                .id(UUID.randomUUID()).name("Copa Enero").numberOfTeams(8).cost(BigDecimal.valueOf(50000))
+                .startDate(LocalDate.of(2026, 3, 1)).endDate(LocalDate.of(2026, 3, 10))
+                .registrationDeadline(LocalDate.of(2026, 2, 20))
+                .status(TournamentStatus.IN_PROGRESS)
+                .reconstruct();
 
         tournament.finish(LocalDate.of(2026, 3, 10));
 
@@ -189,11 +187,12 @@ class TournamentTest {
 
     @Test
     void finish_whenNotInProgress_throwsException() {
-        Tournament tournament = Tournament.reconstruct(
-                UUID.randomUUID(), "Copa Enero", 8, BigDecimal.valueOf(50000),
-                LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 10), LocalDate.of(2026, 2, 20),
-                TournamentStatus.DRAFT
-        );
+        Tournament tournament = Tournament.builder()
+                .id(UUID.randomUUID()).name("Copa Enero").numberOfTeams(8).cost(BigDecimal.valueOf(50000))
+                .startDate(LocalDate.of(2026, 3, 1)).endDate(LocalDate.of(2026, 3, 10))
+                .registrationDeadline(LocalDate.of(2026, 2, 20))
+                .status(TournamentStatus.DRAFT)
+                .reconstruct();
 
         TournamentCannotBeFinalizedException exception = assertThrows(
                 TournamentCannotBeFinalizedException.class,
@@ -205,11 +204,12 @@ class TournamentTest {
 
     @Test
     void finish_whenEndDateNotReached_throwsException() {
-        Tournament tournament = Tournament.reconstruct(
-                UUID.randomUUID(), "Copa Enero", 8, BigDecimal.valueOf(50000),
-                LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 20), LocalDate.of(2026, 2, 20),
-                TournamentStatus.IN_PROGRESS
-        );
+        Tournament tournament = Tournament.builder()
+                .id(UUID.randomUUID()).name("Copa Enero").numberOfTeams(8).cost(BigDecimal.valueOf(50000))
+                .startDate(LocalDate.of(2026, 3, 1)).endDate(LocalDate.of(2026, 3, 20))
+                .registrationDeadline(LocalDate.of(2026, 2, 20))
+                .status(TournamentStatus.IN_PROGRESS)
+                .reconstruct();
 
         TournamentCannotBeFinalizedException exception = assertThrows(
                 TournamentCannotBeFinalizedException.class,
@@ -221,11 +221,12 @@ class TournamentTest {
 
     @Test
     void finish_whenAlreadyFinished_throwsException() {
-        Tournament tournament = Tournament.reconstruct(
-                UUID.randomUUID(), "Copa Enero", 8, BigDecimal.valueOf(50000),
-                LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 10), LocalDate.of(2026, 2, 20),
-                TournamentStatus.FINISHED
-        );
+        Tournament tournament = Tournament.builder()
+                .id(UUID.randomUUID()).name("Copa Enero").numberOfTeams(8).cost(BigDecimal.valueOf(50000))
+                .startDate(LocalDate.of(2026, 3, 1)).endDate(LocalDate.of(2026, 3, 10))
+                .registrationDeadline(LocalDate.of(2026, 2, 20))
+                .status(TournamentStatus.FINISHED)
+                .reconstruct();
 
         assertThrows(TournamentCannotBeFinalizedException.class,
                 () -> tournament.finish(LocalDate.of(2026, 3, 10)));

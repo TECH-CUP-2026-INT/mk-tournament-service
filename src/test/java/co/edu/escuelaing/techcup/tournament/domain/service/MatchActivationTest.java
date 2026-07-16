@@ -62,8 +62,8 @@ class MatchActivationTest {
 
     @Test
     void finish_partidoInactivo_lanzaMatchInactiveException() {
-        Match match = new Match(UUID.randomUUID(), homeTeamId, awayTeamId, MatchStatus.PENDING,
-                true, 0, 0, null);
+        Match match = Match.builder().matchId(UUID.randomUUID()).homeTeamId(homeTeamId).awayTeamId(awayTeamId)
+                .status(MatchStatus.PENDING).finalMatch(true).homeScore(0).awayScore(0).build();
         match.inactivate();
 
         assertThrows(MatchInactiveException.class, () -> match.finish(2, 1));
@@ -71,8 +71,8 @@ class MatchActivationTest {
 
     @Test
     void recordPenaltyShootoutWinner_partidoInactivo_lanzaMatchInactiveException() {
-        Match match = new Match(UUID.randomUUID(), homeTeamId, awayTeamId, MatchStatus.FINISHED,
-                true, 1, 1, null);
+        Match match = Match.builder().matchId(UUID.randomUUID()).homeTeamId(homeTeamId).awayTeamId(awayTeamId)
+                .status(MatchStatus.FINISHED).finalMatch(true).homeScore(1).awayScore(1).build();
         match.inactivate();
 
         assertThrows(MatchInactiveException.class, () -> match.recordPenaltyShootoutWinner(homeTeamId));
@@ -88,8 +88,8 @@ class MatchActivationTest {
 
     @Test
     void inactivate_preservaDatosYaRegistrados() {
-        Match match = new Match(UUID.randomUUID(), homeTeamId, awayTeamId, MatchStatus.FINISHED,
-                true, 3, 1, null);
+        Match match = Match.builder().matchId(UUID.randomUUID()).homeTeamId(homeTeamId).awayTeamId(awayTeamId)
+                .status(MatchStatus.FINISHED).finalMatch(true).homeScore(3).awayScore(1).build();
 
         match.inactivate();
 

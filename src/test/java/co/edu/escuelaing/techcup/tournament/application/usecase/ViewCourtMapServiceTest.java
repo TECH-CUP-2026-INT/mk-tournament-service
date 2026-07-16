@@ -33,11 +33,13 @@ class ViewCourtMapServiceTest {
     private final UUID tournamentId = UUID.randomUUID();
 
     private Tournament sampleTournament(List<Match> matches) {
-        return Tournament.reconstruct(
-                tournamentId, "TechCup", 4, BigDecimal.ZERO,
-                LocalDate.now().plusDays(2), LocalDate.now().plusDays(10), LocalDate.now(),
-                TournamentStatus.IN_PROGRESS, new ArrayList<>(), new ArrayList<>(matches)
-        );
+        return Tournament.builder()
+                .id(tournamentId).name("TechCup").numberOfTeams(4).cost(BigDecimal.ZERO)
+                .startDate(LocalDate.now().plusDays(2)).endDate(LocalDate.now().plusDays(10))
+                .registrationDeadline(LocalDate.now())
+                .status(TournamentStatus.IN_PROGRESS).teams(new ArrayList<>())
+                .matches(new ArrayList<>(matches))
+                .reconstruct();
     }
 
     @Test

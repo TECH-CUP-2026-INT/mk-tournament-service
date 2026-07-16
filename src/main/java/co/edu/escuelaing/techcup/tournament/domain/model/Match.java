@@ -26,27 +26,60 @@ public class Match {
     public Match() {}
 
     public Match(UUID matchId, UUID homeTeamId, UUID awayTeamId, MatchStatus status) {
-        this(matchId, homeTeamId, awayTeamId, status, false, 0, 0, null, true);
-    }
-
-    public Match(UUID matchId, UUID homeTeamId, UUID awayTeamId, MatchStatus status,
-                 boolean finalMatch, int homeScore, int awayScore, UUID penaltyShootoutWinnerTeamId) {
-        this(matchId, homeTeamId, awayTeamId, status, finalMatch, homeScore, awayScore,
-                penaltyShootoutWinnerTeamId, true);
-    }
-
-    public Match(UUID matchId, UUID homeTeamId, UUID awayTeamId, MatchStatus status,
-                 boolean finalMatch, int homeScore, int awayScore, UUID penaltyShootoutWinnerTeamId,
-                 boolean active) {
         this.matchId = matchId;
         this.homeTeamId = homeTeamId;
         this.awayTeamId = awayTeamId;
         this.status = status;
-        this.finalMatch = finalMatch;
-        this.homeScore = homeScore;
-        this.awayScore = awayScore;
-        this.penaltyShootoutWinnerTeamId = penaltyShootoutWinnerTeamId;
-        this.active = active;
+        this.active = true;
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /**
+     * Reemplaza a los constructores de 8/9 parámetros (S107): agrupa los
+     * campos de resultado/estado que antes se pasaban posicionalmente.
+     */
+    public static final class Builder {
+        private UUID matchId;
+        private UUID homeTeamId;
+        private UUID awayTeamId;
+        private MatchStatus status;
+        private boolean finalMatch;
+        private int homeScore;
+        private int awayScore;
+        private UUID penaltyShootoutWinnerTeamId;
+        private boolean active = true;
+
+        private Builder() {}
+
+        public Builder matchId(UUID matchId) { this.matchId = matchId; return this; }
+        public Builder homeTeamId(UUID homeTeamId) { this.homeTeamId = homeTeamId; return this; }
+        public Builder awayTeamId(UUID awayTeamId) { this.awayTeamId = awayTeamId; return this; }
+        public Builder status(MatchStatus status) { this.status = status; return this; }
+        public Builder finalMatch(boolean finalMatch) { this.finalMatch = finalMatch; return this; }
+        public Builder homeScore(int homeScore) { this.homeScore = homeScore; return this; }
+        public Builder awayScore(int awayScore) { this.awayScore = awayScore; return this; }
+        public Builder penaltyShootoutWinnerTeamId(UUID penaltyShootoutWinnerTeamId) {
+            this.penaltyShootoutWinnerTeamId = penaltyShootoutWinnerTeamId;
+            return this;
+        }
+        public Builder active(boolean active) { this.active = active; return this; }
+
+        public Match build() {
+            Match match = new Match();
+            match.matchId = matchId;
+            match.homeTeamId = homeTeamId;
+            match.awayTeamId = awayTeamId;
+            match.status = status;
+            match.finalMatch = finalMatch;
+            match.homeScore = homeScore;
+            match.awayScore = awayScore;
+            match.penaltyShootoutWinnerTeamId = penaltyShootoutWinnerTeamId;
+            match.active = active;
+            return match;
+        }
     }
 
     public boolean involvesteam(UUID teamId) {

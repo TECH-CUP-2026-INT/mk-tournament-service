@@ -42,11 +42,13 @@ class StartTournamentPreparationServiceTest {
             teams.add(new TeamRegistration(teamId, "Equipo " + i, RegistrationStatus.APPROVED));
             enrollments.add(new Enrollment(teamId, "Equipo " + i, EnrollmentStatus.ENROLLED));
         }
-        Tournament tournament = Tournament.reconstruct(
-                tournamentId, "TechCup", TournamentType.NORMAL, TournamentFormat.BRACKETS, 8, BigDecimal.ZERO,
-                LocalDate.now().plusDays(2), LocalDate.now().plusDays(10), LocalDate.now(),
-                null, null, status, teams, new ArrayList<>(), null, null
-        );
+        Tournament tournament = Tournament.builder()
+                .id(tournamentId).name("TechCup").type(TournamentType.NORMAL).format(TournamentFormat.BRACKETS)
+                .numberOfTeams(8).cost(BigDecimal.ZERO)
+                .startDate(LocalDate.now().plusDays(2)).endDate(LocalDate.now().plusDays(10))
+                .registrationDeadline(LocalDate.now())
+                .status(status).teams(teams).matches(new ArrayList<>())
+                .reconstruct();
         tournament.setEnrollments(enrollments);
         return tournament;
     }

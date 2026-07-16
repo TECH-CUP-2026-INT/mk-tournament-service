@@ -27,15 +27,13 @@ import static org.mockito.Mockito.when;
 class InactivateMatchServiceTest {
 
     private Tournament tournamentWithMatch(Match match) {
-        return Tournament.reconstruct(
-                UUID.randomUUID(), "TechCup", 4, BigDecimal.ZERO,
-                LocalDate.now().plusDays(2),
-                LocalDate.now().plusDays(10),
-                LocalDate.now(),
-                TournamentStatus.IN_PROGRESS,
-                new ArrayList<>(),
-                new ArrayList<>(List.of(match))
-        );
+        return Tournament.builder()
+                .id(UUID.randomUUID()).name("TechCup").numberOfTeams(4).cost(BigDecimal.ZERO)
+                .startDate(LocalDate.now().plusDays(2)).endDate(LocalDate.now().plusDays(10))
+                .registrationDeadline(LocalDate.now())
+                .status(TournamentStatus.IN_PROGRESS).teams(new ArrayList<>())
+                .matches(new ArrayList<>(List.of(match)))
+                .reconstruct();
     }
 
     @Test
