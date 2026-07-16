@@ -32,13 +32,15 @@ class RecordPenaltyShootoutWinnerServiceTest {
         UUID homeTeamId = UUID.randomUUID();
         UUID awayTeamId = UUID.randomUUID();
         TournamentRepositoryPort repository = mock(TournamentRepositoryPort.class);
-        Match finalMatch = new Match(matchId, homeTeamId, awayTeamId, MatchStatus.FINISHED,
-                true, 1, 1, null);
-        Tournament tournament = Tournament.reconstruct(
-                tournamentId, "TechCup", 4, BigDecimal.ZERO,
-                LocalDate.now().plusDays(2), LocalDate.now().plusDays(10), LocalDate.now(),
-                TournamentStatus.IN_PROGRESS, new ArrayList<>(), new ArrayList<>(List.of(finalMatch))
-        );
+        Match finalMatch = Match.builder().matchId(matchId).homeTeamId(homeTeamId).awayTeamId(awayTeamId)
+                .status(MatchStatus.FINISHED).finalMatch(true).homeScore(1).awayScore(1).build();
+        Tournament tournament = Tournament.builder()
+                .id(tournamentId).name("TechCup").numberOfTeams(4).cost(BigDecimal.ZERO)
+                .startDate(LocalDate.now().plusDays(2)).endDate(LocalDate.now().plusDays(10))
+                .registrationDeadline(LocalDate.now())
+                .status(TournamentStatus.IN_PROGRESS).teams(new ArrayList<>())
+                .matches(new ArrayList<>(List.of(finalMatch)))
+                .reconstruct();
 
         when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
         when(repository.save(tournament)).thenReturn(tournament);
@@ -57,13 +59,15 @@ class RecordPenaltyShootoutWinnerServiceTest {
         UUID homeTeamId = UUID.randomUUID();
         UUID awayTeamId = UUID.randomUUID();
         TournamentRepositoryPort repository = mock(TournamentRepositoryPort.class);
-        Match finalMatch = new Match(matchId, homeTeamId, awayTeamId, MatchStatus.FINISHED,
-                true, 2, 1, null);
-        Tournament tournament = Tournament.reconstruct(
-                tournamentId, "TechCup", 4, BigDecimal.ZERO,
-                LocalDate.now().plusDays(2), LocalDate.now().plusDays(10), LocalDate.now(),
-                TournamentStatus.IN_PROGRESS, new ArrayList<>(), new ArrayList<>(List.of(finalMatch))
-        );
+        Match finalMatch = Match.builder().matchId(matchId).homeTeamId(homeTeamId).awayTeamId(awayTeamId)
+                .status(MatchStatus.FINISHED).finalMatch(true).homeScore(2).awayScore(1).build();
+        Tournament tournament = Tournament.builder()
+                .id(tournamentId).name("TechCup").numberOfTeams(4).cost(BigDecimal.ZERO)
+                .startDate(LocalDate.now().plusDays(2)).endDate(LocalDate.now().plusDays(10))
+                .registrationDeadline(LocalDate.now())
+                .status(TournamentStatus.IN_PROGRESS).teams(new ArrayList<>())
+                .matches(new ArrayList<>(List.of(finalMatch)))
+                .reconstruct();
 
         when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
 

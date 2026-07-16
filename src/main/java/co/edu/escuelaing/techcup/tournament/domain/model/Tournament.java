@@ -65,171 +65,148 @@ public class Tournament extends AggregateRoot {
     private boolean active = true;
     private Long version;
 
-    private Tournament(UUID id, String name, TournamentType type, TournamentFormat format,
-                       int numberOfTeams, BigDecimal cost,
-                       LocalDate startDate, LocalDate endDate, LocalDate registrationDeadline,
-                       LocalTime matchStartTime, LocalTime matchEndTime,
-                       TournamentStatus status) {
+    private Tournament(UUID id) {
         super(id);
-        this.name = name;
-        this.type = type;
-        this.format = format;
-        this.numberOfTeams = numberOfTeams;
-        this.cost = cost;
-        this.startDate = startDate;
-        this.endDate = endDate;
-        this.registrationDeadline = registrationDeadline;
-        this.matchStartTime = matchStartTime;
-        this.matchEndTime = matchEndTime;
-        this.status = status;
         this.teams = new ArrayList<>();
         this.enrollments = new ArrayList<>();
         this.matches = new ArrayList<>();
     }
 
     public Tournament(UUID id, String name, TournamentStatus status) {
-        this(id, name, TournamentType.NORMAL, TournamentFormat.BRACKETS, 0, BigDecimal.ZERO,
-                null, null, null, null, null, status);
+        this(id);
+        this.name = name;
+        this.type = TournamentType.NORMAL;
+        this.format = TournamentFormat.BRACKETS;
+        this.numberOfTeams = 0;
+        this.cost = BigDecimal.ZERO;
+        this.status = status;
     }
 
     public boolean isDraft() {
         return TournamentStatus.DRAFT == this.status;
     }
 
-    /**
-     * TCF-52: crea un torneo nuevo. Siempre nace en ACTIVE,
-     * sin importar lo que envíe el cliente. Para torneos Lightning,
-     * endDate se deriva automáticamente de startDate (torneo de un solo día).
-     */
-    public static Tournament create(String name, TournamentType type, TournamentFormat format,
-                                    int numberOfTeams, BigDecimal cost,
-                                    LocalDate startDate, LocalDate endDate,
-                                    LocalDate registrationDeadline,
-                                    LocalTime matchStartTime, LocalTime matchEndTime) {
-        validateName(name);
-        validateType(type);
-        validateFormat(format);
-        validateNumberOfTeams(numberOfTeams);
-        validateCost(cost);
-        validateCommonDates(startDate, registrationDeadline);
-        validateNormalSchedule(type, startDate, endDate);
-        validateLightningSchedule(type, matchStartTime, matchEndTime);
-
-        LocalDate effectiveEndDate = type == TournamentType.LIGHTNING ? startDate : endDate;
-
-        return new Tournament(UUID.randomUUID(), name, type, format, numberOfTeams, cost, startDate,
-                effectiveEndDate, registrationDeadline, matchStartTime, matchEndTime,
-                TournamentStatus.ACTIVE);
+    public static Builder builder() {
+        return new Builder();
     }
 
     /**
-     * Reconstruye un torneo desde la base de datos sin aplicar
-     * reglas de creación ni forzar el estado.
+     * Reemplaza a las 8 sobrecargas de {@code create}/{@code reconstruct} (S107:
+     * demasiados parámetros posicionales). Los valores por defecto de cada campo
+     * reproducen los que tenían las sobrecargas de compatibilidad que existían
+     * para no romper llamadas anteriores a TCF-52/TCF-153/TCF-154/TC-109.
      */
-    public static Tournament reconstruct(UUID id, String name, TournamentType type, TournamentFormat format,
-                                         int numberOfTeams, BigDecimal cost,
-                                         LocalDate startDate, LocalDate endDate,
-                                         LocalDate registrationDeadline,
-                                         LocalTime matchStartTime, LocalTime matchEndTime,
-                                         TournamentStatus status,
-                                         List<TeamRegistration> teams, List<Match> matches,
-                                         UUID championTeamId, ChampionResolution championResolution,
-                                         boolean paused, boolean active, List<Enrollment> enrollments, Long version) {
-        Tournament t = new Tournament(id, name, type, format, numberOfTeams, cost, startDate, endDate,
-                registrationDeadline, matchStartTime, matchEndTime, status);
-        t.teams = teams != null ? new ArrayList<>(teams) : new ArrayList<>();
-        t.matches = matches != null ? new ArrayList<>(matches) : new ArrayList<>();
-        t.championTeamId = championTeamId;
-        t.championResolution = championResolution;
-        t.paused = paused;
-        t.active = active;
-        t.enrollments = enrollments != null ? new ArrayList<>(enrollments) : new ArrayList<>();
-        t.version = version;
-        return t;
-    }
+    public static final class Builder {
+        private UUID id;
+        private String name;
+        private TournamentType type = TournamentType.NORMAL;
+        private TournamentFormat format = TournamentFormat.BRACKETS;
+        private int numberOfTeams;
+        private BigDecimal cost;
+        private LocalDate startDate;
+        private LocalDate endDate;
+        private LocalDate registrationDeadline;
+        private LocalTime matchStartTime;
+        private LocalTime matchEndTime;
+        private TournamentStatus status;
+        private List<TeamRegistration> teams;
+        private List<Match> matches;
+        private UUID championTeamId;
+        private ChampionResolution championResolution;
+        private boolean paused = false;
+        private boolean active = true;
+        private List<Enrollment> enrollments;
+        private Long version;
 
-    /**
-     * Sobrecarga de compatibilidad: reconstruye sin lista de Enrollment
-     * (torneos anteriores a TC-109, o llamadas que no necesitan el estado de pago).
-     */
-    public static Tournament reconstruct(UUID id, String name, TournamentType type, TournamentFormat format,
-                                         int numberOfTeams, BigDecimal cost,
-                                         LocalDate startDate, LocalDate endDate,
-                                         LocalDate registrationDeadline,
-                                         LocalTime matchStartTime, LocalTime matchEndTime,
-                                         TournamentStatus status,
-                                         List<TeamRegistration> teams, List<Match> matches,
-                                         UUID championTeamId, ChampionResolution championResolution,
-                                         boolean paused, boolean active) {
-        return reconstruct(id, name, type, format, numberOfTeams, cost, startDate, endDate, registrationDeadline,
-                matchStartTime, matchEndTime, status, teams, matches, championTeamId, championResolution,
-                paused, active, null, null);
-    }
+        private Builder() {}
 
-    /**
-     * Sobrecarga de compatibilidad: reconstruye sin dato de inactivación
-     * (torneos anteriores a TCF-154, se asumen activos).
-     */
-    public static Tournament reconstruct(UUID id, String name, TournamentType type, TournamentFormat format,
-                                         int numberOfTeams, BigDecimal cost,
-                                         LocalDate startDate, LocalDate endDate,
-                                         LocalDate registrationDeadline,
-                                         LocalTime matchStartTime, LocalTime matchEndTime,
-                                         TournamentStatus status,
-                                         List<TeamRegistration> teams, List<Match> matches,
-                                         UUID championTeamId, ChampionResolution championResolution,
-                                         boolean paused) {
-        return reconstruct(id, name, type, format, numberOfTeams, cost, startDate, endDate, registrationDeadline,
-                matchStartTime, matchEndTime, status, teams, matches, championTeamId, championResolution, paused, true);
-    }
+        public Builder id(UUID id) { this.id = id; return this; }
+        public Builder name(String name) { this.name = name; return this; }
+        public Builder type(TournamentType type) { this.type = type; return this; }
+        public Builder format(TournamentFormat format) { this.format = format; return this; }
+        public Builder numberOfTeams(int numberOfTeams) { this.numberOfTeams = numberOfTeams; return this; }
+        public Builder cost(BigDecimal cost) { this.cost = cost; return this; }
+        public Builder startDate(LocalDate startDate) { this.startDate = startDate; return this; }
+        public Builder endDate(LocalDate endDate) { this.endDate = endDate; return this; }
+        public Builder registrationDeadline(LocalDate registrationDeadline) {
+            this.registrationDeadline = registrationDeadline;
+            return this;
+        }
+        public Builder matchStartTime(LocalTime matchStartTime) { this.matchStartTime = matchStartTime; return this; }
+        public Builder matchEndTime(LocalTime matchEndTime) { this.matchEndTime = matchEndTime; return this; }
+        public Builder status(TournamentStatus status) { this.status = status; return this; }
+        public Builder teams(List<TeamRegistration> teams) { this.teams = teams; return this; }
+        public Builder matches(List<Match> matches) { this.matches = matches; return this; }
+        public Builder championTeamId(UUID championTeamId) { this.championTeamId = championTeamId; return this; }
+        public Builder championResolution(ChampionResolution championResolution) {
+            this.championResolution = championResolution;
+            return this;
+        }
+        public Builder paused(boolean paused) { this.paused = paused; return this; }
+        public Builder active(boolean active) { this.active = active; return this; }
+        public Builder enrollments(List<Enrollment> enrollments) { this.enrollments = enrollments; return this; }
+        public Builder version(Long version) { this.version = version; return this; }
 
-    /**
-     * Sobrecarga de compatibilidad: reconstruye sin dato de pausa
-     * (torneos anteriores a TCF-153, se asumen no pausados).
-     */
-    public static Tournament reconstruct(UUID id, String name, TournamentType type, TournamentFormat format,
-                                         int numberOfTeams, BigDecimal cost,
-                                         LocalDate startDate, LocalDate endDate,
-                                         LocalDate registrationDeadline,
-                                         LocalTime matchStartTime, LocalTime matchEndTime,
-                                         TournamentStatus status,
-                                         List<TeamRegistration> teams, List<Match> matches,
-                                         UUID championTeamId, ChampionResolution championResolution) {
-        return reconstruct(id, name, type, format, numberOfTeams, cost, startDate, endDate, registrationDeadline,
-                matchStartTime, matchEndTime, status, teams, matches, championTeamId, championResolution, false);
-    }
+        /**
+         * TCF-52: crea un torneo nuevo. Siempre nace en ACTIVE con un id nuevo,
+         * sin importar lo que se haya seteado en el builder para esos campos.
+         * Para torneos Lightning, endDate se deriva automáticamente de startDate
+         * (torneo de un solo día).
+         */
+        public Tournament create() {
+            validateName(name);
+            validateType(type);
+            validateFormat(format);
+            validateNumberOfTeams(numberOfTeams);
+            validateCost(cost);
+            validateCommonDates(startDate, registrationDeadline);
+            validateNormalSchedule(type, startDate, endDate);
+            validateLightningSchedule(type, matchStartTime, matchEndTime);
 
-    /**
-     * Sobrecarga de compatibilidad: reconstruye sin tipo/formato/horas de partido
-     * ni datos de campeón (torneos anteriores a TCF-52 o pruebas que no los necesitan).
-     */
-    public static Tournament reconstruct(UUID id, String name, int numberOfTeams, BigDecimal cost,
-                                         LocalDate startDate, LocalDate endDate,
-                                         LocalDate registrationDeadline, TournamentStatus status,
-                                         List<TeamRegistration> teams, List<Match> matches,
-                                         UUID championTeamId, ChampionResolution championResolution) {
-        return reconstruct(id, name, TournamentType.NORMAL, TournamentFormat.BRACKETS, numberOfTeams, cost,
-                startDate, endDate, registrationDeadline, null, null, status, teams, matches,
-                championTeamId, championResolution);
-    }
+            LocalDate effectiveEndDate = type == TournamentType.LIGHTNING ? startDate : endDate;
 
-    public static Tournament reconstruct(UUID id, String name, int numberOfTeams, BigDecimal cost,
-                                         LocalDate startDate, LocalDate endDate,
-                                         LocalDate registrationDeadline, TournamentStatus status,
-                                         List<TeamRegistration> teams, List<Match> matches) {
-        return reconstruct(id, name, numberOfTeams, cost, startDate, endDate, registrationDeadline,
-                status, teams, matches, null, null);
-    }
+            Tournament t = new Tournament(UUID.randomUUID());
+            t.name = name;
+            t.type = type;
+            t.format = format;
+            t.numberOfTeams = numberOfTeams;
+            t.cost = cost;
+            t.startDate = startDate;
+            t.endDate = effectiveEndDate;
+            t.registrationDeadline = registrationDeadline;
+            t.matchStartTime = matchStartTime;
+            t.matchEndTime = matchEndTime;
+            t.status = TournamentStatus.ACTIVE;
+            return t;
+        }
 
-    /**
-     * Sobrecarga de compatibilidad: reconstruye sin equipos ni partidos
-     * (torneos que aún no tienen inscripciones/llaves generadas).
-     */
-    public static Tournament reconstruct(UUID id, String name, int numberOfTeams, BigDecimal cost,
-                                         LocalDate startDate, LocalDate endDate,
-                                         LocalDate registrationDeadline, TournamentStatus status) {
-        return reconstruct(id, name, numberOfTeams, cost, startDate, endDate,
-                registrationDeadline, status, null, null);
+        /**
+         * Reconstruye un torneo desde la base de datos (o desde un test) sin
+         * aplicar reglas de creación ni forzar el estado.
+         */
+        public Tournament reconstruct() {
+            Tournament t = new Tournament(id);
+            t.name = name;
+            t.type = type;
+            t.format = format;
+            t.numberOfTeams = numberOfTeams;
+            t.cost = cost;
+            t.startDate = startDate;
+            t.endDate = endDate;
+            t.registrationDeadline = registrationDeadline;
+            t.matchStartTime = matchStartTime;
+            t.matchEndTime = matchEndTime;
+            t.status = status;
+            t.teams = teams != null ? new ArrayList<>(teams) : new ArrayList<>();
+            t.matches = matches != null ? new ArrayList<>(matches) : new ArrayList<>();
+            t.championTeamId = championTeamId;
+            t.championResolution = championResolution;
+            t.paused = paused;
+            t.active = active;
+            t.enrollments = enrollments != null ? new ArrayList<>(enrollments) : new ArrayList<>();
+            t.version = version;
+            return t;
+        }
     }
 
     // --- Preparación del torneo ---

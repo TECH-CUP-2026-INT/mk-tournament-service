@@ -30,10 +30,13 @@ class TournamentRepositoryAdapterTest {
     private final TournamentPersistenceMapper mapper = Mappers.getMapper(TournamentPersistenceMapper.class);
 
     private Tournament sampleTournament(UUID id) {
-        return Tournament.reconstruct(id, "TechCup Fútbol 2026", TournamentType.NORMAL, TournamentFormat.BRACKETS,
-                8, BigDecimal.valueOf(50000), LocalDate.now().plusDays(10), LocalDate.now().plusDays(20),
-                LocalDate.now().plusDays(5), null, null, TournamentStatus.ACTIVE,
-                new ArrayList<>(), new ArrayList<>(), null, null, false);
+        return Tournament.builder()
+                .id(id).name("TechCup Fútbol 2026").type(TournamentType.NORMAL).format(TournamentFormat.BRACKETS)
+                .numberOfTeams(8).cost(BigDecimal.valueOf(50000)).startDate(LocalDate.now().plusDays(10))
+                .endDate(LocalDate.now().plusDays(20)).registrationDeadline(LocalDate.now().plusDays(5))
+                .status(TournamentStatus.ACTIVE).teams(new ArrayList<>()).matches(new ArrayList<>())
+                .paused(false)
+                .reconstruct();
     }
 
     @Test

@@ -30,14 +30,15 @@ class TournamentPersistenceMapperTest {
         UUID homeTeamId = UUID.randomUUID();
         UUID awayTeamId = UUID.randomUUID();
         UUID matchId = UUID.randomUUID();
-        Tournament tournament = Tournament.reconstruct(
-                UUID.randomUUID(), "TechCup", TournamentType.NORMAL, TournamentFormat.BRACKETS, 4, BigDecimal.ZERO,
-                LocalDate.now().plusDays(2), LocalDate.now().plusDays(10), LocalDate.now(),
-                null, null, TournamentStatus.IN_PREPARATION,
-                List.of(new TeamRegistration(teamId, "Equipo 1", RegistrationStatus.APPROVED)),
-                List.of(new Match(matchId, homeTeamId, awayTeamId, MatchStatus.PENDING)),
-                null, null
-        );
+        Tournament tournament = Tournament.builder()
+                .id(UUID.randomUUID()).name("TechCup").type(TournamentType.NORMAL).format(TournamentFormat.BRACKETS)
+                .numberOfTeams(4).cost(BigDecimal.ZERO)
+                .startDate(LocalDate.now().plusDays(2)).endDate(LocalDate.now().plusDays(10))
+                .registrationDeadline(LocalDate.now())
+                .status(TournamentStatus.IN_PREPARATION)
+                .teams(List.of(new TeamRegistration(teamId, "Equipo 1", RegistrationStatus.APPROVED)))
+                .matches(List.of(new Match(matchId, homeTeamId, awayTeamId, MatchStatus.PENDING)))
+                .reconstruct();
 
         TournamentDocument document = mapper.toDocument(tournament);
         Tournament reconstructed = mapper.toDomain(document);
