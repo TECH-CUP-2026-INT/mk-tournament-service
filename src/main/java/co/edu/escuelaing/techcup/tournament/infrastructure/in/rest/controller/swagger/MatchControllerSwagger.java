@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 
@@ -22,12 +21,10 @@ public interface MatchControllerSwagger {
             description = "Assigns a date, time, court and referee to an already generated matchup, creating a new "
                     + "scheduled-match record. Fails with 409 if the court or referee is already booked at that "
                     + "exact date and time.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Match scheduled",
-                    content = @Content(schema = @Schema(implementation = ScheduledMatchResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content),
-            @ApiResponse(responseCode = "409", description = "Scheduling conflict with the court or the referee", content = @Content)
-    })
+    @ApiResponse(responseCode = "201", description = "Match scheduled",
+            content = @Content(schema = @Schema(implementation = ScheduledMatchResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content)
+    @ApiResponse(responseCode = "409", description = "Scheduling conflict with the court or the referee", content = @Content)
     ResponseEntity<ScheduledMatchResponse> schedule(ScheduleMatchRequest request);
 
     @Operation(summary = "Activate or inactivate match",

@@ -6,6 +6,7 @@ import java.util.UUID;
  * Participante (jugador) dentro de un torneo, independiente del equipo al que
  * pertenece.
  */
+@SuppressWarnings("java:S2160") // identidad por id (heredada de AggregateRoot), no por campos: patron DDD intencional
 public class TournamentParticipant extends AggregateRoot {
 
     private final UUID tournamentId;

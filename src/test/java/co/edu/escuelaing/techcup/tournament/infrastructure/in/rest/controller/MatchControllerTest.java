@@ -19,6 +19,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
+import java.time.Month;
 import java.time.LocalTime;
 import java.util.UUID;
 
@@ -50,10 +51,10 @@ class MatchControllerTest {
     @Test
     void schedule_devuelve201() throws Exception {
         ScheduledMatch scheduled = ScheduledMatch.reconstruct(SCHEDULED_MATCH_ID, MATCHUP_ID, COURT_ID, REFEREE_ID,
-                LocalDate.of(2026, 8, 5), LocalTime.of(9, 0));
+                LocalDate.of(2026, Month.AUGUST, 5), LocalTime.of(9, 0));
         when(scheduleMatchUseCase.schedule(any())).thenReturn(scheduled);
         when(mapper.toResponse(any())).thenReturn(new ScheduledMatchResponse(
-                SCHEDULED_MATCH_ID, MATCHUP_ID, COURT_ID, REFEREE_ID, LocalDate.of(2026, 8, 5), LocalTime.of(9, 0)));
+                SCHEDULED_MATCH_ID, MATCHUP_ID, COURT_ID, REFEREE_ID, LocalDate.of(2026, Month.AUGUST, 5), LocalTime.of(9, 0)));
 
         String body = """
                 {"matchupId":"%s","matchDate":"2026-08-05","matchTime":"09:00:00","courtId":"%s","refereeId":"%s"}

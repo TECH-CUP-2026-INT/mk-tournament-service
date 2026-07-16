@@ -1,7 +1,5 @@
 package co.edu.escuelaing.techcup.tournament.domain.service.ports.out;
 
-import co.edu.escuelaing.techcup.tournament.domain.model.Enrollment;
-
 import co.edu.escuelaing.techcup.tournament.domain.exception.PaymentOrderCreationFailedException;
 import co.edu.escuelaing.techcup.tournament.domain.model.PaymentOrderStatus;
 

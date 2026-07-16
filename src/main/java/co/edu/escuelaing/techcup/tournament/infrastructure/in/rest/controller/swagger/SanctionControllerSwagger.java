@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 
@@ -20,11 +19,9 @@ public interface SanctionControllerSwagger {
     @Operation(summary = "Apply sanction to player",
             description = "Red card = 1 match; 2 yellow cards in different matches = 1 match; 2 yellow cards in the "
                     + "same match = red card; for conduct sanctions, the Organizer defines the number of matches suspended.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Sanction applied",
-                    content = @Content(schema = @Schema(implementation = SanctionResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content)
-    })
+    @ApiResponse(responseCode = "201", description = "Sanction applied",
+            content = @Content(schema = @Schema(implementation = SanctionResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content)
     ResponseEntity<SanctionResponse> apply(ApplySanctionRequest request);
 
     @Operation(summary = "Get a player's active sanctions",

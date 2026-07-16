@@ -73,8 +73,9 @@ class RecordPenaltyShootoutWinnerServiceTest {
 
         RecordPenaltyShootoutWinnerService service = new RecordPenaltyShootoutWinnerService(repository);
 
-        assertThrows(ChampionAssignmentNotAllowedException.class,
-                () -> service.recordWinner(new RecordPenaltyShootoutWinnerCommand(tournamentId, matchId, awayTeamId)));
+        RecordPenaltyShootoutWinnerCommand command =
+                new RecordPenaltyShootoutWinnerCommand(tournamentId, matchId, awayTeamId);
+        assertThrows(ChampionAssignmentNotAllowedException.class, () -> service.recordWinner(command));
     }
 
     @Test
@@ -87,7 +88,8 @@ class RecordPenaltyShootoutWinnerServiceTest {
 
         RecordPenaltyShootoutWinnerService service = new RecordPenaltyShootoutWinnerService(repository);
 
-        assertThrows(TournamentNotFoundException.class,
-                () -> service.recordWinner(new RecordPenaltyShootoutWinnerCommand(tournamentId, matchId, awayTeamId)));
+        RecordPenaltyShootoutWinnerCommand command =
+                new RecordPenaltyShootoutWinnerCommand(tournamentId, matchId, awayTeamId);
+        assertThrows(TournamentNotFoundException.class, () -> service.recordWinner(command));
     }
 }

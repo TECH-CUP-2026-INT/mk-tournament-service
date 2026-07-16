@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -26,8 +27,8 @@ class InactivateTournamentServiceTest {
     private Tournament sampleTournament(UUID id, TournamentStatus status) {
         return Tournament.builder()
                 .id(id).name("Copa Enero").numberOfTeams(8).cost(BigDecimal.valueOf(50000))
-                .startDate(LocalDate.of(2026, 3, 1)).endDate(LocalDate.of(2026, 3, 20))
-                .registrationDeadline(LocalDate.of(2026, 2, 20))
+                .startDate(LocalDate.of(2026, Month.MARCH, 1)).endDate(LocalDate.of(2026, Month.MARCH, 20))
+                .registrationDeadline(LocalDate.of(2026, Month.FEBRUARY, 20))
                 .status(status)
                 .reconstruct();
     }
@@ -75,8 +76,8 @@ class InactivateTournamentServiceTest {
 
         InactivateTournamentService service = new InactivateTournamentService(repositoryMock);
 
-        assertThrows(TournamentNotFoundException.class,
-                () -> service.execute(new InactivateTournamentCommand(id, TournamentInactivationAction.INACTIVATE)));
+        InactivateTournamentCommand command = new InactivateTournamentCommand(id, TournamentInactivationAction.INACTIVATE);
+        assertThrows(TournamentNotFoundException.class, () -> service.execute(command));
     }
 
     @Test
@@ -88,7 +89,7 @@ class InactivateTournamentServiceTest {
 
         InactivateTournamentService service = new InactivateTournamentService(repositoryMock);
 
-        assertThrows(TournamentInactivationNotAllowedException.class,
-                () -> service.execute(new InactivateTournamentCommand(id, TournamentInactivationAction.INACTIVATE)));
+        InactivateTournamentCommand command = new InactivateTournamentCommand(id, TournamentInactivationAction.INACTIVATE);
+        assertThrows(TournamentInactivationNotAllowedException.class, () -> service.execute(command));
     }
 }

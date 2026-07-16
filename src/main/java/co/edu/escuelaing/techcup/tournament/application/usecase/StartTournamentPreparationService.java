@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 
 import co.edu.escuelaing.techcup.tournament.domain.exception.FixtureGenerationFailedException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentNotFoundException;
+import co.edu.escuelaing.techcup.tournament.domain.model.Enrollment;
 import co.edu.escuelaing.techcup.tournament.domain.model.EnrollmentStatus;
 import co.edu.escuelaing.techcup.tournament.domain.model.Match;
 import co.edu.escuelaing.techcup.tournament.domain.model.Tournament;
@@ -32,7 +33,7 @@ public class StartTournamentPreparationService implements StartTournamentPrepara
 
         List<UUID> enrolledTeamIds = tournament.getEnrollments().stream()
                 .filter(team -> team.getStatus() == EnrollmentStatus.ENROLLED)
-                .map(team -> team.getTeamId())
+                .map(Enrollment::getTeamId)
                 .toList();
 
         List<Match> generatedMatches;
