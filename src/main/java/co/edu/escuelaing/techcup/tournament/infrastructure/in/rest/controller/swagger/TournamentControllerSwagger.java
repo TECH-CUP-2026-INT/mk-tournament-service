@@ -25,6 +25,7 @@ import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.RegisteredTeamsResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.RulebookResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.TournamentResponse;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.TeamActiveEnrollmentResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -149,6 +150,15 @@ public interface TournamentControllerSwagger {
     })
     ResponseEntity<TournamentResponse> getByMatch(
             @Parameter(description = "Match ID", example = "550e8400-e29b-41d4-a716-446655440000") UUID matchId);
+
+    @Operation(summary = "Check if a team has an active tournament enrollment",
+            description = "Returns whether the team has a confirmed (ENROLLED) enrollment in a tournament that is "
+                    + "currently ACTIVE or IN_PROGRESS. Intended for other services (e.g. the Teams service) that "
+                    + "need to block an action — such as updating team info — while the team is competing.")
+    @ApiResponse(responseCode = "200", description = "Check result",
+            content = @Content(schema = @Schema(implementation = TeamActiveEnrollmentResponse.class)))
+    ResponseEntity<TeamActiveEnrollmentResponse> hasActiveEnrollment(
+            @Parameter(description = "Team ID", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6") UUID teamId);
 
     @Operation(summary = "List registered teams",
             description = "Legacy registration view (name + status). For payment/reservation details, use "

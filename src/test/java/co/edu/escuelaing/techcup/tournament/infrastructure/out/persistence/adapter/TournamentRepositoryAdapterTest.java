@@ -134,4 +134,15 @@ class TournamentRepositoryAdapterTest {
 
         assertEquals(1, result.size());
     }
+
+    @Test
+    void existsActiveEnrollmentForTeam_delegaAlMongoRepository() {
+        UUID teamId = UUID.randomUUID();
+        TournamentMongoRepository mongoRepository = mock(TournamentMongoRepository.class);
+        when(mongoRepository.existsActiveEnrollmentForTeam(teamId)).thenReturn(true);
+
+        TournamentRepositoryAdapter adapter = new TournamentRepositoryAdapter(mongoRepository, mapper);
+
+        assertTrue(adapter.existsActiveEnrollmentForTeam(teamId));
+    }
 }
