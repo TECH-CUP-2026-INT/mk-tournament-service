@@ -25,11 +25,12 @@ import static org.mockito.Mockito.when;
 class FinalizeTournamentServiceTest {
 
     private Tournament inProgressTournament(UUID id) {
-        return Tournament.reconstruct(
-                id, "Copa Enero", 8, BigDecimal.valueOf(50000),
-                LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 10), LocalDate.of(2026, 2, 20),
-                TournamentStatus.IN_PROGRESS
-        );
+        return Tournament.builder()
+                .id(id).name("Copa Enero").numberOfTeams(8).cost(BigDecimal.valueOf(50000))
+                .startDate(LocalDate.of(2026, 3, 1)).endDate(LocalDate.of(2026, 3, 10))
+                .registrationDeadline(LocalDate.of(2026, 2, 20))
+                .status(TournamentStatus.IN_PROGRESS)
+                .reconstruct();
     }
 
     @Test
@@ -92,11 +93,12 @@ class FinalizeTournamentServiceTest {
         RecognitionAwardPort awardPortMock = mock(RecognitionAwardPort.class);
         TournamentEventPublisherPort eventPublisherMock = mock(TournamentEventPublisherPort.class);
 
-        Tournament tournament = Tournament.reconstruct(
-                id, "Copa Enero", 8, BigDecimal.valueOf(50000),
-                LocalDate.of(2026, 3, 1), LocalDate.now().plusDays(10), LocalDate.of(2026, 2, 20),
-                TournamentStatus.IN_PROGRESS
-        );
+        Tournament tournament = Tournament.builder()
+                .id(id).name("Copa Enero").numberOfTeams(8).cost(BigDecimal.valueOf(50000))
+                .startDate(LocalDate.of(2026, 3, 1)).endDate(LocalDate.now().plusDays(10))
+                .registrationDeadline(LocalDate.of(2026, 2, 20))
+                .status(TournamentStatus.IN_PROGRESS)
+                .reconstruct();
 
         when(repositoryMock.findById(id)).thenReturn(Optional.of(tournament));
 
@@ -113,11 +115,12 @@ class FinalizeTournamentServiceTest {
         RecognitionAwardPort awardPortMock = mock(RecognitionAwardPort.class);
         TournamentEventPublisherPort eventPublisherMock = mock(TournamentEventPublisherPort.class);
 
-        Tournament tournament = Tournament.reconstruct(
-                id, "Copa Enero", 8, BigDecimal.valueOf(50000),
-                LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 10), LocalDate.of(2026, 2, 20),
-                TournamentStatus.FINISHED
-        );
+        Tournament tournament = Tournament.builder()
+                .id(id).name("Copa Enero").numberOfTeams(8).cost(BigDecimal.valueOf(50000))
+                .startDate(LocalDate.of(2026, 3, 1)).endDate(LocalDate.of(2026, 3, 10))
+                .registrationDeadline(LocalDate.of(2026, 2, 20))
+                .status(TournamentStatus.FINISHED)
+                .reconstruct();
 
         when(repositoryMock.findById(id)).thenReturn(Optional.of(tournament));
 

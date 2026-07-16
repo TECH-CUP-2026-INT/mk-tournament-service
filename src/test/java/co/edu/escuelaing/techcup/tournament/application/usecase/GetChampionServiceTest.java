@@ -27,12 +27,13 @@ class GetChampionServiceTest {
         UUID tournamentId = UUID.randomUUID();
         UUID championTeamId = UUID.randomUUID();
         TournamentRepositoryPort repository = mock(TournamentRepositoryPort.class);
-        Tournament tournament = Tournament.reconstruct(
-                tournamentId, "TechCup", 4, BigDecimal.ZERO,
-                LocalDate.now().plusDays(2), LocalDate.now().plusDays(10), LocalDate.now(),
-                TournamentStatus.IN_PROGRESS, new ArrayList<>(), new ArrayList<>(),
-                championTeamId, ChampionResolution.REGULATION_TIME
-        );
+        Tournament tournament = Tournament.builder()
+                .id(tournamentId).name("TechCup").numberOfTeams(4).cost(BigDecimal.ZERO)
+                .startDate(LocalDate.now().plusDays(2)).endDate(LocalDate.now().plusDays(10))
+                .registrationDeadline(LocalDate.now())
+                .status(TournamentStatus.IN_PROGRESS).teams(new ArrayList<>()).matches(new ArrayList<>())
+                .championTeamId(championTeamId).championResolution(ChampionResolution.REGULATION_TIME)
+                .reconstruct();
 
         when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
 
@@ -47,11 +48,12 @@ class GetChampionServiceTest {
     void getChampion_whenNotYetAssigned_lanzaChampionAssignmentNotAllowedException() {
         UUID tournamentId = UUID.randomUUID();
         TournamentRepositoryPort repository = mock(TournamentRepositoryPort.class);
-        Tournament tournament = Tournament.reconstruct(
-                tournamentId, "TechCup", 4, BigDecimal.ZERO,
-                LocalDate.now().plusDays(2), LocalDate.now().plusDays(10), LocalDate.now(),
-                TournamentStatus.IN_PROGRESS, new ArrayList<>(), new ArrayList<>()
-        );
+        Tournament tournament = Tournament.builder()
+                .id(tournamentId).name("TechCup").numberOfTeams(4).cost(BigDecimal.ZERO)
+                .startDate(LocalDate.now().plusDays(2)).endDate(LocalDate.now().plusDays(10))
+                .registrationDeadline(LocalDate.now())
+                .status(TournamentStatus.IN_PROGRESS).teams(new ArrayList<>()).matches(new ArrayList<>())
+                .reconstruct();
 
         when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
 

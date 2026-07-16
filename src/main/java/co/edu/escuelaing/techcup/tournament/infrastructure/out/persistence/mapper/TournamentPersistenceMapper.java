@@ -30,30 +30,30 @@ import java.util.List;
 public interface TournamentPersistenceMapper {
 
     default Tournament toDomain(TournamentDocument document) {
-        return Tournament.reconstruct(
-                document.getId(),
-                document.getName(),
-                TournamentType.valueOf(document.getType()),
-                TournamentFormat.valueOf(document.getFormat()),
-                document.getNumberOfTeams(),
-                document.getCost(),
-                document.getStartDate(),
-                document.getEndDate(),
-                document.getRegistrationDeadline(),
-                document.getMatchStartTime(),
-                document.getMatchEndTime(),
-                TournamentStatus.valueOf(document.getStatus()),
-                toTeams(document.getTeams()),
-                toMatches(document.getMatches()),
-                document.getChampionTeamId(),
-                document.getChampionResolution() != null
+        return Tournament.builder()
+                .id(document.getId())
+                .name(document.getName())
+                .type(TournamentType.valueOf(document.getType()))
+                .format(TournamentFormat.valueOf(document.getFormat()))
+                .numberOfTeams(document.getNumberOfTeams())
+                .cost(document.getCost())
+                .startDate(document.getStartDate())
+                .endDate(document.getEndDate())
+                .registrationDeadline(document.getRegistrationDeadline())
+                .matchStartTime(document.getMatchStartTime())
+                .matchEndTime(document.getMatchEndTime())
+                .status(TournamentStatus.valueOf(document.getStatus()))
+                .teams(toTeams(document.getTeams()))
+                .matches(toMatches(document.getMatches()))
+                .championTeamId(document.getChampionTeamId())
+                .championResolution(document.getChampionResolution() != null
                         ? ChampionResolution.valueOf(document.getChampionResolution())
-                        : null,
-                document.isPaused(),
-                document.getActive() == null || document.getActive(),
-                toEnrollmentDomainList(document.getEnrollments()),
-                document.getVersion()
-        );
+                        : null)
+                .paused(document.isPaused())
+                .active(document.getActive() == null || document.getActive())
+                .enrollments(toEnrollmentDomainList(document.getEnrollments()))
+                .version(document.getVersion())
+                .reconstruct();
     }
 
     default TournamentDocument toDocument(Tournament domain) {
@@ -101,10 +101,17 @@ public interface TournamentPersistenceMapper {
     private List<Match> toMatches(List<MatchDocument> documents) {
         if (documents == null) return new ArrayList<>();
         return documents.stream()
-                .map(d -> new Match(d.getMatchId(), d.getHomeTeamId(), d.getAwayTeamId(),
-                        MatchStatus.valueOf(d.getStatus()), d.isFinalMatch(), d.getHomeScore(),
-                        d.getAwayScore(), d.getPenaltyShootoutWinnerTeamId(),
-                        d.getActive() == null || d.getActive()))
+                .map(d -> Match.builder()
+                        .matchId(d.getMatchId())
+                        .homeTeamId(d.getHomeTeamId())
+                        .awayTeamId(d.getAwayTeamId())
+                        .status(MatchStatus.valueOf(d.getStatus()))
+                        .finalMatch(d.isFinalMatch())
+                        .homeScore(d.getHomeScore())
+                        .awayScore(d.getAwayScore())
+                        .penaltyShootoutWinnerTeamId(d.getPenaltyShootoutWinnerTeamId())
+                        .active(d.getActive() == null || d.getActive())
+                        .build())
                 .toList();
     }
 
