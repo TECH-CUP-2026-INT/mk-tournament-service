@@ -1,0 +1,94 @@
+# Harness de humo (wiring smoke test) entre mk-tournament-service y
+# am-matches-service. Todo local y offline: Mongo x2, RabbitMQ local
+# (NO CloudAMQP), sin team-service (ver README: seed directo en Mongo
+# para las inscripciones). Un solo comando: ./run.sh
+
+services:
+
+  mongo-tournament:
+    image: mongo:7-jammy
+    container_name: smoke-mongo-tournament
+    ports:
+      - "27018:27017"
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --eval \"db.adminCommand('ping')\" --quiet"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  mongo-matches:
+    image: mongo:7
+    container_name: smoke-mongo-matches
+    ports:
+      - "27019:27017"
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --eval \"db.adminCommand('ping')\" --quiet"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: smoke-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  tournament:
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    container_name: smoke-tournament
+    depends_on:
+      mongo-tournament:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://mongo-tournament:27017/techcup_tournaments
+      SERVER_PORT: "5623"
+      # Broker local del harness en vez de CloudAMQP: mismo mecanismo de
+      # relaxed binding que ya se usaba para pisar matches-service.base-url.
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: "5672"
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+      SPRING_RABBITMQ_VIRTUAL_HOST: "/"
+      SPRING_RABBITMQ_SSL_ENABLED: "false"
+      MATCHES_SERVICE_URL: http://matches:8080
+      INTERNAL_API_KEY: local-smoke-test-key
+    ports:
+      - "5623:5623"
+
+  matches:
+    build:
+      context: ${MATCHES_SERVICE_PATH:-../../am-matches-service}
+      dockerfile: Dockerfile
+    container_name: smoke-matches
+    depends_on:
+      mongo-matches:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      MONGODB_URI: mongodb://mongo-matches:27017/techcup_matches
+      SERVER_PORT: "8080"
+      INTERNAL_API_KEY: local-smoke-test-key
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: "5672"
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+      SPRING_RABBITMQ_VIRTUAL_HOST: "/"
+      SPRING_RABBITMQ_SSL_ENABLED: "false"
+    ports:
+      - "8090:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
