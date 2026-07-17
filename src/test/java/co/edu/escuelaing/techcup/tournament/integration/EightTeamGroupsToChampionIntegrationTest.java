@@ -10,6 +10,7 @@ import co.edu.escuelaing.techcup.tournament.domain.model.Enrollment;
 import co.edu.escuelaing.techcup.tournament.domain.model.EnrollmentStatus;
 import co.edu.escuelaing.techcup.tournament.domain.model.Match;
 import co.edu.escuelaing.techcup.tournament.domain.model.MatchPhase;
+import co.edu.escuelaing.techcup.tournament.domain.model.MatchStatus;
 import co.edu.escuelaing.techcup.tournament.domain.model.RegistrationStatus;
 import co.edu.escuelaing.techcup.tournament.domain.model.Round;
 import co.edu.escuelaing.techcup.tournament.domain.model.TeamRegistration;
@@ -87,21 +88,39 @@ class EightTeamGroupsToChampionIntegrationTest {
         Tournament started = beginTournamentService.begin(tournamentId);
         assertEquals(TournamentStatus.IN_PROGRESS, started.getStatus());
 
+        // Al menos un walkover en la fase de grupos (requerimiento): el primer partido
+        // procesado se resuelve con ausenteId en vez de marcador, y debe quedar
+        // FINISHED_NO_SHOW con el mismo equipo ganando igual que si hubiera jugado.
         Map<String, List<UUID>> rankByGroup = rankTeamsByGroup(started.getMatches());
+        UUID walkoverMatchId = null;
         for (Match match : new ArrayList<>(started.getMatches())) {
             List<UUID> ranking = rankByGroup.get(match.getGroupName());
             boolean homeWins = ranking.indexOf(match.getHomeTeamId()) < ranking.indexOf(match.getAwayTeamId());
+            UUID winnerId = homeWins ? match.getHomeTeamId() : match.getAwayTeamId();
+            UUID loserId = homeWins ? match.getAwayTeamId() : match.getHomeTeamId();
+
+            if (walkoverMatchId == null) {
+                walkoverMatchId = match.getMatchId();
+                processMatchResultService.process(new ProcessMatchResultCommand(
+                        match.getMatchId(), tournamentId, MatchPhase.GRUPOS, 0, 0, winnerId, loserId));
+                continue;
+            }
+
             int homeScore = homeWins ? 2 : 0;
             int awayScore = homeWins ? 0 : 2;
-            UUID winnerId = homeWins ? match.getHomeTeamId() : match.getAwayTeamId();
-
             processMatchResultService.process(new ProcessMatchResultCommand(
-                    match.getMatchId(), tournamentId, MatchPhase.GRUPOS, homeScore, awayScore, winnerId));
+                    match.getMatchId(), tournamentId, MatchPhase.GRUPOS, homeScore, awayScore, winnerId, null));
         }
 
         Tournament afterGroups = repository.findById(tournamentId).orElseThrow();
         assertEquals(3, afterGroups.getBracketNodes().size(), "2 semis + 1 final");
         assertEquals(TournamentStatus.IN_PROGRESS, afterGroups.getStatus());
+
+        UUID resolvedWalkoverMatchId = walkoverMatchId;
+        Match walkoverMatch = afterGroups.getMatches().stream()
+                .filter(m -> m.getMatchId().equals(resolvedWalkoverMatchId)).findFirst().orElseThrow();
+        assertEquals(MatchStatus.FINISHED_NO_SHOW, walkoverMatch.getStatus());
+        assertNotNull(walkoverMatch.getAbsentTeamId());
 
         List<BracketNode> semis = afterGroups.getBracketNodes().stream()
                 .filter(n -> n.getRound() == Round.SEMIFINAL).toList();
@@ -129,7 +148,7 @@ class EightTeamGroupsToChampionIntegrationTest {
 
     private void resolveElimination(UUID tournamentId, UUID matchId, UUID winnerId) {
         processMatchResultService.process(new ProcessMatchResultCommand(
-                matchId, tournamentId, MatchPhase.ELIMINATORIA, 2, 0, winnerId));
+                matchId, tournamentId, MatchPhase.ELIMINATORIA, 2, 0, winnerId, null));
     }
 
     private void approveEightTeams(UUID tournamentId) {

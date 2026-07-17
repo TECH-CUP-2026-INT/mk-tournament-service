@@ -20,5 +20,7 @@ public record SimulateMatchResultRequest(
         UUID ganadorId,
         @Schema(description = "Eliminated team ID (informational only; not used by processing).")
         UUID eliminadoId,
+        @Schema(description = "Absent team ID: non-null means the match was a walkover (marked FINISHED_NO_SHOW).")
+        UUID ausenteId,
         @NotNull @Schema(description = "GRUPOS or ELIMINATORIA.", example = "GRUPOS") MatchPhase fase
 ) {}

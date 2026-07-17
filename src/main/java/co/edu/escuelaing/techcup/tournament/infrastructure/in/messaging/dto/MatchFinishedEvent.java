@@ -15,7 +15,9 @@ import java.util.UUID;
  * {@code matchId} es el id que este servicio generó y envió en la definición
  * del partido (competenciaMatchId); {@code ganadorId}/{@code eliminadoId} ya
  * vienen resueltos por Matches, penales incluidos — este servicio no los
- * recalcula.
+ * recalcula. {@code ausenteId} (agregado por Matches en el commit 3958872)
+ * viene no-null cuando el partido fue walkover: identifica al equipo que no
+ * se presentó.
  */
 public record MatchFinishedEvent(
         UUID matchId,
@@ -25,4 +27,5 @@ public record MatchFinishedEvent(
         int golesB,
         UUID ganadorId,
         UUID eliminadoId,
+        UUID ausenteId,
         Instant finishedAt) {}

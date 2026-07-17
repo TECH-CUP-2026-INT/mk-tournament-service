@@ -3,12 +3,14 @@ package co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.controller;
 import co.edu.escuelaing.techcup.tournament.infrastructure.config.SecurityConfig;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.ScheduledMatchResponse;
 import co.edu.escuelaing.techcup.tournament.domain.exception.MatchActivationNotAllowedException;
+import co.edu.escuelaing.techcup.tournament.domain.exception.MatchNotScheduledException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.ScheduleConflictException;
 import co.edu.escuelaing.techcup.tournament.application.mapper.ScheduledMatchRestMapper;
 import co.edu.escuelaing.techcup.tournament.domain.model.Match;
 import co.edu.escuelaing.techcup.tournament.domain.model.MatchStatus;
 import co.edu.escuelaing.techcup.tournament.domain.model.ScheduledMatch;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.InactivateMatchUseCase;
+import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ResendMatchDefinitionUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ScheduleMatchUseCase;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +26,8 @@ import java.time.LocalTime;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -39,6 +43,7 @@ class MatchControllerTest {
 
     @MockitoBean private ScheduleMatchUseCase scheduleMatchUseCase;
     @MockitoBean private InactivateMatchUseCase inactivateMatchUseCase;
+    @MockitoBean private ResendMatchDefinitionUseCase resendMatchDefinitionUseCase;
     @MockitoBean private ScheduledMatchRestMapper mapper;
 
     private static final UUID SCHEDULED_MATCH_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
@@ -97,6 +102,22 @@ class MatchControllerTest {
 
         mockMvc.perform(patch("/matches/" + MATCHUP_ID + "/activation")
                         .contentType(MediaType.APPLICATION_JSON).content("{\"action\":\"INACTIVATE\"}"))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void resendDefinition_devuelve200() throws Exception {
+        mockMvc.perform(post("/matches/" + MATCHUP_ID + "/resend-definition"))
+                .andExpect(status().isOk());
+
+        verify(resendMatchDefinitionUseCase).resend(MATCHUP_ID);
+    }
+
+    @Test
+    void resendDefinition_noProgramadoTodavia_devuelve409() throws Exception {
+        doThrow(new MatchNotScheduledException(MATCHUP_ID)).when(resendMatchDefinitionUseCase).resend(MATCHUP_ID);
+
+        mockMvc.perform(post("/matches/" + MATCHUP_ID + "/resend-definition"))
                 .andExpect(status().isConflict());
     }
 }

@@ -158,4 +158,31 @@ class TournamentChampionTest {
         assertThrows(ChampionAssignmentNotAllowedException.class,
                 () -> match.finishWithExternalResult(1, 1, UUID.randomUUID()));
     }
+
+    @Test
+    void match_markWalkover_quedaFinishedNoShowYResuelveAlPresenteComoGanador() {
+        Match match = new Match(UUID.randomUUID(), homeTeamId, awayTeamId, MatchStatus.PENDING);
+
+        match.markWalkover(awayTeamId);
+
+        assertEquals(MatchStatus.FINISHED_NO_SHOW, match.getStatus());
+        assertEquals(awayTeamId, match.getAbsentTeamId());
+        assertEquals(homeTeamId, match.resolveChampionTeamId());
+    }
+
+    @Test
+    void match_markWalkover_equipoQueNoEsDelPartido_lanzaExcepcion() {
+        Match match = new Match(UUID.randomUUID(), homeTeamId, awayTeamId, MatchStatus.PENDING);
+
+        assertThrows(ChampionAssignmentNotAllowedException.class,
+                () -> match.markWalkover(UUID.randomUUID()));
+    }
+
+    @Test
+    void match_resolveChampionTeamId_walkoverSinAbsentTeamId_devuelveNull() {
+        Match match = Match.builder().matchId(UUID.randomUUID()).homeTeamId(homeTeamId).awayTeamId(awayTeamId)
+                .status(MatchStatus.FINISHED_NO_SHOW).build();
+
+        assertNull(match.resolveChampionTeamId());
+    }
 }

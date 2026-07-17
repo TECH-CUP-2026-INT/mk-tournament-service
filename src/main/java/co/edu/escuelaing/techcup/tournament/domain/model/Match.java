@@ -34,6 +34,17 @@ public class Match {
     // BRACKETS/LEAGUE planos (RandomFixtureGenerationAdapter) aún no los asignan.
     private MatchPhase phase;
     private UUID tournamentId;
+    // true si el último intento de empujar la definición de este partido a Matches
+    // falló (o si aún no se ha reintentado tras una falla previa) — ver ScheduleMatchService
+    // y ResendMatchDefinitionService. false por defecto: antes de programarse no hay
+    // definición que enviar todavía.
+    private boolean definitionSyncPending;
+    // Equipo que no se presentó, cuando el partido termina en walkover (FINISHED_NO_SHOW).
+    // Fuente directa (ausenteId de Matches, ver ProcessMatchResult) para que
+    // GroupStandingsCalculator no dependa únicamente del conjunto de "equipos
+    // inelegibles" calculado aparte a partir del estado de descalificación/remoción
+    // (ver markWalkover). Null para partidos que no son walkover.
+    private UUID absentTeamId;
 
     public Match() {}
 
@@ -67,6 +78,8 @@ public class Match {
         private Integer matchday;
         private MatchPhase phase;
         private UUID tournamentId;
+        private boolean definitionSyncPending;
+        private UUID absentTeamId;
 
         private Builder() {}
 
@@ -86,6 +99,11 @@ public class Match {
         public Builder matchday(Integer matchday) { this.matchday = matchday; return this; }
         public Builder phase(MatchPhase phase) { this.phase = phase; return this; }
         public Builder tournamentId(UUID tournamentId) { this.tournamentId = tournamentId; return this; }
+        public Builder definitionSyncPending(boolean definitionSyncPending) {
+            this.definitionSyncPending = definitionSyncPending;
+            return this;
+        }
+        public Builder absentTeamId(UUID absentTeamId) { this.absentTeamId = absentTeamId; return this; }
 
         public Match build() {
             Match match = new Match();
@@ -98,10 +116,12 @@ public class Match {
             match.awayScore = awayScore;
             match.penaltyShootoutWinnerTeamId = penaltyShootoutWinnerTeamId;
             match.active = active;
+            match.definitionSyncPending = definitionSyncPending;
             match.groupName = groupName;
             match.matchday = matchday;
             match.phase = phase;
             match.tournamentId = tournamentId;
+            match.absentTeamId = absentTeamId;
             return match;
         }
     }
@@ -165,6 +185,23 @@ public class Match {
     }
 
     /**
+     * Marca el partido como walkover con el equipo ausente ya identificado
+     * (ausenteId de Matches, ver ProcessMatchResult): a diferencia de
+     * {@link #markAsNoShow()} (usado por removeTeam/disqualifyTeam, donde el
+     * ausente se infiere aparte a partir del estado de descalificación/remoción
+     * del equipo), este método deja el dato en el propio partido.
+     */
+    public void markWalkover(UUID absentTeamId) {
+        assertActive();
+        if (!involvesteam(absentTeamId)) {
+            throw new ChampionAssignmentNotAllowedException(
+                    "El equipo ausente debe ser uno de los equipos del partido");
+        }
+        this.status = MatchStatus.FINISHED_NO_SHOW;
+        this.absentTeamId = absentTeamId;
+    }
+
+    /**
      * Marca el partido como finalizado con el marcador en tiempo reglamentario.
      * Los penales no se suman al marcador; se registran por separado.
      */
@@ -220,7 +257,16 @@ public class Match {
         this.penaltyShootoutWinnerTeamId = winnerTeamId;
     }
 
+    /**
+     * Si el partido es un walkover (FINISHED_NO_SHOW), el ganador es directamente
+     * el equipo que no está marcado como ausente — no hay marcador que comparar.
+     * Para el resto, exige estado FINISHED y resuelve por marcador (o por el
+     * ganador de penales ya registrado, si quedó empatado en tiempo reglamentario).
+     */
     public UUID resolveChampionTeamId() {
+        if (status == MatchStatus.FINISHED_NO_SHOW) {
+            return absentTeamId != null ? otherTeam(absentTeamId) : null;
+        }
         if (!isFinished()) {
             throw new ChampionAssignmentNotAllowedException(
                     "El partido debe estar finalizado para resolver al campeón");
@@ -242,7 +288,11 @@ public class Match {
      * (ver {@link #resolveChampionTeamId()}): el otro equipo del enfrentamiento.
      */
     public UUID resolveRunnerUpTeamId(UUID winnerTeamId) {
-        return winnerTeamId.equals(homeTeamId) ? awayTeamId : homeTeamId;
+        return otherTeam(winnerTeamId);
+    }
+
+    private UUID otherTeam(UUID teamId) {
+        return teamId.equals(homeTeamId) ? awayTeamId : homeTeamId;
     }
 
     public UUID getMatchId() { return matchId; }
@@ -281,4 +331,11 @@ public class Match {
 
     public UUID getTournamentId() { return tournamentId; }
     public void setTournamentId(UUID tournamentId) { this.tournamentId = tournamentId; }
+
+    public boolean isDefinitionSyncPending() { return definitionSyncPending; }
+    public void markDefinitionSyncPending() { this.definitionSyncPending = true; }
+    public void clearDefinitionSyncPending() { this.definitionSyncPending = false; }
+
+    public UUID getAbsentTeamId() { return absentTeamId; }
+    public void setAbsentTeamId(UUID absentTeamId) { this.absentTeamId = absentTeamId; }
 }

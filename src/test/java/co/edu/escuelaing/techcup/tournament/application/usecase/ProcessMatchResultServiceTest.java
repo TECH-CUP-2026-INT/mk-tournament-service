@@ -3,12 +3,15 @@ package co.edu.escuelaing.techcup.tournament.application.usecase;
 import co.edu.escuelaing.techcup.tournament.domain.exception.MatchNotFoundException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentNotFoundException;
 import co.edu.escuelaing.techcup.tournament.domain.model.BracketNode;
+import co.edu.escuelaing.techcup.tournament.domain.model.ChampionResolution;
+import co.edu.escuelaing.techcup.tournament.domain.model.GroupTable;
 import co.edu.escuelaing.techcup.tournament.domain.model.Match;
 import co.edu.escuelaing.techcup.tournament.domain.model.MatchPhase;
 import co.edu.escuelaing.techcup.tournament.domain.model.MatchStatus;
 import co.edu.escuelaing.techcup.tournament.domain.model.Round;
 import co.edu.escuelaing.techcup.tournament.domain.model.Tournament;
 import co.edu.escuelaing.techcup.tournament.domain.model.TournamentStatus;
+import co.edu.escuelaing.techcup.tournament.domain.model.GroupStandingsCalculator;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ProcessMatchResultUseCase.ProcessMatchResultCommand;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.RecordMatchFinishedForSanctionsUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.RecognitionAwardPort;
@@ -22,6 +25,7 @@ import java.time.Month;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -65,7 +69,7 @@ class ProcessMatchResultServiceTest {
         when(repository.findById(tournamentId)).thenReturn(Optional.empty());
 
         assertThrows(TournamentNotFoundException.class, () -> service.process(
-                new ProcessMatchResultCommand(UUID.randomUUID(), tournamentId, MatchPhase.GRUPOS, 1, 0, null)));
+                new ProcessMatchResultCommand(UUID.randomUUID(), tournamentId, MatchPhase.GRUPOS, 1, 0, null, null)));
     }
 
     @Test
@@ -75,7 +79,7 @@ class ProcessMatchResultServiceTest {
         when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
 
         assertThrows(MatchNotFoundException.class, () -> service.process(
-                new ProcessMatchResultCommand(UUID.randomUUID(), tournamentId, MatchPhase.GRUPOS, 1, 0, null)));
+                new ProcessMatchResultCommand(UUID.randomUUID(), tournamentId, MatchPhase.GRUPOS, 1, 0, null, null)));
     }
 
     @Test
@@ -87,7 +91,7 @@ class ProcessMatchResultServiceTest {
         tournament.pause();
         when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
 
-        service.process(new ProcessMatchResultCommand(matchId, tournamentId, MatchPhase.GRUPOS, 2, 0, null));
+        service.process(new ProcessMatchResultCommand(matchId, tournamentId, MatchPhase.GRUPOS, 2, 0, null, null));
 
         assertEquals(MatchStatus.PENDING, match.getStatus());
         verify(recordMatchFinishedForSanctions, never()).recordMatchFinished();
@@ -103,7 +107,7 @@ class ProcessMatchResultServiceTest {
         tournament.inactivate();
         when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
 
-        service.process(new ProcessMatchResultCommand(matchId, tournamentId, MatchPhase.GRUPOS, 2, 0, null));
+        service.process(new ProcessMatchResultCommand(matchId, tournamentId, MatchPhase.GRUPOS, 2, 0, null, null));
 
         assertEquals(MatchStatus.PENDING, match.getStatus());
         verify(repository, never()).save(any());
@@ -117,7 +121,7 @@ class ProcessMatchResultServiceTest {
         Tournament tournament = buildTournament(tournamentId, TournamentStatus.FINISHED, List.of(match));
         when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
 
-        service.process(new ProcessMatchResultCommand(matchId, tournamentId, MatchPhase.GRUPOS, 2, 0, null));
+        service.process(new ProcessMatchResultCommand(matchId, tournamentId, MatchPhase.GRUPOS, 2, 0, null, null));
 
         assertEquals(MatchStatus.PENDING, match.getStatus());
         verify(repository, never()).save(any());
@@ -135,10 +139,28 @@ class ProcessMatchResultServiceTest {
         Tournament tournament = buildTournament(tournamentId, TournamentStatus.IN_PROGRESS, List.of(match));
         when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
 
-        service.process(new ProcessMatchResultCommand(matchId, tournamentId, MatchPhase.GRUPOS, 1, 1, null));
+        service.process(new ProcessMatchResultCommand(matchId, tournamentId, MatchPhase.GRUPOS, 1, 1, null, null));
 
         assertEquals(3, match.getHomeScore());
         assertEquals(0, match.getAwayScore());
+        verify(recordMatchFinishedForSanctions, never()).recordMatchFinished();
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void process_walkoverSobreUnPartidoYaWalkover_esIdempotente() {
+        UUID tournamentId = UUID.randomUUID();
+        UUID matchId = UUID.randomUUID();
+        UUID home = UUID.randomUUID();
+        UUID away = UUID.randomUUID();
+        Match match = Match.builder().matchId(matchId).homeTeamId(home).awayTeamId(away)
+                .status(MatchStatus.FINISHED_NO_SHOW).groupName("Grupo A")
+                .phase(MatchPhase.GRUPOS).absentTeamId(away).build();
+        Tournament tournament = buildTournament(tournamentId, TournamentStatus.IN_PROGRESS, List.of(match));
+        when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
+
+        service.process(new ProcessMatchResultCommand(matchId, tournamentId, MatchPhase.GRUPOS, 0, 0, home, away));
+
         verify(recordMatchFinishedForSanctions, never()).recordMatchFinished();
         verify(repository, never()).save(any());
     }
@@ -157,7 +179,7 @@ class ProcessMatchResultServiceTest {
         when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
         when(repository.save(tournament)).thenReturn(tournament);
 
-        service.process(new ProcessMatchResultCommand(matchId, tournamentId, MatchPhase.GRUPOS, 2, 1, home));
+        service.process(new ProcessMatchResultCommand(matchId, tournamentId, MatchPhase.GRUPOS, 2, 1, home, null));
 
         assertEquals(MatchStatus.FINISHED, match.getStatus());
         assertEquals(2, match.getHomeScore());
@@ -167,6 +189,34 @@ class ProcessMatchResultServiceTest {
         verify(repository).save(tournament);
         verify(recognitionAwardPort, never()).triggerAwards(any());
         verify(tournamentEventPublisher, never()).publishTournamentFinalized(any());
+    }
+
+    @Test
+    void process_partidoDeGrupoConAusente_marcaFinishedNoShowYLaTablaAcreditaAlPresente() {
+        UUID tournamentId = UUID.randomUUID();
+        UUID matchId = UUID.randomUUID();
+        UUID present = UUID.randomUUID();
+        UUID absent = UUID.randomUUID();
+        Match match = groupMatch(matchId, present, absent, "Grupo A");
+        Tournament tournament = buildTournament(tournamentId, TournamentStatus.IN_PROGRESS, List.of(match));
+        when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
+        when(repository.save(tournament)).thenReturn(tournament);
+
+        // golesA/golesB vienen en 0 desde Matches para un walkover; no deben afectar la tabla.
+        service.process(new ProcessMatchResultCommand(matchId, tournamentId, MatchPhase.GRUPOS, 0, 0, present, absent));
+
+        assertEquals(MatchStatus.FINISHED_NO_SHOW, match.getStatus());
+        assertEquals(absent, match.getAbsentTeamId());
+        verify(recordMatchFinishedForSanctions).recordMatchFinished();
+
+        List<GroupTable> tables = GroupStandingsCalculator.computeAll(tournament.getMatches(), Set.of());
+        var presentStanding = tables.get(0).standings().stream()
+                .filter(s -> s.teamId().equals(present)).findFirst().orElseThrow();
+        var absentStanding = tables.get(0).standings().stream()
+                .filter(s -> s.teamId().equals(absent)).findFirst().orElseThrow();
+        assertEquals(3, presentStanding.points());
+        assertEquals(0, presentStanding.goalsFor());
+        assertEquals(0, absentStanding.points());
     }
 
     @Test
@@ -190,7 +240,7 @@ class ProcessMatchResultServiceTest {
         when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
         when(repository.save(tournament)).thenReturn(tournament);
 
-        service.process(new ProcessMatchResultCommand(lastMatchId, tournamentId, MatchPhase.GRUPOS, 1, 0, b3));
+        service.process(new ProcessMatchResultCommand(lastMatchId, tournamentId, MatchPhase.GRUPOS, 1, 0, b3, null));
 
         assertEquals(3, tournament.getBracketNodes().size());
         verify(repository).save(tournament);
@@ -219,12 +269,34 @@ class ProcessMatchResultServiceTest {
         when(repository.save(tournament)).thenReturn(tournament);
 
         service.process(new ProcessMatchResultCommand(
-                semi1.getMatchId(), tournamentId, MatchPhase.ELIMINATORIA, 2, 0, semi1.getSlotA()));
+                semi1.getMatchId(), tournamentId, MatchPhase.ELIMINATORIA, 2, 0, semi1.getSlotA(), null));
 
         assertEquals(TournamentStatus.IN_PROGRESS, tournament.getStatus());
         assertEquals(semi1.getSlotA(), semi1.getWinnerTeamId());
         verify(recognitionAwardPort, never()).triggerAwards(any());
         verify(tournamentEventPublisher, never()).publishTournamentFinalized(any());
+    }
+
+    @Test
+    void process_semifinalConAusente_marcaWalkoverYAvanzaAlPresente() {
+        UUID tournamentId = UUID.randomUUID();
+        Tournament tournament = twoGroupBracketTournament(tournamentId);
+        BracketNode semi1 = tournament.getBracketNodes().stream()
+                .filter(n -> n.getRound() == Round.SEMIFINAL).findFirst().orElseThrow();
+        UUID present = semi1.getSlotA();
+        UUID absent = semi1.getSlotB();
+        when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
+        when(repository.save(tournament)).thenReturn(tournament);
+
+        service.process(new ProcessMatchResultCommand(
+                semi1.getMatchId(), tournamentId, MatchPhase.ELIMINATORIA, 0, 0, present, absent));
+
+        Match match = tournament.getMatches().stream()
+                .filter(m -> m.getMatchId().equals(semi1.getMatchId())).findFirst().orElseThrow();
+        assertEquals(MatchStatus.FINISHED_NO_SHOW, match.getStatus());
+        assertEquals(absent, match.getAbsentTeamId());
+        assertEquals(present, semi1.getWinnerTeamId());
+        assertEquals(absent, semi1.getLoserTeamId());
     }
 
     @Test
@@ -244,12 +316,39 @@ class ProcessMatchResultServiceTest {
         UUID championId = finalNode.getSlotA();
 
         service.process(new ProcessMatchResultCommand(
-                finalNode.getMatchId(), tournamentId, MatchPhase.ELIMINATORIA, 2, 0, championId));
+                finalNode.getMatchId(), tournamentId, MatchPhase.ELIMINATORIA, 2, 0, championId, null));
 
         assertEquals(TournamentStatus.FINISHED, tournament.getStatus());
         assertEquals(championId, tournament.getChampionTeamId());
+        assertEquals(ChampionResolution.REGULATION_TIME, tournament.getChampionResolution());
         verify(recognitionAwardPort).triggerAwards(tournamentId);
         verify(tournamentEventPublisher).publishTournamentFinalized(tournamentId);
+    }
+
+    @Test
+    void process_finalConAusente_asignaCampeonPorWalkover() {
+        UUID tournamentId = UUID.randomUUID();
+        Tournament tournament = twoGroupBracketTournament(tournamentId);
+        List<BracketNode> semis = tournament.getBracketNodes().stream()
+                .filter(n -> n.getRound() == Round.SEMIFINAL).toList();
+        when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
+        when(repository.save(tournament)).thenReturn(tournament);
+
+        resolve(tournament, semis.get(0).getMatchId(), semis.get(0).getSlotA());
+        resolve(tournament, semis.get(1).getMatchId(), semis.get(1).getSlotB());
+
+        BracketNode finalNode = tournament.getBracketNodes().stream()
+                .filter(n -> n.getRound() == Round.FINAL).findFirst().orElseThrow();
+        UUID championId = finalNode.getSlotA();
+        UUID absentRunnerUp = finalNode.getSlotB();
+
+        service.process(new ProcessMatchResultCommand(
+                finalNode.getMatchId(), tournamentId, MatchPhase.ELIMINATORIA, 0, 0, championId, absentRunnerUp));
+
+        assertEquals(TournamentStatus.FINISHED, tournament.getStatus());
+        assertEquals(championId, tournament.getChampionTeamId());
+        assertEquals(absentRunnerUp, tournament.getRunnerUpTeamId());
+        assertEquals(ChampionResolution.WALKOVER, tournament.getChampionResolution());
     }
 
     @Test
@@ -262,7 +361,7 @@ class ProcessMatchResultServiceTest {
         when(repository.save(tournament)).thenReturn(tournament);
 
         service.process(new ProcessMatchResultCommand(
-                semi1.getMatchId(), tournamentId, MatchPhase.ELIMINATORIA, 1, 1, null));
+                semi1.getMatchId(), tournamentId, MatchPhase.ELIMINATORIA, 1, 1, null, null));
 
         assertEquals(co.edu.escuelaing.techcup.tournament.domain.model.BracketNodeStatus.PENDING_PENALTIES,
                 semi1.getStatus());

@@ -24,6 +24,13 @@ import org.springframework.stereotype.Service;
  * la fase de grupos y generando la llave si corresponde) o avanza la llave
  * eliminatoria. Sin lógica de negocio propia más allá de la orquestación —
  * las reglas viven en {@link Tournament}/{@link Match}.
+ * <p>
+ * Si el comando trae {@code absentTeamId} (ausenteId, agregado por Matches en
+ * el commit 3958872), el partido es un walkover: se marca FINISHED_NO_SHOW en
+ * vez de FINISHED (ver {@link Match#markWalkover}) en ambas fases. En GRUPOS,
+ * GroupStandingsCalculator ya sabe leer ese dato directamente del partido
+ * para acreditar la victoria al presente. En ELIMINATORIA, winnerTeamId ya
+ * identifica al presente, así que advanceBracket resuelve igual.
  */
 @Service
 @RequiredArgsConstructor
@@ -64,7 +71,11 @@ public class ProcessMatchResultService implements ProcessMatchResultUseCase {
             return;
         }
 
-        match.finishWithExternalResult(command.homeScore(), command.awayScore(), command.winnerTeamId());
+        if (command.absentTeamId() != null) {
+            match.markWalkover(command.absentTeamId());
+        } else {
+            match.finishWithExternalResult(command.homeScore(), command.awayScore(), command.winnerTeamId());
+        }
         recordMatchFinishedForSanctions.recordMatchFinished();
 
         if (command.phase() == MatchPhase.GRUPOS) {

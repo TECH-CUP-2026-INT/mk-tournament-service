@@ -234,6 +234,29 @@ class TournamentEliminationBracketTest {
     }
 
     @Test
+    void advanceBracket_finalPorWalkover_asignaCampeonConResolutionWalkover() {
+        Tournament tournament = twoGroupBracket();
+        BracketNode semi1 = findByRound(tournament, Round.SEMIFINAL, 0);
+        BracketNode semi2 = findByRound(tournament, Round.SEMIFINAL, 1);
+        resolveMatch(tournament, semi1.getMatchId(), semi1.getSlotA());
+        resolveMatch(tournament, semi2.getMatchId(), semi2.getSlotB());
+
+        BracketNode finalNode = findByRound(tournament, Round.FINAL, 0);
+        UUID championId = finalNode.getSlotA();
+        UUID absentRunnerUpId = finalNode.getSlotB();
+        Match finalMatch = tournament.getMatches().stream()
+                .filter(m -> m.getMatchId().equals(finalNode.getMatchId())).findFirst().orElseThrow();
+        finalMatch.markWalkover(absentRunnerUpId);
+
+        tournament.advanceBracket(finalNode.getMatchId());
+
+        assertEquals(TournamentStatus.FINISHED, tournament.getStatus());
+        assertEquals(championId, tournament.getChampionTeamId());
+        assertEquals(absentRunnerUpId, tournament.getRunnerUpTeamId());
+        assertEquals(ChampionResolution.WALKOVER, tournament.getChampionResolution());
+    }
+
+    @Test
     void advanceBracket_esIdempotente_siYaEstabaFinalizadoNoLoVuelveAResolver() {
         Tournament tournament = twoGroupBracket();
         BracketNode semi1 = findByRound(tournament, Round.SEMIFINAL, 0);

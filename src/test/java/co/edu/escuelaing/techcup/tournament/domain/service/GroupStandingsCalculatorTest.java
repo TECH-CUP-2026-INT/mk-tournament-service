@@ -37,6 +37,11 @@ class GroupStandingsCalculatorTest {
                 .status(MatchStatus.FINISHED_NO_SHOW).groupName(group).build();
     }
 
+    private Match noShowWithAbsentTeam(UUID home, UUID away, UUID absentTeamId, String group) {
+        return Match.builder().matchId(UUID.randomUUID()).homeTeamId(home).awayTeamId(away)
+                .status(MatchStatus.FINISHED_NO_SHOW).absentTeamId(absentTeamId).groupName(group).build();
+    }
+
     @Test
     void computeAll_ignoraPartidosSinGrupo() {
         Match noGroup = finished(a, b, 1, 0, null);
@@ -177,6 +182,35 @@ class GroupStandingsCalculatorTest {
         List<GroupStanding> standings = GroupStandingsCalculator.computeAll(matches, Set.of()).get(0).standings();
 
         standings.forEach(s -> assertEquals(0, s.played()));
+    }
+
+    @Test
+    void table_walkover_conAusenteIdEnElPartido_acreditaAlPresenteAunqueIneligibleTeamIdsVengaVacio() {
+        // A diferencia de table_walkover_ningunoDescalificado_seIgnoraPorAmbiguo: acá el
+        // partido ya sabe quién faltó (ausenteId de Matches, ver ProcessMatchResult), así
+        // que no depende de ineligibleTeamIds para resolverse.
+        List<Match> matches = List.of(noShowWithAbsentTeam(a, b, b, "Grupo A"));
+
+        List<GroupStanding> standings = GroupStandingsCalculator.computeAll(matches, Set.of()).get(0).standings();
+
+        GroupStanding aStanding = standings.stream().filter(s -> s.teamId().equals(a)).findFirst().orElseThrow();
+        GroupStanding bStanding = standings.stream().filter(s -> s.teamId().equals(b)).findFirst().orElseThrow();
+        assertEquals(3, aStanding.points());
+        assertEquals(0, bStanding.points());
+    }
+
+    @Test
+    void table_walkover_absentTeamIdDelPartidoTienePrioridadSobreIneligibleTeamIds() {
+        // El partido dice que el ausente es 'a'; aunque ineligibleTeamIds diga 'b', gana el
+        // dato directo del propio partido.
+        List<Match> matches = List.of(noShowWithAbsentTeam(a, b, a, "Grupo A"));
+
+        List<GroupStanding> standings = GroupStandingsCalculator.computeAll(matches, Set.of(b)).get(0).standings();
+
+        GroupStanding aStanding = standings.stream().filter(s -> s.teamId().equals(a)).findFirst().orElseThrow();
+        GroupStanding bStanding = standings.stream().filter(s -> s.teamId().equals(b)).findFirst().orElseThrow();
+        assertEquals(0, aStanding.points());
+        assertEquals(3, bStanding.points());
     }
 
     @Test

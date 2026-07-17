@@ -18,8 +18,10 @@ import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidScheduledMat
 import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidTournamentDataException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidTournamentDateRangeException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.MatchActivationNotAllowedException;
+import co.edu.escuelaing.techcup.tournament.domain.exception.MatchDefinitionPushFailedException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.MatchInactiveException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.MatchNotFoundException;
+import co.edu.escuelaing.techcup.tournament.domain.exception.MatchNotScheduledException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.MatchupNotFoundException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.NoAvailableSlotsException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.PaymentOrderCreationFailedException;
@@ -219,9 +221,15 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
     }
 
-    @ExceptionHandler({PaymentOrderCreationFailedException.class, TeamServiceUnavailableException.class})
+    @ExceptionHandler({PaymentOrderCreationFailedException.class, TeamServiceUnavailableException.class,
+            MatchDefinitionPushFailedException.class})
     public ResponseEntity<ErrorResponse> handleExternalServiceFailure(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(MatchNotScheduledException.class)
+    public ResponseEntity<ErrorResponse> handleMatchNotScheduled(MatchNotScheduledException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
     }
 
     @ExceptionHandler(TeamRosterSizeInvalidException.class)

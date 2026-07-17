@@ -26,7 +26,15 @@ payment-service:
 team-service:
   base-url: http://localhost:8082
 
-# Feign clients (payment-service, team-service)
+# URL de Matches y llave interna para POST /api/partidos (empuje de la definición
+# del partido al programarse, ver MatchDefinitionRestAdapter). Ninguno de los dos
+# está hardcodeado: configurables por env var para no depender de un valor fijo
+# mientras Matches no haya pusheado su rama.
+matches-service:
+  base-url: ${MATCHES_SERVICE_URL:http://localhost:8083}
+  internal-api-key: ${INTERNAL_API_KEY:}
+
+# Feign clients (payment-service, team-service, matches-service)
 feign:
   client:
     config:

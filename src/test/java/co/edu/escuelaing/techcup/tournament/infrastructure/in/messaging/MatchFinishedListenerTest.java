@@ -23,11 +23,29 @@ class MatchFinishedListenerTest {
         UUID tournamentId = UUID.randomUUID();
         UUID ganadorId = UUID.randomUUID();
         MatchFinishedEvent event = new MatchFinishedEvent(
-                matchId, tournamentId, MatchPhase.ELIMINATORIA, 2, 1, ganadorId, UUID.randomUUID(), Instant.now());
+                matchId, tournamentId, MatchPhase.ELIMINATORIA, 2, 1, ganadorId, UUID.randomUUID(), null, Instant.now());
 
         listener.onMatchFinished(event);
 
         verify(processMatchResult).process(new ProcessMatchResultCommand(
-                matchId, tournamentId, MatchPhase.ELIMINATORIA, 2, 1, ganadorId));
+                matchId, tournamentId, MatchPhase.ELIMINATORIA, 2, 1, ganadorId, null));
+    }
+
+    @Test
+    void onMatchFinished_conAusenteId_loPropagaAlComando() {
+        ProcessMatchResultUseCase processMatchResult = mock(ProcessMatchResultUseCase.class);
+        MatchFinishedListener listener = new MatchFinishedListener(processMatchResult);
+
+        UUID matchId = UUID.randomUUID();
+        UUID tournamentId = UUID.randomUUID();
+        UUID presentTeamId = UUID.randomUUID();
+        UUID ausenteId = UUID.randomUUID();
+        MatchFinishedEvent event = new MatchFinishedEvent(
+                matchId, tournamentId, MatchPhase.GRUPOS, 0, 0, presentTeamId, null, ausenteId, Instant.now());
+
+        listener.onMatchFinished(event);
+
+        verify(processMatchResult).process(new ProcessMatchResultCommand(
+                matchId, tournamentId, MatchPhase.GRUPOS, 0, 0, presentTeamId, ausenteId));
     }
 }

@@ -49,7 +49,8 @@ public class SimulationController {
                 request.fase(),
                 request.golesA(),
                 request.golesB(),
-                request.ganadorId()));
+                request.ganadorId(),
+                request.ausenteId()));
 
         return ResponseEntity.ok().build();
     }

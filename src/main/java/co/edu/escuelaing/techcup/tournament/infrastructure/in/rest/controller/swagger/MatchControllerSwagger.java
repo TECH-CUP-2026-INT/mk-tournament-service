@@ -37,4 +37,15 @@ public interface MatchControllerSwagger {
     ResponseEntity<MatchActivationResponse> activation(
             @Parameter(description = "Match ID", example = "550e8400-e29b-41d4-a716-446655440000") UUID matchId,
             MatchActivationRequest request);
+
+    @Operation(summary = "Resend match definition to Matches",
+            description = "Manual retry for when the automatic push (done when the match was scheduled) failed. "
+                    + "Rebuilds the definition from the current matchup/scheduling data and sends it again; Matches "
+                    + "upserts by matchId, so retrying is safe.")
+    @ApiResponse(responseCode = "200", description = "Definition resent", content = @Content)
+    @ApiResponse(responseCode = "404", description = "Match not found", content = @Content)
+    @ApiResponse(responseCode = "409", description = "Match not scheduled yet, or Matches rejected it as not editable", content = @Content)
+    @ApiResponse(responseCode = "502", description = "Matches unreachable or returned an unexpected error", content = @Content)
+    ResponseEntity<Void> resendDefinition(
+            @Parameter(description = "Match ID", example = "550e8400-e29b-41d4-a716-446655440000") UUID matchId);
 }

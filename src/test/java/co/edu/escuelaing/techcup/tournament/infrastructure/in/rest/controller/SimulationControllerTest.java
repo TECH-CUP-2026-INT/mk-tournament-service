@@ -65,7 +65,7 @@ class SimulationControllerTest {
                 .andExpect(status().isOk());
 
         verify(processMatchResult).process(new ProcessMatchResultCommand(
-                MATCH_ID, TOURNAMENT_ID, MatchPhase.GRUPOS, 2, 1, WINNER_ID));
+                MATCH_ID, TOURNAMENT_ID, MatchPhase.GRUPOS, 2, 1, WINNER_ID, null));
     }
 
     @Test
@@ -81,7 +81,24 @@ class SimulationControllerTest {
                 .andExpect(status().isOk());
 
         verify(processMatchResult).process(new ProcessMatchResultCommand(
-                MATCH_ID, TOURNAMENT_ID, MatchPhase.ELIMINATORIA, 1, 1, null));
+                MATCH_ID, TOURNAMENT_ID, MatchPhase.ELIMINATORIA, 1, 1, null, null));
+    }
+
+    @Test
+    void simulateResult_walkover_pasaAusenteIdAlComando() throws Exception {
+        when(getTournamentByMatch.getByMatch(MATCH_ID)).thenReturn(sampleTournament());
+        UUID absentTeamId = UUID.fromString("44444444-4444-4444-4444-444444444444");
+
+        String body = """
+                {"golesA":0,"golesB":0,"ganadorId":"%s","ausenteId":"%s","fase":"GRUPOS"}
+                """.formatted(WINNER_ID, absentTeamId);
+
+        mockMvc.perform(post("/sim/partidos/" + MATCH_ID + "/resultado")
+                        .contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk());
+
+        verify(processMatchResult).process(new ProcessMatchResultCommand(
+                MATCH_ID, TOURNAMENT_ID, MatchPhase.GRUPOS, 0, 0, WINNER_ID, absentTeamId));
     }
 
     @Test

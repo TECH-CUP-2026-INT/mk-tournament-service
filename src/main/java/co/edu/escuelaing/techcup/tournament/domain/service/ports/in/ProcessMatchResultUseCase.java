@@ -19,6 +19,12 @@ public interface ProcessMatchResultUseCase {
      * empatado y Matches no resolvió penales (no se asume que vaya a hacerlo).
      * El id del equipo eliminado no se recibe: {@code Tournament} lo deriva del
      * ganador y del propio partido (siempre es "el otro equipo").
+     * <p>
+     * {@code absentTeamId} (ausenteId del evento) viene no-null cuando el
+     * partido fue walkover: el equipo que no se presentó. En ese caso el
+     * partido se marca FINISHED_NO_SHOW (no FINISHED) sin importar la fase;
+     * en ELIMINATORIA, {@code winnerTeamId} ya identifica al presente, así que
+     * la llave avanza igual.
      */
     record ProcessMatchResultCommand(
             UUID matchId,
@@ -26,5 +32,6 @@ public interface ProcessMatchResultUseCase {
             MatchPhase phase,
             int homeScore,
             int awayScore,
-            UUID winnerTeamId) {}
+            UUID winnerTeamId,
+            UUID absentTeamId) {}
 }

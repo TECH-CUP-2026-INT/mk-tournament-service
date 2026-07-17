@@ -19,11 +19,15 @@ import java.util.stream.Collectors;
  * groupName (formatos sin fase de grupos, o partidos de la llave eliminatoria)
  * se ignoran.
  * <p>
- * Un partido FINISHED_NO_SHOW (walkover: ver {@link Tournament#disqualifyTeam}
- * / {@link Tournament#removeTeam}) cuenta como victoria administrativa del
- * equipo que NO está en {@code ineligibleTeamIds}, sin sumar goles a ninguno
- * de los dos; si ambos equipos (o ninguno) están en ese conjunto, el partido
- * no se puede resolver y se ignora.
+ * Un partido FINISHED_NO_SHOW (walkover) cuenta como victoria administrativa
+ * del equipo presente, sin sumar goles a ninguno de los dos. El equipo ausente
+ * se resuelve primero desde el propio partido ({@link Match#getAbsentTeamId()}
+ * — ausenteId reportado por Matches, ver ProcessMatchResult); si el partido no
+ * lo tiene (walkover disparado por {@link Tournament#disqualifyTeam} /
+ * {@link Tournament#removeTeam}, que no lo registran porque ya se sabe aparte
+ * por el estado de descalificación/remoción del equipo), se cae al conjunto
+ * {@code ineligibleTeamIds}. Si no se puede determinar un único ausente por
+ * ninguna de las dos vías, el partido no se puede resolver y se ignora.
  */
 public final class GroupStandingsCalculator {
 
@@ -119,18 +123,30 @@ public final class GroupStandingsCalculator {
     }
 
     private static void applyWalkoverResult(Map<UUID, Accumulator> stats, Match m, Set<UUID> ineligibleTeamIds) {
-        boolean homeIneligible = ineligibleTeamIds.contains(m.getHomeTeamId());
-        boolean awayIneligible = ineligibleTeamIds.contains(m.getAwayTeamId());
-        if (homeIneligible == awayIneligible) {
+        UUID absentTeamId = resolveAbsentTeamId(m, ineligibleTeamIds);
+        if (absentTeamId == null) {
             return;
         }
 
-        Accumulator winner = stats.get(homeIneligible ? m.getAwayTeamId() : m.getHomeTeamId());
-        Accumulator loser = stats.get(homeIneligible ? m.getHomeTeamId() : m.getAwayTeamId());
+        UUID presentTeamId = absentTeamId.equals(m.getHomeTeamId()) ? m.getAwayTeamId() : m.getHomeTeamId();
+        Accumulator winner = stats.get(presentTeamId);
+        Accumulator loser = stats.get(absentTeamId);
         winner.played++;
         winner.won++;
         loser.played++;
         loser.lost++;
+    }
+
+    private static UUID resolveAbsentTeamId(Match m, Set<UUID> ineligibleTeamIds) {
+        if (m.getAbsentTeamId() != null) {
+            return m.getAbsentTeamId();
+        }
+        boolean homeIneligible = ineligibleTeamIds.contains(m.getHomeTeamId());
+        boolean awayIneligible = ineligibleTeamIds.contains(m.getAwayTeamId());
+        if (homeIneligible == awayIneligible) {
+            return null;
+        }
+        return homeIneligible ? m.getHomeTeamId() : m.getAwayTeamId();
     }
 
     private static List<GroupStanding> sortWithTiebreakers(List<GroupStanding> base, List<Match> groupMatches) {

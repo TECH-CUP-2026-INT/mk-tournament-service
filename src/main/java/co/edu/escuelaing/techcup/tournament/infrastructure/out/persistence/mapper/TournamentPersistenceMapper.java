@@ -125,6 +125,8 @@ public interface TournamentPersistenceMapper {
                         .matchday(d.getMatchday())
                         .phase(d.getPhase() != null ? MatchPhase.valueOf(d.getPhase()) : null)
                         .tournamentId(d.getTournamentId())
+                        .definitionSyncPending(d.isDefinitionSyncPending())
+                        .absentTeamId(d.getAbsentTeamId())
                         .build())
                 .toList();
     }
@@ -135,7 +137,8 @@ public interface TournamentPersistenceMapper {
                 .map(m -> new MatchDocument(m.getMatchId(), m.getHomeTeamId(), m.getAwayTeamId(),
                         m.getStatus().name(), m.isFinalMatch(), m.getHomeScore(), m.getAwayScore(),
                         m.getPenaltyShootoutWinnerTeamId(), m.isActive(), m.getGroupName(), m.getMatchday(),
-                        m.getPhase() != null ? m.getPhase().name() : null, m.getTournamentId()))
+                        m.getPhase() != null ? m.getPhase().name() : null, m.getTournamentId(),
+                        m.isDefinitionSyncPending(), m.getAbsentTeamId()))
                 .toList();
     }
 

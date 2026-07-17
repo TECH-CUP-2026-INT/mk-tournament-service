@@ -795,8 +795,7 @@ public class Tournament extends AggregateRoot {
         if (node.isFinal()) {
             this.championTeamId = winnerTeamId;
             this.runnerUpTeamId = loserTeamId;
-            this.championResolution = match.isTiedInRegulation()
-                    ? ChampionResolution.PENALTIES : ChampionResolution.REGULATION_TIME;
+            this.championResolution = resolveChampionResolution(match);
             this.status = TournamentStatus.FINISHED;
             return;
         }
@@ -817,6 +816,13 @@ public class Tournament extends AggregateRoot {
             matches.add(nextMatch);
             target.assignMatch(nextMatch.getMatchId());
         }
+    }
+
+    private static ChampionResolution resolveChampionResolution(Match match) {
+        if (match.getStatus() == MatchStatus.FINISHED_NO_SHOW) {
+            return ChampionResolution.WALKOVER;
+        }
+        return match.isTiedInRegulation() ? ChampionResolution.PENALTIES : ChampionResolution.REGULATION_TIME;
     }
 
     private BracketNode findBracketNode(UUID nodeId) {

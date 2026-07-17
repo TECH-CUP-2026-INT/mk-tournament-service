@@ -26,6 +26,7 @@ public class MatchFinishedListener {
                 event.fase(),
                 event.golesA(),
                 event.golesB(),
-                event.ganadorId()));
+                event.ganadorId(),
+                event.ausenteId()));
     }
 }

@@ -9,6 +9,7 @@ import co.edu.escuelaing.techcup.tournament.domain.model.Match;
 import co.edu.escuelaing.techcup.tournament.domain.model.ScheduledMatch;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.InactivateMatchUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.InactivateMatchUseCase.InactivateMatchCommand;
+import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ResendMatchDefinitionUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ScheduleMatchUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ScheduleMatchUseCase.ScheduleMatchCommand;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.controller.swagger.MatchControllerSwagger;
@@ -32,6 +33,7 @@ public class MatchController implements MatchControllerSwagger {
 
     private final ScheduleMatchUseCase scheduleMatchUseCase;
     private final InactivateMatchUseCase inactivateMatchUseCase;
+    private final ResendMatchDefinitionUseCase resendMatchDefinitionUseCase;
     private final ScheduledMatchRestMapper mapper;
 
     @Override
@@ -57,5 +59,12 @@ public class MatchController implements MatchControllerSwagger {
                 : "The match was successfully inactivated";
 
         return ResponseEntity.ok(new MatchActivationResponse(match.getMatchId(), match.isActive(), message));
+    }
+
+    @Override
+    @PostMapping("/{matchId}/resend-definition")
+    public ResponseEntity<Void> resendDefinition(@PathVariable UUID matchId) {
+        resendMatchDefinitionUseCase.resend(matchId);
+        return ResponseEntity.ok().build();
     }
 }

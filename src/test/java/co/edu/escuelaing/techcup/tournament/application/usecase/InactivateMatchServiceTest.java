@@ -7,6 +7,7 @@ import co.edu.escuelaing.techcup.tournament.domain.model.MatchStatus;
 import co.edu.escuelaing.techcup.tournament.domain.model.Tournament;
 import co.edu.escuelaing.techcup.tournament.domain.model.TournamentStatus;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.InactivateMatchUseCase.InactivateMatchCommand;
+import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.MatchDefinitionPort;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentRepositoryPort;
 import org.junit.jupiter.api.Test;
 
@@ -20,11 +21,15 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class InactivateMatchServiceTest {
+
+    private final MatchDefinitionPort matchDefinitionPort = mock(MatchDefinitionPort.class);
 
     private Tournament tournamentWithMatch(Match match) {
         return Tournament.builder()
@@ -45,12 +50,13 @@ class InactivateMatchServiceTest {
         when(repositoryMock.findByMatchId(matchId)).thenReturn(Optional.of(tournament));
         when(repositoryMock.save(tournament)).thenReturn(tournament);
 
-        InactivateMatchService service = new InactivateMatchService(repositoryMock);
+        InactivateMatchService service = new InactivateMatchService(repositoryMock, matchDefinitionPort);
 
         Match result = service.execute(new InactivateMatchCommand(matchId, MatchActivationAction.INACTIVATE));
 
         assertFalse(result.isActive());
         verify(repositoryMock).save(tournament);
+        verify(matchDefinitionPort).notifyMatchInactivated(matchId);
     }
 
     @Test
@@ -63,12 +69,13 @@ class InactivateMatchServiceTest {
         when(repositoryMock.findByMatchId(matchId)).thenReturn(Optional.of(tournament));
         when(repositoryMock.save(tournament)).thenReturn(tournament);
 
-        InactivateMatchService service = new InactivateMatchService(repositoryMock);
+        InactivateMatchService service = new InactivateMatchService(repositoryMock, matchDefinitionPort);
 
         Match result = service.execute(new InactivateMatchCommand(matchId, MatchActivationAction.REACTIVATE));
 
         assertTrue(result.isActive());
         verify(repositoryMock).save(tournament);
+        verify(matchDefinitionPort, never()).notifyMatchInactivated(any());
     }
 
     @Test
@@ -77,7 +84,7 @@ class InactivateMatchServiceTest {
         TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
         when(repositoryMock.findByMatchId(matchId)).thenReturn(Optional.empty());
 
-        InactivateMatchService service = new InactivateMatchService(repositoryMock);
+        InactivateMatchService service = new InactivateMatchService(repositoryMock, matchDefinitionPort);
 
         InactivateMatchCommand command = new InactivateMatchCommand(matchId, MatchActivationAction.INACTIVATE);
         assertThrows(MatchupNotFoundException.class, () -> service.execute(command));

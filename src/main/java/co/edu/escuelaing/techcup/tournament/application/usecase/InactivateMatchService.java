@@ -6,6 +6,7 @@ import co.edu.escuelaing.techcup.tournament.domain.exception.MatchupNotFoundExce
 import co.edu.escuelaing.techcup.tournament.domain.model.Match;
 import co.edu.escuelaing.techcup.tournament.domain.model.Tournament;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.InactivateMatchUseCase;
+import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.MatchDefinitionPort;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentRepositoryPort;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 public class InactivateMatchService implements InactivateMatchUseCase {
 
     private final TournamentRepositoryPort tournamentRepository;
+    private final MatchDefinitionPort matchDefinitionPort;
 
 
     @Override
@@ -27,7 +29,10 @@ public class InactivateMatchService implements InactivateMatchUseCase {
                 .orElseThrow(() -> new MatchupNotFoundException(command.matchId()));
 
         switch (command.action()) {
-            case INACTIVATE -> match.inactivate();
+            case INACTIVATE -> {
+                match.inactivate();
+                matchDefinitionPort.notifyMatchInactivated(command.matchId());
+            }
             case REACTIVATE -> match.reactivate();
         }
 

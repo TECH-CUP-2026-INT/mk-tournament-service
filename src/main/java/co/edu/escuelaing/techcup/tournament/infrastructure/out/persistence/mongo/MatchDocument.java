@@ -29,4 +29,6 @@ public class MatchDocument {
     private Integer matchday;
     private String phase;
     private UUID tournamentId;
+    private boolean definitionSyncPending;
+    private UUID absentTeamId;
 }
