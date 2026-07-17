@@ -23,6 +23,23 @@ Controller: `TournamentController`.
 | `PATCH` | `/tournaments/{id}/inactivate` | Inactivate / reactivate tournament (`action: INACTIVATE \| REACTIVATE`) | Organizer |
 | `DELETE` | `/tournaments/{id}` | Delete tournament (only if Finished) | Organizer |
 | `GET` | `/tournaments/{tournamentId}/preparation` | Check preparation readiness | Authenticated |
+| `GET` | `/tournaments/active` | Resolve the tournament currently `IN_PROGRESS` (service-to-service) | Service |
+
+### Get active tournament
+
+```http
+GET /tournaments/active
+```
+
+Integration point consumed by **Estadísticas** (`TournamentClientImpl`) to resolve which tournament is currently live. "Active" here means `IN_PROGRESS` — if more than one tournament is `IN_PROGRESS`, the one with the most recent `startDate` wins (tie-broken deterministically by ID).
+
+**200 response** — contract is exact, do not change the field name or type:
+
+```json
+{ "id": "550e8400-e29b-41d4-a716-446655440000" }
+```
+
+**404** if no tournament is currently `IN_PROGRESS`.
 
 ### Create tournament
 

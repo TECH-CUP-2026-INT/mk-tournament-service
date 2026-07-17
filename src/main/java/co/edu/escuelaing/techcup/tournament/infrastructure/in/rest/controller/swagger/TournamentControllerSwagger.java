@@ -1,5 +1,6 @@
 package co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.controller.swagger;
 
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.ActiveTournamentResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.BracketNodeResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.CreateTournamentRequest;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.DisqualifyTeamRequest;
@@ -183,6 +184,15 @@ public interface TournamentControllerSwagger {
     @ApiResponse(responseCode = "404", description = "No tournament has a match with that ID", content = @Content)
     ResponseEntity<TournamentResponse> getByMatch(
             @Parameter(description = "Match ID", example = "550e8400-e29b-41d4-a716-446655440000") UUID matchId);
+
+    @Operation(summary = "Get the active tournament",
+            description = "Resolves the tournament currently IN_PROGRESS. Intended for other services (e.g. "
+                    + "Estadísticas' TournamentClientImpl) that need to know which tournament is live right now. "
+                    + "If more than one tournament is IN_PROGRESS, the one with the most recent startDate wins.")
+    @ApiResponse(responseCode = "200", description = "Active tournament found",
+            content = @Content(schema = @Schema(implementation = ActiveTournamentResponse.class)))
+    @ApiResponse(responseCode = "404", description = "No tournament is currently IN_PROGRESS", content = @Content)
+    ResponseEntity<ActiveTournamentResponse> getActive();
 
     @Operation(summary = "Check if a team has an active tournament enrollment",
             description = "Returns whether the team has a confirmed (ENROLLED) enrollment in a tournament that is "

@@ -47,6 +47,7 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.EnrollTeamIn
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.FinalizeTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.GetChampionUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.GetEnrolledTeamsUseCase;
+import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.GetActiveTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.GetTournamentByMatchUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.CheckTeamActiveEnrollmentUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.InactivateTeamUseCase;
@@ -133,6 +134,7 @@ class TournamentControllerTest {
     @MockitoBean private ViewEliminationBracketUseCase viewEliminationBracket;
     @MockitoBean private ViewMatchCourtUseCase viewMatchCourt;
     @MockitoBean private GetTournamentByMatchUseCase getTournamentByMatchUseCase;
+    @MockitoBean private GetActiveTournamentUseCase getActiveTournamentUseCase;
     @MockitoBean private CheckTeamActiveEnrollmentUseCase checkTeamActiveEnrollmentUseCase;
     @MockitoBean private TournamentRestMapper mapper;
     @MockitoBean private MatchupRestMapper matchupRestMapper;
@@ -436,6 +438,24 @@ class TournamentControllerTest {
                 .thenThrow(new MatchupNotFoundException(MISSING_ID));
 
         mockMvc.perform(get("/tournaments/by-match/" + MISSING_ID))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void getActive_devuelve200ConElIdComoString() throws Exception {
+        when(getActiveTournamentUseCase.getActiveTournament()).thenReturn(sampleTournament(TOURNAMENT_ID));
+
+        mockMvc.perform(get("/tournaments/active"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(TOURNAMENT_ID.toString()));
+    }
+
+    @Test
+    void getActive_cuandoNoHayTorneoEnCurso_devuelve404() throws Exception {
+        when(getActiveTournamentUseCase.getActiveTournament())
+                .thenThrow(new TournamentNotFoundException("No hay ningún torneo en curso"));
+
+        mockMvc.perform(get("/tournaments/active"))
                 .andExpect(status().isNotFound());
     }
 
