@@ -1,7 +1,10 @@
 package co.edu.escuelaing.techcup.tournament.domain.model;
 
+import co.edu.escuelaing.techcup.tournament.domain.exception.BracketNodeNotFoundException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.ChampionAssignmentNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.ChampionPendingPenaltiesException;
+import co.edu.escuelaing.techcup.tournament.domain.exception.EliminationBracketAlreadyGeneratedException;
+import co.edu.escuelaing.techcup.tournament.domain.exception.GroupStageNotCompleteException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidTournamentDataException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidTournamentDateRangeException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.InsufficientApprovedTeamsException;
@@ -11,6 +14,8 @@ import co.edu.escuelaing.techcup.tournament.domain.exception.TeamDisqualificatio
 import co.edu.escuelaing.techcup.tournament.domain.exception.TeamInactivationNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.TeamRemovalNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.TeamRosterSizeInvalidException;
+import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentActivationNotAllowedException;
+import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentBeginNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentCannotBeEditedException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentCannotBeFinalizedException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentInactivationNotAllowedException;
@@ -25,6 +30,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -56,9 +62,11 @@ public class Tournament extends AggregateRoot {
     private List<TeamRegistration> teams;
     private List<Enrollment> enrollments;
     private List<Match> matches;
+    private List<BracketNode> bracketNodes;
     // GridFS ObjectId (hex string, no es formato UUID) — ver GridFsRulebookStorageAdapter.
     private String rulebookFileId;
     private UUID championTeamId;
+    private UUID runnerUpTeamId;
     private ChampionResolution championResolution;
     private boolean paused;
     private boolean active = true;
@@ -69,6 +77,7 @@ public class Tournament extends AggregateRoot {
         this.teams = new ArrayList<>();
         this.enrollments = new ArrayList<>();
         this.matches = new ArrayList<>();
+        this.bracketNodes = new ArrayList<>();
     }
 
     public Tournament(UUID id, String name, TournamentStatus status) {
@@ -110,7 +119,9 @@ public class Tournament extends AggregateRoot {
         private TournamentStatus status;
         private List<TeamRegistration> teams;
         private List<Match> matches;
+        private List<BracketNode> bracketNodes;
         private UUID championTeamId;
+        private UUID runnerUpTeamId;
         private ChampionResolution championResolution;
         private boolean paused = false;
         private boolean active = true;
@@ -136,7 +147,9 @@ public class Tournament extends AggregateRoot {
         public Builder status(TournamentStatus status) { this.status = status; return this; }
         public Builder teams(List<TeamRegistration> teams) { this.teams = teams; return this; }
         public Builder matches(List<Match> matches) { this.matches = matches; return this; }
+        public Builder bracketNodes(List<BracketNode> bracketNodes) { this.bracketNodes = bracketNodes; return this; }
         public Builder championTeamId(UUID championTeamId) { this.championTeamId = championTeamId; return this; }
+        public Builder runnerUpTeamId(UUID runnerUpTeamId) { this.runnerUpTeamId = runnerUpTeamId; return this; }
         public Builder championResolution(ChampionResolution championResolution) {
             this.championResolution = championResolution;
             return this;
@@ -147,10 +160,11 @@ public class Tournament extends AggregateRoot {
         public Builder version(Long version) { this.version = version; return this; }
 
         /**
-         * TCF-52: crea un torneo nuevo. Siempre nace en ACTIVE con un id nuevo,
-         * sin importar lo que se haya seteado en el builder para esos campos.
-         * Para torneos Lightning, endDate se deriva automáticamente de startDate
-         * (torneo de un solo día).
+         * TCF-52: crea un torneo nuevo. Siempre nace en DRAFT con un id nuevo,
+         * sin importar lo que se haya seteado en el builder para esos campos;
+         * requiere una activación explícita (ver {@link Tournament#activate()})
+         * antes de poder recibir inscripciones. Para torneos Lightning, endDate
+         * se deriva automáticamente de startDate (torneo de un solo día).
          */
         public Tournament create() {
             validateName(name);
@@ -175,7 +189,7 @@ public class Tournament extends AggregateRoot {
             t.registrationDeadline = registrationDeadline;
             t.matchStartTime = matchStartTime;
             t.matchEndTime = matchEndTime;
-            t.status = TournamentStatus.ACTIVE;
+            t.status = TournamentStatus.DRAFT;
             return t;
         }
 
@@ -198,7 +212,9 @@ public class Tournament extends AggregateRoot {
             t.status = status;
             t.teams = teams != null ? new ArrayList<>(teams) : new ArrayList<>();
             t.matches = matches != null ? new ArrayList<>(matches) : new ArrayList<>();
+            t.bracketNodes = bracketNodes != null ? new ArrayList<>(bracketNodes) : new ArrayList<>();
             t.championTeamId = championTeamId;
+            t.runnerUpTeamId = runnerUpTeamId;
             t.championResolution = championResolution;
             t.paused = paused;
             t.active = active;
@@ -206,6 +222,20 @@ public class Tournament extends AggregateRoot {
             t.version = version;
             return t;
         }
+    }
+
+    /**
+     * TC-27: activa el torneo, habilitando la inscripción de equipos.
+     * Solo procede desde Borrador (estado en el que nace todo torneo nuevo,
+     * ver {@link Builder#create()}).
+     */
+    public void activate() {
+        assertActive();
+        if (status != TournamentStatus.DRAFT) {
+            throw new TournamentActivationNotAllowedException(
+                    "Solo se puede activar un torneo en estado Borrador");
+        }
+        this.status = TournamentStatus.ACTIVE;
     }
 
     // --- Preparación del torneo ---
@@ -281,6 +311,16 @@ public class Tournament extends AggregateRoot {
         }
 
         team.setRegistrationStatus(RegistrationStatus.DISQUALIFIED);
+
+        // Igual que removeTeam(): sus partidos pendientes quedan como walkover
+        // (gana el rival presente) y alimentan el recálculo de la tabla de
+        // posiciones (ver GroupStandingsCalculator, que trata FINISHED_NO_SHOW
+        // como victoria administrativa del equipo no descalificado).
+        for (Match match : matches) {
+            if (match.isPending() && match.involvesteam(teamId)) {
+                match.markAsNoShow();
+            }
+        }
     }
 
     private static final int MIN_ROSTER_SIZE = 7;
@@ -366,6 +406,21 @@ public class Tournament extends AggregateRoot {
         validateReadyForPreparation();
         this.matches = new ArrayList<>(generatedMatches);
         this.status = TournamentStatus.IN_PREPARATION;
+    }
+
+    /**
+     * TC-29: inicia el torneo (arranca el juego de los partidos ya programados
+     * en la preparación). Solo procede desde En Preparación; a partir de aquí
+     * el torneo puede finalizarse una vez se alcance la fecha de fin (ver
+     * {@link #finish(LocalDate)}).
+     */
+    public void begin() {
+        assertActive();
+        if (status != TournamentStatus.IN_PREPARATION) {
+            throw new TournamentBeginNotAllowedException(
+                    "Solo se puede iniciar un torneo en estado En Preparación");
+        }
+        this.status = TournamentStatus.IN_PROGRESS;
     }
 
     public void attachRulebook(String rulebookFileId) {
@@ -547,21 +602,30 @@ public class Tournament extends AggregateRoot {
                 : ChampionResolution.REGULATION_TIME;
 
         this.championTeamId = winnerTeamId;
+        this.runnerUpTeamId = match.resolveRunnerUpTeamId(winnerTeamId);
         this.championResolution = resolution;
 
-        return new ChampionAssignment(championTeamId, championResolution);
+        return new ChampionAssignment(championTeamId, runnerUpTeamId, championResolution);
     }
 
     /**
      * TC-50: registra el ganador de la tanda de penales de un partido, previo
      * a poder asignar campeón cuando ese partido terminó empatado en tiempo
      * reglamentario (ver {@link #assignChampionWhenFinalMatchFinished}, que
-     * exige este dato ya cargado para resolver al campeón en ese caso).
+     * exige este dato ya cargado para resolver al campeón en ese caso). Si el
+     * partido es el de un nodo de la llave eliminatoria que había quedado
+     * "pendiente de penales" (ver {@link #advanceBracket}, camino por evento
+     * que no resuelve el empate por su cuenta), este mismo endpoint manual
+     * también avanza la llave con el ganador ya conocido.
      */
     public void recordPenaltyShootoutWinner(UUID matchId, UUID winnerTeamId) {
         assertActive();
         Match match = findMatch(matchId);
         match.recordPenaltyShootoutWinner(winnerTeamId);
+
+        findBracketNodeByMatchId(matchId)
+                .filter(node -> node.getStatus() == BracketNodeStatus.PENDING_PENALTIES)
+                .ifPresent(node -> advanceBracket(matchId));
     }
 
     private Match findMatch(UUID matchId) {
@@ -569,6 +633,204 @@ public class Tournament extends AggregateRoot {
                 .filter(m -> m.getMatchId().equals(matchId))
                 .findFirst()
                 .orElseThrow(() -> new MatchNotFoundException(getId(), matchId));
+    }
+
+    // --- Llave eliminatoria ---
+
+    /**
+     * LÓGICA 3: cuando todos los partidos de todos los grupos ya terminaron,
+     * toma los puestos 1 y 2 de cada grupo (ver {@link GroupStandingsCalculator})
+     * y construye el árbol completo de la llave eliminatoria. La primera ronda
+     * se siembra cruzada entre grupos adyacentes en orden alfabético (1A-2B,
+     * 1B-2A, 1C-2D, 1D-2C, ...), y esos cruces se emparejan de forma que dos
+     * equipos del mismo grupo no puedan volver a encontrarse hasta la ronda
+     * siguiente a la suya (mismo criterio que usa el bracket de un Mundial:
+     * 1A-2B se cruza en la próxima ronda con el ganador de 1C-2D, no con el de
+     * 1B-2A). Las rondas futuras nacen con sus dos cupos "Por definir" (null);
+     * solo la primera ronda genera matchId de una vez, porque es la única con
+     * ambos cupos ya resueltos.
+     */
+    public void generateEliminationBracket() {
+        assertActive();
+        if (!bracketNodes.isEmpty()) {
+            throw new EliminationBracketAlreadyGeneratedException(
+                    "La llave eliminatoria de este torneo ya fue generada");
+        }
+
+        List<GroupTable> tables = GroupStandingsCalculator.computeAll(
+                matches, GroupStandingsCalculator.ineligibleTeamIds(teams, matches));
+
+        if (tables.isEmpty() || !allGroupMatchesResolved()) {
+            throw new GroupStageNotCompleteException(
+                    "No se puede generar la llave eliminatoria: aún hay partidos de grupos sin finalizar");
+        }
+
+        List<BracketNode> firstRound = seedFirstRound(tables);
+        buildTreeFromLeaves(firstRound);
+    }
+
+    private boolean allGroupMatchesResolved() {
+        return matches.stream()
+                .filter(m -> m.getGroupName() != null)
+                .allMatch(m -> m.getStatus() == MatchStatus.FINISHED || m.getStatus() == MatchStatus.FINISHED_NO_SHOW);
+    }
+
+    private List<BracketNode> seedFirstRound(List<GroupTable> tables) {
+        int numGroups = tables.size();
+        Round firstRound = roundForNodeCount(numGroups);
+
+        List<UUID> pos1 = new ArrayList<>();
+        List<UUID> pos2 = new ArrayList<>();
+        for (GroupTable table : tables) {
+            pos1.add(table.standings().get(0).teamId());
+            pos2.add(table.standings().get(1).teamId());
+        }
+
+        List<BracketNode> firstLegs = new ArrayList<>();
+        List<BracketNode> secondLegs = new ArrayList<>();
+        for (int pairIndex = 0; pairIndex < numGroups / 2; pairIndex++) {
+            int x = pairIndex * 2;
+            int y = pairIndex * 2 + 1;
+            firstLegs.add(newSeededNode(firstRound, pos1.get(x), pos2.get(y)));
+            secondLegs.add(newSeededNode(firstRound, pos1.get(y), pos2.get(x)));
+        }
+
+        List<BracketNode> leaves = new ArrayList<>(firstLegs);
+        leaves.addAll(secondLegs);
+
+        for (BracketNode leaf : leaves) {
+            Match match = Match.builder()
+                    .matchId(UUID.randomUUID())
+                    .homeTeamId(leaf.getSlotA())
+                    .awayTeamId(leaf.getSlotB())
+                    .status(MatchStatus.PENDING)
+                    .active(true)
+                    .finalMatch(false)
+                    .phase(MatchPhase.ELIMINATORIA)
+                    .tournamentId(getId())
+                    .build();
+            matches.add(match);
+            leaf.assignMatch(match.getMatchId());
+        }
+
+        bracketNodes.addAll(leaves);
+        return leaves;
+    }
+
+    private BracketNode newSeededNode(Round round, UUID slotA, UUID slotB) {
+        return BracketNode.builder().nodeId(UUID.randomUUID()).round(round).slotA(slotA).slotB(slotB).build();
+    }
+
+    private void buildTreeFromLeaves(List<BracketNode> firstRoundNodes) {
+        List<BracketNode> currentRound = firstRoundNodes;
+        while (currentRound.size() > 1) {
+            Round nextRound = roundForNodeCount(currentRound.size() / 2);
+            List<BracketNode> nextRoundNodes = new ArrayList<>();
+            for (int i = 0; i < currentRound.size(); i += 2) {
+                BracketNode nextNode = BracketNode.builder().nodeId(UUID.randomUUID()).round(nextRound).build();
+                currentRound.get(i).setAdvanceTo(nextNode.getNodeId(), BracketSlot.A);
+                currentRound.get(i + 1).setAdvanceTo(nextNode.getNodeId(), BracketSlot.B);
+                nextRoundNodes.add(nextNode);
+            }
+            bracketNodes.addAll(nextRoundNodes);
+            currentRound = nextRoundNodes;
+        }
+    }
+
+    private static Round roundForNodeCount(int nodeCount) {
+        return switch (nodeCount) {
+            case 8 -> Round.ROUND_OF_16;
+            case 4 -> Round.QUARTERFINAL;
+            case 2 -> Round.SEMIFINAL;
+            case 1 -> Round.FINAL;
+            default -> throw new GroupStageNotCompleteException(
+                    "Cantidad de grupos inválida para armar la llave eliminatoria: " + nodeCount);
+        };
+    }
+
+    /**
+     * LÓGICA 4: aplica el resultado ya registrado (ver {@link Match#finishWithExternalResult})
+     * de un partido de la llave eliminatoria. Si el partido quedó sin ganador
+     * resuelto (empate en tiempo reglamentario sin penales), el nodo queda
+     * "pendiente de penales" y no avanza — no se asume que Matches vaya a
+     * agregar penales; el organizador debe resolverlo con el endpoint manual
+     * ({@link #recordPenaltyShootoutWinner}), que reintenta este mismo avance.
+     * Si el ganador ya está resuelto, sube al cupo del nodo siguiente
+     * (avanzaA); si ese nodo queda con sus dos cupos llenos, genera su
+     * partido. Si el nodo era la Final, asigna campeón/subcampeón y finaliza
+     * el torneo. Idempotente: si el nodo ya estaba Finalizado, no hace nada.
+     * <p>
+     * Decisión intencional: al resolver la Final, este método pone el estado
+     * del torneo en FINISHED directamente, SIN pasar por la validación de
+     * fecha de fin de {@link #finish(LocalDate)} (la que usa el endpoint
+     * manual "finalizar"). Son dos caminos distintos a propósito: terminar de
+     * jugarse la llave es en sí mismo el criterio de cierre del torneo (así
+     * lo pide LÓGICA 4 del contrato), no depende de si la fecha de fin
+     * administrativa ya se alcanzó. Efectos secundarios de la finalización
+     * (disparar reconocimientos, publicar el evento de torneo finalizado) NO
+     * viven aquí — a diferencia de FinalizeTournamentService, esto es lógica
+     * de dominio pura; es responsabilidad del llamador (ver
+     * ProcessMatchResultService) dispararlos cuando este método deja el
+     * torneo en FINISHED.
+     */
+    public void advanceBracket(UUID matchId) {
+        assertActive();
+        BracketNode node = findBracketNodeByMatchId(matchId)
+                .orElseThrow(() -> BracketNodeNotFoundException.forMatch(matchId));
+
+        if (node.getStatus() == BracketNodeStatus.FINISHED) {
+            return;
+        }
+
+        Match match = findMatch(matchId);
+        UUID winnerTeamId = match.resolveChampionTeamId();
+        if (winnerTeamId == null) {
+            node.markPendingPenalties();
+            return;
+        }
+
+        UUID loserTeamId = match.resolveRunnerUpTeamId(winnerTeamId);
+        node.resolve(winnerTeamId, loserTeamId);
+
+        if (node.isFinal()) {
+            this.championTeamId = winnerTeamId;
+            this.runnerUpTeamId = loserTeamId;
+            this.championResolution = match.isTiedInRegulation()
+                    ? ChampionResolution.PENALTIES : ChampionResolution.REGULATION_TIME;
+            this.status = TournamentStatus.FINISHED;
+            return;
+        }
+
+        BracketNode target = findBracketNode(node.getAdvanceToNodeId());
+        target.fillSlot(node.getAdvanceToSlot(), winnerTeamId);
+        if (target.hasBothSlots()) {
+            Match nextMatch = Match.builder()
+                    .matchId(UUID.randomUUID())
+                    .homeTeamId(target.getSlotA())
+                    .awayTeamId(target.getSlotB())
+                    .status(MatchStatus.PENDING)
+                    .active(true)
+                    .finalMatch(target.getRound() == Round.FINAL)
+                    .phase(MatchPhase.ELIMINATORIA)
+                    .tournamentId(getId())
+                    .build();
+            matches.add(nextMatch);
+            target.assignMatch(nextMatch.getMatchId());
+        }
+    }
+
+    private BracketNode findBracketNode(UUID nodeId) {
+        return bracketNodes.stream()
+                .filter(n -> n.getNodeId().equals(nodeId))
+                .findFirst()
+                .orElseThrow(() -> new BracketNodeNotFoundException(
+                        "No se encontró el nodo '" + nodeId + "' de la llave eliminatoria"));
+    }
+
+    private Optional<BracketNode> findBracketNodeByMatchId(UUID matchId) {
+        return bracketNodes.stream()
+                .filter(n -> matchId.equals(n.getMatchId()))
+                .findFirst();
     }
 
     // --- Validaciones privadas ---
@@ -643,9 +905,12 @@ public class Tournament extends AggregateRoot {
     public void setEnrollments(List<Enrollment> enrollments) { this.enrollments = enrollments; }
     public List<Match> getMatches() { return matches; }
     public void setMatches(List<Match> matches) { this.matches = matches; }
+    public List<BracketNode> getBracketNodes() { return bracketNodes; }
+    public void setBracketNodes(List<BracketNode> bracketNodes) { this.bracketNodes = bracketNodes; }
     public String getRulebookFileId() { return rulebookFileId; }
     public void setRulebookFileId(String rulebookFileId) { this.rulebookFileId = rulebookFileId; }
     public UUID getChampionTeamId() { return championTeamId; }
+    public UUID getRunnerUpTeamId() { return runnerUpTeamId; }
     public ChampionResolution getChampionResolution() { return championResolution; }
     public boolean isPaused() { return paused; }
     public boolean isActive() { return active; }

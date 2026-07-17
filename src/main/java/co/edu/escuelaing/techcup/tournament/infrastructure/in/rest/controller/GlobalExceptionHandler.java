@@ -1,13 +1,17 @@
 package co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.controller;
 
+import co.edu.escuelaing.techcup.tournament.domain.exception.BracketNodeNotFoundException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.ChampionAssignmentNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.ChampionPendingPenaltiesException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.CourtNotFoundException;
+import co.edu.escuelaing.techcup.tournament.domain.exception.EliminationBracketAlreadyGeneratedException;
+import co.edu.escuelaing.techcup.tournament.domain.exception.GroupStageNotCompleteException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.FixtureGenerationFailedException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.HistoricalTournamentNotFoundException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.InsufficientApprovedTeamsException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidCourtDataException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidCourtImageException;
+import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidGroupStageTeamCountException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidRulebookFileException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidSanctionDataException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidScheduledMatchDataException;
@@ -26,6 +30,8 @@ import co.edu.escuelaing.techcup.tournament.domain.exception.TeamInactivationNot
 import co.edu.escuelaing.techcup.tournament.domain.exception.TeamRemovalNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.TeamRosterSizeInvalidException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.TeamServiceUnavailableException;
+import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentActivationNotAllowedException;
+import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentBeginNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentCannotBeDeletedException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentCannotBeEditedException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentCannotBeFinalizedException;
@@ -162,8 +168,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
     }
 
-    @ExceptionHandler({TournamentPreparationNotAllowedException.class, InsufficientApprovedTeamsException.class})
+    @ExceptionHandler({TournamentPreparationNotAllowedException.class, InsufficientApprovedTeamsException.class,
+            InvalidGroupStageTeamCountException.class})
     public ResponseEntity<ErrorResponse> handlePreparationNotAllowed(RuntimeException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler({TournamentActivationNotAllowedException.class, TournamentBeginNotAllowedException.class})
+    public ResponseEntity<ErrorResponse> handleTournamentLifecycleNotAllowed(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
     }
 
@@ -172,9 +184,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(ex.getMessage()));
     }
 
-    @ExceptionHandler({MatchupNotFoundException.class, CourtNotFoundException.class})
+    @ExceptionHandler({MatchupNotFoundException.class, CourtNotFoundException.class, BracketNodeNotFoundException.class})
     public ResponseEntity<ErrorResponse> handleScheduleMatchNotFound(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler({GroupStageNotCompleteException.class, EliminationBracketAlreadyGeneratedException.class})
+    public ResponseEntity<ErrorResponse> handleBracketGenerationNotAllowed(RuntimeException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
     }
 
     @ExceptionHandler(ScheduleConflictException.class)

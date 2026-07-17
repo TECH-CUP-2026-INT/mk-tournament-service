@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class TournamentTest {
 
     @Test
-    void create_withValidNormalData_createsTournamentInActiveStatus() {
+    void create_withValidNormalData_createsTournamentInDraftStatus() {
         Tournament tournament = Tournament.builder()
                 .name("Copa Enero").type(TournamentType.NORMAL).format(TournamentFormat.BRACKETS)
                 .numberOfTeams(8).cost(BigDecimal.valueOf(50000))
@@ -32,7 +32,7 @@ class TournamentTest {
                 .create();
 
         assertEquals("Copa Enero", tournament.getName());
-        assertEquals(TournamentStatus.ACTIVE, tournament.getStatus());
+        assertEquals(TournamentStatus.DRAFT, tournament.getStatus());
     }
 
     @Test
@@ -45,8 +45,62 @@ class TournamentTest {
                 .matchStartTime(LocalTime.of(9, 0)).matchEndTime(LocalTime.of(18, 0))
                 .create();
 
-        assertEquals(TournamentStatus.ACTIVE, tournament.getStatus());
+        assertEquals(TournamentStatus.DRAFT, tournament.getStatus());
         assertEquals(LocalDate.of(2026, Month.MARCH, 1), tournament.getEndDate());
+    }
+
+    @Test
+    void activate_desdeDraft_pasaAActive() {
+        Tournament tournament = Tournament.builder()
+                .id(UUID.randomUUID()).name("Copa Enero").numberOfTeams(8).cost(BigDecimal.valueOf(50000))
+                .startDate(LocalDate.of(2026, Month.MARCH, 1)).endDate(LocalDate.of(2026, Month.MARCH, 20))
+                .registrationDeadline(LocalDate.of(2026, Month.FEBRUARY, 20))
+                .status(TournamentStatus.DRAFT)
+                .reconstruct();
+
+        tournament.activate();
+
+        assertEquals(TournamentStatus.ACTIVE, tournament.getStatus());
+    }
+
+    @Test
+    void activate_desdeEstadoDistintoDeDraft_lanzaExcepcion() {
+        Tournament tournament = Tournament.builder()
+                .id(UUID.randomUUID()).name("Copa Enero").numberOfTeams(8).cost(BigDecimal.valueOf(50000))
+                .startDate(LocalDate.of(2026, Month.MARCH, 1)).endDate(LocalDate.of(2026, Month.MARCH, 20))
+                .registrationDeadline(LocalDate.of(2026, Month.FEBRUARY, 20))
+                .status(TournamentStatus.ACTIVE)
+                .reconstruct();
+
+        assertThrows(co.edu.escuelaing.techcup.tournament.domain.exception.TournamentActivationNotAllowedException.class,
+                tournament::activate);
+    }
+
+    @Test
+    void begin_desdeInPreparation_pasaAInProgress() {
+        Tournament tournament = Tournament.builder()
+                .id(UUID.randomUUID()).name("Copa Enero").numberOfTeams(8).cost(BigDecimal.valueOf(50000))
+                .startDate(LocalDate.of(2026, Month.MARCH, 1)).endDate(LocalDate.of(2026, Month.MARCH, 20))
+                .registrationDeadline(LocalDate.of(2026, Month.FEBRUARY, 20))
+                .status(TournamentStatus.IN_PREPARATION)
+                .reconstruct();
+
+        tournament.begin();
+
+        assertEquals(TournamentStatus.IN_PROGRESS, tournament.getStatus());
+    }
+
+    @Test
+    void begin_desdeEstadoDistintoDeInPreparation_lanzaExcepcion() {
+        Tournament tournament = Tournament.builder()
+                .id(UUID.randomUUID()).name("Copa Enero").numberOfTeams(8).cost(BigDecimal.valueOf(50000))
+                .startDate(LocalDate.of(2026, Month.MARCH, 1)).endDate(LocalDate.of(2026, Month.MARCH, 20))
+                .registrationDeadline(LocalDate.of(2026, Month.FEBRUARY, 20))
+                .status(TournamentStatus.ACTIVE)
+                .reconstruct();
+
+        assertThrows(co.edu.escuelaing.techcup.tournament.domain.exception.TournamentBeginNotAllowedException.class,
+                tournament::begin);
     }
 
     @Test

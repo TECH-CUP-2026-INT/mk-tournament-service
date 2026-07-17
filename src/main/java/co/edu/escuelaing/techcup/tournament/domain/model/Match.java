@@ -22,6 +22,18 @@ public class Match {
     private int awayScore;
     private UUID penaltyShootoutWinnerTeamId;
     private boolean active = true;
+    // Grupo de fase de clasificatoria ("Grupo A", "Grupo B", ...) y jornada (1..3)
+    // dentro de ese grupo. Ambos null para partidos que no pertenecen a un grupo
+    // (formatos BRACKETS/LEAGUE, o partidos de la llave eliminatoria).
+    private String groupName;
+    private Integer matchday;
+    // fase (GRUPOS/ELIMINATORIA) y torneo dueño del partido: obligatorios para poder
+    // empujar la definición a Matches (fase le dice si es a muerte súbita) y para que
+    // ProcessMatchResult enrute el resultado entrante. Solo se completan hoy para los
+    // partidos de grupos y de la llave eliminatoria del flujo "mundial"; los formatos
+    // BRACKETS/LEAGUE planos (RandomFixtureGenerationAdapter) aún no los asignan.
+    private MatchPhase phase;
+    private UUID tournamentId;
 
     public Match() {}
 
@@ -51,6 +63,10 @@ public class Match {
         private int awayScore;
         private UUID penaltyShootoutWinnerTeamId;
         private boolean active = true;
+        private String groupName;
+        private Integer matchday;
+        private MatchPhase phase;
+        private UUID tournamentId;
 
         private Builder() {}
 
@@ -66,6 +82,10 @@ public class Match {
             return this;
         }
         public Builder active(boolean active) { this.active = active; return this; }
+        public Builder groupName(String groupName) { this.groupName = groupName; return this; }
+        public Builder matchday(Integer matchday) { this.matchday = matchday; return this; }
+        public Builder phase(MatchPhase phase) { this.phase = phase; return this; }
+        public Builder tournamentId(UUID tournamentId) { this.tournamentId = tournamentId; return this; }
 
         public Match build() {
             Match match = new Match();
@@ -78,6 +98,10 @@ public class Match {
             match.awayScore = awayScore;
             match.penaltyShootoutWinnerTeamId = penaltyShootoutWinnerTeamId;
             match.active = active;
+            match.groupName = groupName;
+            match.matchday = matchday;
+            match.phase = phase;
+            match.tournamentId = tournamentId;
             return match;
         }
     }
@@ -156,6 +180,31 @@ public class Match {
     }
 
     /**
+     * Finaliza el partido con un resultado ya resuelto externamente (Matches, vía
+     * evento {@code techcup.match.finished} o el modo simulación): a diferencia de
+     * {@link #finish(int, int)}, no exige {@code finalMatch} (aplica a cualquier
+     * partido de grupos o de la llave eliminatoria) y acepta el ganador ya resuelto.
+     * Si el partido queda empatado en tiempo reglamentario y {@code winnerTeamId}
+     * viene null, el partido queda finalizado pero sin ganador resuelto: pendiente
+     * de que el organizador registre penales por {@link #recordPenaltyShootoutWinner}.
+     */
+    public void finishWithExternalResult(int homeScore, int awayScore, UUID winnerTeamId) {
+        assertActive();
+        this.homeScore = homeScore;
+        this.awayScore = awayScore;
+        this.status = MatchStatus.FINISHED;
+        if (winnerTeamId != null) {
+            if (!involvesteam(winnerTeamId)) {
+                throw new ChampionAssignmentNotAllowedException(
+                        "El ganador debe ser uno de los equipos del partido");
+            }
+            if (isTiedInRegulation()) {
+                this.penaltyShootoutWinnerTeamId = winnerTeamId;
+            }
+        }
+    }
+
+    /**
      * Registra el ganador de la tanda de penales (integración pendiente con módulo de arbitraje).
      */
     public void recordPenaltyShootoutWinner(UUID winnerTeamId) {
@@ -188,6 +237,14 @@ public class Match {
         return penaltyShootoutWinnerTeamId;
     }
 
+    /**
+     * Devuelve al equipo perdedor de este partido dado un ganador ya resuelto
+     * (ver {@link #resolveChampionTeamId()}): el otro equipo del enfrentamiento.
+     */
+    public UUID resolveRunnerUpTeamId(UUID winnerTeamId) {
+        return winnerTeamId.equals(homeTeamId) ? awayTeamId : homeTeamId;
+    }
+
     public UUID getMatchId() { return matchId; }
     public void setMatchId(UUID matchId) { this.matchId = matchId; }
 
@@ -212,4 +269,16 @@ public class Match {
     public void setPenaltyShootoutWinnerTeamId(UUID penaltyShootoutWinnerTeamId) {
         this.penaltyShootoutWinnerTeamId = penaltyShootoutWinnerTeamId;
     }
+
+    public String getGroupName() { return groupName; }
+    public void setGroupName(String groupName) { this.groupName = groupName; }
+
+    public Integer getMatchday() { return matchday; }
+    public void setMatchday(Integer matchday) { this.matchday = matchday; }
+
+    public MatchPhase getPhase() { return phase; }
+    public void setPhase(MatchPhase phase) { this.phase = phase; }
+
+    public UUID getTournamentId() { return tournamentId; }
+    public void setTournamentId(UUID tournamentId) { this.tournamentId = tournamentId; }
 }

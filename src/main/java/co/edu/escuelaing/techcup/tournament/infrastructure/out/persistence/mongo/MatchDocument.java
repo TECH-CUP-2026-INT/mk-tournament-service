@@ -25,4 +25,8 @@ public class MatchDocument {
     // historia, que no tienen este campo en Mongo, se leen como null y se
     // tratan como activos en vez de caer por defecto en false (inactivos).
     private Boolean active;
+    private String groupName;
+    private Integer matchday;
+    private String phase;
+    private UUID tournamentId;
 }

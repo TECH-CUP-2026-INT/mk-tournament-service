@@ -16,6 +16,7 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ViewRegister
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ViewMatchupsUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ViewMatchCourtUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ViewCourtMapUseCase;
+import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ViewGroupStandingsUseCase;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.controller.swagger.TournamentControllerSwagger;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.EnrolledTeamResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.HistoricalTournamentResponse;
@@ -31,12 +32,16 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.AssignChampi
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.AttachRulebookUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.AttachRulebookUseCase.AttachRulebookCommand;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.CheckTournamentPreparationUseCase;
+import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ActivateTournamentUseCase;
+import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.BeginTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.CreateTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.DeleteTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.FinalizeTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.RegisterCourtUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.RegisterCourtUseCase.RegisterCourtCommand;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.EditTournamentUseCase;
+import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.GenerateEliminationBracketUseCase;
+import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ViewEliminationBracketUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.EditTournamentUseCase.EditTournamentCommand;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.PauseTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.PauseTournamentUseCase.PauseTournamentCommand;
@@ -46,7 +51,9 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.DisqualifyTe
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.InactivateTeamUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.InactivateUserUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.EnrollTeamInTournamentUseCase;
+import co.edu.escuelaing.techcup.tournament.domain.model.BracketNode;
 import co.edu.escuelaing.techcup.tournament.domain.model.Enrollment;
+import co.edu.escuelaing.techcup.tournament.domain.model.GroupTable;
 import co.edu.escuelaing.techcup.tournament.domain.model.ParticipantStatus;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.CreateTournamentRequest;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.EditTournamentRequest;
@@ -63,7 +70,10 @@ import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.DisqualifyTeamResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.InactivateTeamResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.InactivateUserResponse;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.BracketNodeResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.EnrollmentResponse;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.GroupStandingsResponse;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.TeamStandingResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.PreparationResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.RulebookResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.TournamentResponse;
@@ -93,6 +103,8 @@ import java.util.UUID;
 public class TournamentController implements TournamentControllerSwagger {
 
     private final CreateTournamentUseCase createTournamentUseCase;
+    private final ActivateTournamentUseCase activateTournamentUseCase;
+    private final BeginTournamentUseCase beginTournamentUseCase;
     private final FinalizeTournamentUseCase finalizeTournamentUseCase;
     private final CheckTournamentPreparationUseCase checkPreparation;
     private final DeleteTournamentUseCase deleteTournamentUseCase;
@@ -115,6 +127,9 @@ public class TournamentController implements TournamentControllerSwagger {
     private final EnrollTeamInTournamentUseCase enrollTeamInTournamentUseCase;
     private final StartTournamentPreparationUseCase startTournamentPreparation;
     private final ViewMatchupsUseCase viewMatchups;
+    private final ViewGroupStandingsUseCase viewGroupStandings;
+    private final GenerateEliminationBracketUseCase generateEliminationBracket;
+    private final ViewEliminationBracketUseCase viewEliminationBracket;
     private final ViewMatchCourtUseCase viewMatchCourt;
     private final GetTournamentByMatchUseCase getTournamentByMatchUseCase;
     private final CheckTeamActiveEnrollmentUseCase checkTeamActiveEnrollmentUseCase;
@@ -138,6 +153,20 @@ public class TournamentController implements TournamentControllerSwagger {
                 request.matchEndTime()
         ));
         return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toResponse(created));
+    }
+
+    @Override
+    @PatchMapping("/{id}/activate")
+    public ResponseEntity<TournamentResponse> activate(@PathVariable UUID id) {
+        Tournament activated = activateTournamentUseCase.activate(id);
+        return ResponseEntity.ok(mapper.toResponse(activated));
+    }
+
+    @Override
+    @PatchMapping("/{id}/begin")
+    public ResponseEntity<TournamentResponse> begin(@PathVariable UUID id) {
+        Tournament started = beginTournamentUseCase.begin(id);
+        return ResponseEntity.ok(mapper.toResponse(started));
     }
 
     @Override
@@ -170,7 +199,7 @@ public class TournamentController implements TournamentControllerSwagger {
             @PathVariable UUID tournamentId, @PathVariable UUID matchId) {
         ChampionAssignment assignment = assignChampionUseCase.assignChampion(tournamentId, matchId);
         return ResponseEntity.ok(new ChampionResponse(
-                tournamentId, assignment.championTeamId(), assignment.resolution()));
+                tournamentId, assignment.championTeamId(), assignment.runnerUpTeamId(), assignment.resolution()));
     }
 
     @Override
@@ -188,7 +217,7 @@ public class TournamentController implements TournamentControllerSwagger {
     public ResponseEntity<ChampionResponse> getChampion(@PathVariable UUID tournamentId) {
         ChampionAssignment assignment = getChampionUseCase.getChampion(tournamentId);
         return ResponseEntity.ok(new ChampionResponse(
-                tournamentId, assignment.championTeamId(), assignment.resolution()));
+                tournamentId, assignment.championTeamId(), assignment.runnerUpTeamId(), assignment.resolution()));
     }
 
     @Override
@@ -208,6 +237,45 @@ public class TournamentController implements TournamentControllerSwagger {
                 .map(matchupRestMapper::toResponse)
                 .toList();
         return ResponseEntity.ok(result);
+    }
+
+    @Override
+    @GetMapping("/{tournamentId}/standings")
+    public ResponseEntity<List<GroupStandingsResponse>> getStandings(@PathVariable UUID tournamentId) {
+        List<GroupStandingsResponse> result = viewGroupStandings.getStandings(tournamentId).stream()
+                .map(this::toGroupStandingsResponse)
+                .toList();
+        return ResponseEntity.ok(result);
+    }
+
+    private GroupStandingsResponse toGroupStandingsResponse(GroupTable table) {
+        List<TeamStandingResponse> rows = table.standings().stream()
+                .map(s -> new TeamStandingResponse(
+                        s.position(), s.teamId(), s.played(), s.won(), s.drawn(), s.lost(),
+                        s.goalsFor(), s.goalsAgainst(), s.goalDifference(), s.points()))
+                .toList();
+        return new GroupStandingsResponse(table.groupName(), rows);
+    }
+
+    @Override
+    @PostMapping("/{tournamentId}/bracket")
+    public ResponseEntity<List<BracketNodeResponse>> generateBracket(@PathVariable UUID tournamentId) {
+        Tournament tournament = generateEliminationBracket.generate(tournamentId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(toBracketResponse(tournament.getBracketNodes()));
+    }
+
+    @Override
+    @GetMapping("/{tournamentId}/bracket")
+    public ResponseEntity<List<BracketNodeResponse>> getBracket(@PathVariable UUID tournamentId) {
+        return ResponseEntity.ok(toBracketResponse(viewEliminationBracket.getBracket(tournamentId)));
+    }
+
+    private List<BracketNodeResponse> toBracketResponse(List<BracketNode> nodes) {
+        return nodes.stream()
+                .map(n -> new BracketNodeResponse(
+                        n.getNodeId(), n.getRound(), n.getSlotA(), n.getSlotB(), n.getMatchId(),
+                        n.getStatus(), n.getWinnerTeamId(), n.getLoserTeamId(), n.getAdvanceToNodeId()))
+                .toList();
     }
 
     @Override

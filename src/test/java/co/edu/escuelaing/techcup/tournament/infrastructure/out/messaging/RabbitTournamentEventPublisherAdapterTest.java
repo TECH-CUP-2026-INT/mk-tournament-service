@@ -3,6 +3,7 @@ package co.edu.escuelaing.techcup.tournament.infrastructure.out.messaging;
 import co.edu.escuelaing.techcup.tournament.infrastructure.config.RabbitMQConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.amqp.AmqpException;
+import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 import java.util.UUID;
@@ -16,15 +17,18 @@ import static org.mockito.Mockito.verify;
 
 class RabbitTournamentEventPublisherAdapterTest {
 
+    private final TopicExchange techcupExchange = new TopicExchange(RabbitMQConfig.DEFAULT_EXCHANGE, true, false);
+
     @Test
     void publishTournamentFinalized_enviaAlExchangeCompartidoConLaRoutingKeyCorrecta() {
         RabbitTemplate rabbitTemplate = mock(RabbitTemplate.class);
-        RabbitTournamentEventPublisherAdapter adapter = new RabbitTournamentEventPublisherAdapter(rabbitTemplate);
+        RabbitTournamentEventPublisherAdapter adapter =
+                new RabbitTournamentEventPublisherAdapter(rabbitTemplate, techcupExchange);
 
         adapter.publishTournamentFinalized(UUID.randomUUID());
 
         verify(rabbitTemplate).convertAndSend(
-                eq(RabbitMQConfig.TECHCUP_EXCHANGE), eq("techcup.tournament.event.finalized"), any(Object.class));
+                eq(RabbitMQConfig.DEFAULT_EXCHANGE), eq("techcup.tournament.event.finalized"), any(Object.class));
     }
 
     @Test
@@ -33,7 +37,8 @@ class RabbitTournamentEventPublisherAdapterTest {
         doThrow(new AmqpException("broker no disponible"))
                 .when(rabbitTemplate).convertAndSend(any(String.class), any(String.class), any(Object.class));
 
-        RabbitTournamentEventPublisherAdapter adapter = new RabbitTournamentEventPublisherAdapter(rabbitTemplate);
+        RabbitTournamentEventPublisherAdapter adapter =
+                new RabbitTournamentEventPublisherAdapter(rabbitTemplate, techcupExchange);
 
         assertDoesNotThrow(() -> adapter.publishTournamentFinalized(UUID.randomUUID()));
     }

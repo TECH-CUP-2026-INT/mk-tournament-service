@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -24,6 +25,9 @@ class RandomFixtureGenerationAdapterTest {
     private final UUID e3 = UUID.randomUUID();
     private final UUID e4 = UUID.randomUUID();
     private final UUID e5 = UUID.randomUUID();
+    private final UUID e6 = UUID.randomUUID();
+    private final UUID e7 = UUID.randomUUID();
+    private final UUID e8 = UUID.randomUUID();
 
     private Set<UUID> teamsInMatches(List<Match> matches) {
         Set<UUID> teams = new HashSet<>();
@@ -77,6 +81,33 @@ class RandomFixtureGenerationAdapterTest {
         // grupo de 4 -> 6 partidos (round robin), grupo de 1 -> 0 partidos
         assertEquals(6, matches.size());
         assertTrue(approved.containsAll(teamsInMatches(matches)));
+    }
+
+    @Test
+    void groups_conOchoEquipos_asignaDosGruposDeCuatroConNombreYJornada() {
+        List<UUID> approved = List.of(e1, e2, e3, e4, e5, e6, e7, e8);
+
+        List<Match> matches = adapter.generateFixture(
+                new FixtureGenerationRequest(tournamentId, approved, TournamentFormat.GROUPS));
+
+        assertEquals(12, matches.size());
+        Set<String> groupNames = matches.stream().map(Match::getGroupName).collect(Collectors.toSet());
+        assertEquals(Set.of("Grupo A", "Grupo B"), groupNames);
+
+        for (String groupName : groupNames) {
+            List<Match> groupMatches = matches.stream().filter(m -> groupName.equals(m.getGroupName())).toList();
+            assertEquals(6, groupMatches.size());
+            assertEquals(Set.of(1, 2, 3), groupMatches.stream().map(Match::getMatchday).collect(Collectors.toSet()));
+
+            Set<UUID> groupTeams = teamsInMatches(groupMatches);
+            assertEquals(4, groupTeams.size());
+
+            // sin cruces repetidos dentro del grupo
+            Set<Set<UUID>> pairs = groupMatches.stream()
+                    .map(m -> Set.of(m.getHomeTeamId(), m.getAwayTeamId()))
+                    .collect(Collectors.toSet());
+            assertEquals(6, pairs.size());
+        }
     }
 
     @Test

@@ -32,6 +32,7 @@ public class GetChampionService implements GetChampionUseCase {
                     "El torneo aún no tiene campeón asignado");
         }
 
-        return new ChampionAssignment(tournament.getChampionTeamId(), tournament.getChampionResolution());
+        return new ChampionAssignment(
+                tournament.getChampionTeamId(), tournament.getRunnerUpTeamId(), tournament.getChampionResolution());
     }
 }

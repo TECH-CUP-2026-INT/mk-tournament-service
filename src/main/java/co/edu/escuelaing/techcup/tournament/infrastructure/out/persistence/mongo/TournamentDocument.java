@@ -37,9 +37,11 @@ public class TournamentDocument {
     // GridFS ObjectId (hex string, no es formato UUID).
     private String rulebookFileId;
     private UUID championTeamId;
+    private UUID runnerUpTeamId;
     private String championResolution;
     private List<TeamRegistrationDocument> teams;
     private List<MatchDocument> matches;
+    private List<BracketNodeDocument> bracketNodes;
     private List<EnrollmentDocument> enrollments;
     private boolean paused;
     // Boolean (no boolean primitivo): así los torneos guardados antes de TCF-154,

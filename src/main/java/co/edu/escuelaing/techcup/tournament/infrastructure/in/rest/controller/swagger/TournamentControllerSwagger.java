@@ -1,5 +1,6 @@
 package co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.controller.swagger;
 
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.BracketNodeResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.CreateTournamentRequest;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.DisqualifyTeamRequest;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.EditTournamentRequest;
@@ -13,6 +14,7 @@ import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.DeleteTournamentResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.DisqualifyTeamResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.EnrollmentResponse;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.GroupStandingsResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.HistoricalTournamentResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.InactivateTeamResponse;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.InactivateTournamentResponse;
@@ -45,12 +47,29 @@ import java.util.UUID;
 public interface TournamentControllerSwagger {
 
     @Operation(summary = "Create tournament",
-            description = "Creates a tournament directly in ACTIVE status. See CreateTournamentRequest for the "
-                    + "NORMAL vs LIGHTNING field rules.")
+            description = "Creates a tournament in DRAFT status. See CreateTournamentRequest for the "
+                    + "NORMAL vs LIGHTNING field rules. Call activate() to open it for enrollment.")
     @ApiResponse(responseCode = "201", description = "Tournament created",
             content = @Content(schema = @Schema(implementation = TournamentResponse.class)))
     @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content)
     ResponseEntity<TournamentResponse> create(CreateTournamentRequest request);
+
+    @Operation(summary = "Activate tournament",
+            description = "Moves the tournament from DRAFT to ACTIVE, opening it up for team enrollment.")
+    @ApiResponse(responseCode = "200", description = "Tournament activated",
+            content = @Content(schema = @Schema(implementation = TournamentResponse.class)))
+    @ApiResponse(responseCode = "409", description = "The tournament is not in DRAFT status", content = @Content)
+    ResponseEntity<TournamentResponse> activate(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID id);
+
+    @Operation(summary = "Begin tournament",
+            description = "Moves the tournament from IN_PREPARATION to IN_PROGRESS, starting play of the "
+                    + "already-scheduled matches.")
+    @ApiResponse(responseCode = "200", description = "Tournament started",
+            content = @Content(schema = @Schema(implementation = TournamentResponse.class)))
+    @ApiResponse(responseCode = "409", description = "The tournament is not in IN_PREPARATION status", content = @Content)
+    ResponseEntity<TournamentResponse> begin(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID id);
 
     @Operation(summary = "Finalize tournament",
             description = "Moves the tournament to FINISHED and archives it to the historical read-only view. "
@@ -118,6 +137,33 @@ public interface TournamentControllerSwagger {
     @ApiResponse(responseCode = "200", description = "List of tournament matchups",
             content = @Content(schema = @Schema(implementation = MatchupResponse.class)))
     ResponseEntity<List<MatchupResponse>> getMatchups(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId);
+
+    @Operation(summary = "Get group stage standings",
+            description = "Returns the standings table for each group of the tournament's group stage, recomputed "
+                    + "from finished matches (points, then goal difference, then goals for, then head-to-head). "
+                    + "Empty if the tournament's format has no group stage.")
+    @ApiResponse(responseCode = "200", description = "Standings table per group",
+            content = @Content(schema = @Schema(implementation = GroupStandingsResponse.class)))
+    ResponseEntity<List<GroupStandingsResponse>> getStandings(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId);
+
+    @Operation(summary = "Generate the elimination bracket",
+            description = "Takes positions 1 and 2 of every group (once ALL group matches are finished) and builds "
+                    + "the full elimination bracket tree, cross-seeding the first round (1A-2B, 1B-2A, ...). Future "
+                    + "rounds are created with both slots \"To be defined\" until the previous round resolves them.")
+    @ApiResponse(responseCode = "201", description = "Bracket generated",
+            content = @Content(schema = @Schema(implementation = BracketNodeResponse.class)))
+    @ApiResponse(responseCode = "409", description = "Group stage not finished yet, or bracket already generated", content = @Content)
+    ResponseEntity<List<BracketNodeResponse>> generateBracket(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId);
+
+    @Operation(summary = "Get the elimination bracket",
+            description = "Returns every node of the elimination bracket tree with its current result. Empty if "
+                    + "the bracket hasn't been generated yet.")
+    @ApiResponse(responseCode = "200", description = "Elimination bracket nodes",
+            content = @Content(schema = @Schema(implementation = BracketNodeResponse.class)))
+    ResponseEntity<List<BracketNodeResponse>> getBracket(
             @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId);
 
     @Operation(summary = "Get the court assigned to a match",

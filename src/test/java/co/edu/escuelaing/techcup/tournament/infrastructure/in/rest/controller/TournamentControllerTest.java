@@ -29,7 +29,9 @@ import co.edu.escuelaing.techcup.tournament.domain.model.Tournament;
 import co.edu.escuelaing.techcup.tournament.domain.model.TournamentFormat;
 import co.edu.escuelaing.techcup.tournament.domain.model.TournamentStatus;
 import co.edu.escuelaing.techcup.tournament.domain.model.TournamentType;
+import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ActivateTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.AssignChampionUseCase;
+import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.BeginTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.RecordPenaltyShootoutWinnerUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.AttachRulebookUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.CheckTournamentPreparationUseCase;
@@ -39,6 +41,8 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.CreateTourna
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.DeleteTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.DisqualifyTeamUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.EditTournamentUseCase;
+import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.GenerateEliminationBracketUseCase;
+import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ViewEliminationBracketUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.EnrollTeamInTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.FinalizeTournamentUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.GetChampionUseCase;
@@ -53,6 +57,7 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.RegisterCour
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ViewCourtMapUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.StartTournamentPreparationUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ViewMatchCourtUseCase;
+import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ViewGroupStandingsUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ViewMatchupsUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.ViewRegisteredTeamsUseCase;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -99,6 +104,8 @@ class TournamentControllerTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean private CreateTournamentUseCase createTournamentUseCase;
+    @MockitoBean private ActivateTournamentUseCase activateTournamentUseCase;
+    @MockitoBean private BeginTournamentUseCase beginTournamentUseCase;
     @MockitoBean private FinalizeTournamentUseCase finalizeTournamentUseCase;
     @MockitoBean private CheckTournamentPreparationUseCase checkPreparation;
     @MockitoBean private DeleteTournamentUseCase deleteTournamentUseCase;
@@ -121,6 +128,9 @@ class TournamentControllerTest {
     @MockitoBean private EnrollTeamInTournamentUseCase enrollTeamInTournamentUseCase;
     @MockitoBean private StartTournamentPreparationUseCase startTournamentPreparation;
     @MockitoBean private ViewMatchupsUseCase viewMatchups;
+    @MockitoBean private ViewGroupStandingsUseCase viewGroupStandings;
+    @MockitoBean private GenerateEliminationBracketUseCase generateEliminationBracket;
+    @MockitoBean private ViewEliminationBracketUseCase viewEliminationBracket;
     @MockitoBean private ViewMatchCourtUseCase viewMatchCourt;
     @MockitoBean private GetTournamentByMatchUseCase getTournamentByMatchUseCase;
     @MockitoBean private CheckTeamActiveEnrollmentUseCase checkTeamActiveEnrollmentUseCase;
@@ -220,6 +230,46 @@ class TournamentControllerTest {
     }
 
     @Test
+    void activate_devuelve200() throws Exception {
+        when(activateTournamentUseCase.activate(TOURNAMENT_ID)).thenReturn(sampleTournament(TOURNAMENT_ID));
+        when(mapper.toResponse(any())).thenReturn(sampleResponse(TOURNAMENT_ID));
+
+        mockMvc.perform(patch("/tournaments/" + TOURNAMENT_ID + "/activate"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(TOURNAMENT_ID.toString()));
+    }
+
+    @Test
+    void activate_cuandoNoPermitido_devuelve409() throws Exception {
+        when(activateTournamentUseCase.activate(TOURNAMENT_ID))
+                .thenThrow(new co.edu.escuelaing.techcup.tournament.domain.exception.TournamentActivationNotAllowedException(
+                        "Solo se puede activar un torneo en estado Borrador"));
+
+        mockMvc.perform(patch("/tournaments/" + TOURNAMENT_ID + "/activate"))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void begin_devuelve200() throws Exception {
+        when(beginTournamentUseCase.begin(TOURNAMENT_ID)).thenReturn(sampleTournament(TOURNAMENT_ID));
+        when(mapper.toResponse(any())).thenReturn(sampleResponse(TOURNAMENT_ID));
+
+        mockMvc.perform(patch("/tournaments/" + TOURNAMENT_ID + "/begin"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(TOURNAMENT_ID.toString()));
+    }
+
+    @Test
+    void begin_cuandoNoPermitido_devuelve409() throws Exception {
+        when(beginTournamentUseCase.begin(TOURNAMENT_ID))
+                .thenThrow(new co.edu.escuelaing.techcup.tournament.domain.exception.TournamentBeginNotAllowedException(
+                        "Solo se puede iniciar un torneo en estado En Preparación"));
+
+        mockMvc.perform(patch("/tournaments/" + TOURNAMENT_ID + "/begin"))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
     void finalize_devuelve200() throws Exception {
         when(finalizeTournamentUseCase.finalizeTournament(TOURNAMENT_ID)).thenReturn(sampleTournament(TOURNAMENT_ID));
         when(mapper.toResponse(any())).thenReturn(sampleResponse(TOURNAMENT_ID));
@@ -293,6 +343,62 @@ class TournamentControllerTest {
         mockMvc.perform(get("/tournaments/" + TOURNAMENT_ID + "/matchups"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].matchId").value(MATCH_ID.toString()));
+    }
+
+    @Test
+    void getStandings_devuelve200ConTablaPorGrupo() throws Exception {
+        co.edu.escuelaing.techcup.tournament.domain.model.GroupStanding standing =
+                new co.edu.escuelaing.techcup.tournament.domain.model.GroupStanding(
+                        1, HOME_TEAM_ID, 1, 1, 0, 0, 2, 0, 2, 3);
+        when(viewGroupStandings.getStandings(TOURNAMENT_ID)).thenReturn(List.of(
+                new co.edu.escuelaing.techcup.tournament.domain.model.GroupTable("Grupo A", List.of(standing))));
+
+        mockMvc.perform(get("/tournaments/" + TOURNAMENT_ID + "/standings"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].groupName").value("Grupo A"))
+                .andExpect(jsonPath("$[0].standings[0].teamId").value(HOME_TEAM_ID.toString()))
+                .andExpect(jsonPath("$[0].standings[0].points").value(3));
+    }
+
+    @Test
+    void generateBracket_devuelve201ConNodos() throws Exception {
+        UUID nodeId = UUID.randomUUID();
+        co.edu.escuelaing.techcup.tournament.domain.model.BracketNode node =
+                co.edu.escuelaing.techcup.tournament.domain.model.BracketNode.builder()
+                        .nodeId(nodeId).round(co.edu.escuelaing.techcup.tournament.domain.model.Round.FINAL)
+                        .build();
+        Tournament tournament = sampleTournament(TOURNAMENT_ID);
+        tournament.setBracketNodes(List.of(node));
+        when(generateEliminationBracket.generate(TOURNAMENT_ID)).thenReturn(tournament);
+
+        mockMvc.perform(post("/tournaments/" + TOURNAMENT_ID + "/bracket"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$[0].nodeId").value(nodeId.toString()));
+    }
+
+    @Test
+    void generateBracket_gruposIncompletos_devuelve409() throws Exception {
+        when(generateEliminationBracket.generate(TOURNAMENT_ID)).thenThrow(
+                new co.edu.escuelaing.techcup.tournament.domain.exception.GroupStageNotCompleteException(
+                        "aún hay partidos de grupos sin finalizar"));
+
+        mockMvc.perform(post("/tournaments/" + TOURNAMENT_ID + "/bracket"))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void getBracket_devuelve200ConNodos() throws Exception {
+        UUID nodeId = UUID.randomUUID();
+        co.edu.escuelaing.techcup.tournament.domain.model.BracketNode node =
+                co.edu.escuelaing.techcup.tournament.domain.model.BracketNode.builder()
+                        .nodeId(nodeId).round(co.edu.escuelaing.techcup.tournament.domain.model.Round.FINAL)
+                        .build();
+        when(viewEliminationBracket.getBracket(TOURNAMENT_ID)).thenReturn(List.of(node));
+
+        mockMvc.perform(get("/tournaments/" + TOURNAMENT_ID + "/bracket"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].nodeId").value(nodeId.toString()))
+                .andExpect(jsonPath("$[0].status").value("PENDING_SLOTS"));
     }
 
     @Test
@@ -499,7 +605,7 @@ class TournamentControllerTest {
     @Test
     void assignChampion_devuelve200() throws Exception {
         when(assignChampionUseCase.assignChampion(TOURNAMENT_ID, MATCH_ID))
-                .thenReturn(new ChampionAssignment(TEAM_ID, ChampionResolution.REGULATION_TIME));
+                .thenReturn(new ChampionAssignment(TEAM_ID, null, ChampionResolution.REGULATION_TIME));
 
         mockMvc.perform(post("/tournaments/" + TOURNAMENT_ID + "/matches/" + MATCH_ID + "/champion"))
                 .andExpect(status().isOk())
@@ -558,7 +664,7 @@ class TournamentControllerTest {
     @Test
     void getChampion_devuelve200() throws Exception {
         when(getChampionUseCase.getChampion(TOURNAMENT_ID))
-                .thenReturn(new ChampionAssignment(TEAM_ID, ChampionResolution.PENALTIES));
+                .thenReturn(new ChampionAssignment(TEAM_ID, null, ChampionResolution.PENALTIES));
 
         mockMvc.perform(get("/tournaments/" + TOURNAMENT_ID + "/champion"))
                 .andExpect(status().isOk())

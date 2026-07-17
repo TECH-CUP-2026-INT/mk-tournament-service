@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TournamentChampionTest {
@@ -45,8 +46,10 @@ class TournamentChampionTest {
         ChampionAssignment assignment = tournament.assignChampionWhenFinalMatchFinished(matchId);
 
         assertEquals(homeTeamId, assignment.championTeamId());
+        assertEquals(awayTeamId, assignment.runnerUpTeamId());
         assertEquals(ChampionResolution.REGULATION_TIME, assignment.resolution());
         assertEquals(homeTeamId, tournament.getChampionTeamId());
+        assertEquals(awayTeamId, tournament.getRunnerUpTeamId());
         assertEquals(ChampionResolution.REGULATION_TIME, tournament.getChampionResolution());
     }
 
@@ -61,6 +64,7 @@ class TournamentChampionTest {
         ChampionAssignment assignment = tournament.assignChampionWhenFinalMatchFinished(matchId);
 
         assertEquals(awayTeamId, assignment.championTeamId());
+        assertEquals(homeTeamId, assignment.runnerUpTeamId());
         assertEquals(ChampionResolution.PENALTIES, assignment.resolution());
     }
 
@@ -112,5 +116,46 @@ class TournamentChampionTest {
 
         assertThrows(ChampionAssignmentNotAllowedException.class,
                 () -> match.recordPenaltyShootoutWinner(homeTeamId));
+    }
+
+    @Test
+    void match_finishWithExternalResult_noExigeFinalMatch() {
+        Match match = new Match(UUID.randomUUID(), homeTeamId, awayTeamId, MatchStatus.PENDING);
+
+        match.finishWithExternalResult(2, 0, homeTeamId);
+
+        assertEquals(MatchStatus.FINISHED, match.getStatus());
+        assertEquals(2, match.getHomeScore());
+        assertEquals(0, match.getAwayScore());
+        assertEquals(homeTeamId, match.resolveChampionTeamId());
+    }
+
+    @Test
+    void match_finishWithExternalResult_empatadoConGanadorExterno_loGuardaComoGanadorDePenales() {
+        Match match = new Match(UUID.randomUUID(), homeTeamId, awayTeamId, MatchStatus.PENDING);
+
+        match.finishWithExternalResult(1, 1, awayTeamId);
+
+        assertEquals(awayTeamId, match.getPenaltyShootoutWinnerTeamId());
+        assertEquals(awayTeamId, match.resolveChampionTeamId());
+    }
+
+    @Test
+    void match_finishWithExternalResult_empatadoSinGanador_quedaPendienteDeResolucion() {
+        Match match = new Match(UUID.randomUUID(), homeTeamId, awayTeamId, MatchStatus.PENDING);
+
+        match.finishWithExternalResult(1, 1, null);
+
+        assertEquals(MatchStatus.FINISHED, match.getStatus());
+        assertNull(match.getPenaltyShootoutWinnerTeamId());
+        assertNull(match.resolveChampionTeamId());
+    }
+
+    @Test
+    void match_finishWithExternalResult_ganadorQueNoEsDelPartido_lanzaExcepcion() {
+        Match match = new Match(UUID.randomUUID(), homeTeamId, awayTeamId, MatchStatus.PENDING);
+
+        assertThrows(ChampionAssignmentNotAllowedException.class,
+                () -> match.finishWithExternalResult(1, 1, UUID.randomUUID()));
     }
 }

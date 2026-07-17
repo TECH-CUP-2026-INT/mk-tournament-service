@@ -56,12 +56,13 @@ class TournamentPersistenceMapperTest {
         TournamentDocument document = new TournamentDocument(
                 UUID.randomUUID(), "TechCup", "NORMAL", "BRACKETS", 4, BigDecimal.ZERO,
                 LocalDate.now(), LocalDate.now().plusDays(1), LocalDate.now().minusDays(1),
-                null, null, "ACTIVE", null, null, null, null, null, null, false, null, null
+                null, null, "ACTIVE", null, null, null, null, null, null, null, null, false, null, null
         );
 
         Tournament reconstructed = mapper.toDomain(document);
 
         assertEquals(0, reconstructed.getTeams().size());
         assertEquals(0, reconstructed.getMatches().size());
+        assertEquals(0, reconstructed.getBracketNodes().size());
     }
 }

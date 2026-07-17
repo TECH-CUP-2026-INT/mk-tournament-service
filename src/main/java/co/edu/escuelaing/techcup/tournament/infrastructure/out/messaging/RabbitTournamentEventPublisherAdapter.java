@@ -1,10 +1,10 @@
 package co.edu.escuelaing.techcup.tournament.infrastructure.out.messaging;
 
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentEventPublisherPort;
-import co.edu.escuelaing.techcup.tournament.infrastructure.config.RabbitMQConfig;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
@@ -20,11 +20,15 @@ public class RabbitTournamentEventPublisherAdapter implements TournamentEventPub
     private static final String ROUTING_KEY_FINALIZED = "techcup.tournament.event.finalized";
 
     private final RabbitTemplate rabbitTemplate;
+    // Inyecta el bean en vez de un nombre fijo: garantiza que siempre se publique
+    // al mismo exchange que declara y bindea RabbitMQConfig, aunque el nombre
+    // real venga de la env var TECHCUP_RABBITMQ_EXCHANGE.
+    private final TopicExchange techcupExchange;
 
     @Override
     public void publishTournamentFinalized(UUID tournamentId) {
         try {
-            rabbitTemplate.convertAndSend(RabbitMQConfig.TECHCUP_EXCHANGE, ROUTING_KEY_FINALIZED,
+            rabbitTemplate.convertAndSend(techcupExchange.getName(), ROUTING_KEY_FINALIZED,
                     new TournamentFinalizedEvent(tournamentId, LocalDateTime.now(ZoneOffset.UTC)));
         } catch (RuntimeException e) {
             log.warn("No se pudo publicar el evento de finalización para el torneo '{}'", tournamentId, e);
