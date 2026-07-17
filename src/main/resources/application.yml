@@ -16,15 +16,20 @@ spring:
     ssl:
       enabled: true
 
-# TC-109: URL del Payment Service (aun no desplegado en este entorno); las
-# llamadas a GET /payment-orders/{enrollmentId} caen a UNKNOWN por timeout hasta que exista.
+# TC-109: URL del Payment Service. localhost:8081 solo como default de
+# desarrollo (ese puerto no resuelve en Azure) -- en despliegue se debe
+# fijar PAYMENT_SERVICE_URL. Mientras el servicio real no esté disponible
+# en el entorno apuntado, las llamadas a GET /payment-orders/{enrollmentId}
+# caen a UNKNOWN por timeout.
 payment-service:
-  base-url: http://localhost:8081
+  base-url: ${PAYMENT_SERVICE_URL:http://localhost:8081}
 
-# URL del Team Service (aun no desplegado en este entorno); las llamadas a
-# GET /teams/{teamId} fallan con TeamServiceUnavailableException hasta que exista.
+# URL del Team Service. Mismo criterio que payment-service: localhost:8082
+# es el default de desarrollo, en despliegue se debe fijar TEAM_SERVICE_URL.
+# Mientras el servicio real no esté disponible en el entorno apuntado, las
+# llamadas a GET /teams/{teamId} fallan con TeamServiceUnavailableException.
 team-service:
-  base-url: http://localhost:8082
+  base-url: ${TEAM_SERVICE_URL:http://localhost:8082}
 
 # URL de Matches y llave interna para POST /api/partidos (empuje de la definición
 # del partido al programarse, ver MatchDefinitionRestAdapter). Ninguno de los dos

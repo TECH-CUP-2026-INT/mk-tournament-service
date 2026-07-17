@@ -34,9 +34,9 @@ public class SwaggerConfig {
                                 - `4xx` responses signal invalid input or a state conflict; `5xx` responses signal an
                                   unexpected internal failure.
 
-                                **External dependencies**
-                                - `payment-service` at `http://localhost:8081` — validates enrollment payments.
-                                - `team-service` at `http://localhost:8082` — resolves team data.
+                                **External dependencies** (URLs configurable via env vars; `localhost` values below are dev-only defaults)
+                                - `payment-service` (`PAYMENT_SERVICE_URL`, default `http://localhost:8081`) — validates enrollment payments.
+                                - `team-service` (`TEAM_SERVICE_URL`, default `http://localhost:8082`) — resolves team data.
                                 """)
                         .version("0.0.1-SNAPSHOT")
                         .contact(new Contact()
