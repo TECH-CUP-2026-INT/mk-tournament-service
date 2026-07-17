@@ -31,6 +31,8 @@ import java.util.stream.Collectors;
  */
 public final class GroupStandingsCalculator {
 
+    private static final int POINTS_PER_WIN = 3;
+
     private GroupStandingsCalculator() {}
 
     /**
@@ -222,7 +224,7 @@ public final class GroupStandingsCalculator {
         int goalsAgainst;
 
         GroupStanding toStanding(UUID teamId) {
-            int points = won * 3 + drawn;
+            int points = won * POINTS_PER_WIN + drawn;
             int goalDifference = goalsFor - goalsAgainst;
             return new GroupStanding(0, teamId, played, won, drawn, lost, goalsFor, goalsAgainst, goalDifference, points);
         }

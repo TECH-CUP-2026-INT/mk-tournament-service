@@ -226,7 +226,7 @@ public class Tournament extends AggregateRoot {
 
     /**
      * TC-27: activa el torneo, habilitando la inscripción de equipos.
-     * Solo procede desde Borrador (estado en el que nace todo torneo nuevo,
+     * Solo procede desde Borrador (estado en el que nace cualquier torneo nuevo,
      * ver {@link Builder#create()}).
      */
     public void activate() {

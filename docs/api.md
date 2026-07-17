@@ -13,10 +13,12 @@ Controller: `TournamentController`.
 
 | Method | Endpoint | Description | Intended role |
 |---|---|---|---|
-| `POST` | `/tournaments` | Create tournament | Organizer |
+| `POST` | `/tournaments` | Create tournament (starts in `DRAFT`) | Organizer |
 | `PATCH` | `/tournaments/{id}` | Edit any tournament field | Organizer |
+| `PATCH` | `/tournaments/{id}/activate` | Activate tournament: `DRAFT` → `ACTIVE`, opens enrollment | Organizer |
+| `PATCH` | `/tournaments/{id}/prepare` | Start tournament preparation: `ACTIVE` → `IN_PREPARATION`, generates the fixture (group matchups, or the bracket for a `BRACKETS` tournament) | Organizer |
+| `PATCH` | `/tournaments/{id}/begin` | Begin the tournament: `IN_PREPARATION` → `IN_PROGRESS`, matches can now be scheduled and played | Organizer |
 | `PATCH` | `/tournaments/{id}/finalize` | Finalize tournament (moves to history) | Organizer |
-| `PATCH` | `/tournaments/{id}/prepare` | Start tournament preparation (generates matchups) | Organizer |
 | `PATCH` | `/tournaments/{id}/pause` | Pause / resume tournament (`action: PAUSE \| RESUME`) | Organizer |
 | `PATCH` | `/tournaments/{id}/inactivate` | Inactivate / reactivate tournament (`action: INACTIVATE \| REACTIVATE`) | Organizer |
 | `DELETE` | `/tournaments/{id}` | Delete tournament (only if Finished) | Organizer |
@@ -44,7 +46,9 @@ Content-Type: application/json
 }
 ```
 
-**201 response:** `TournamentResponse` with the tournament created in `ACTIVE` status.
+**201 response:** `TournamentResponse` with the tournament created in `DRAFT` status.
+
+Lifecycle: `DRAFT` → (`activate`) → `ACTIVE` → (`prepare`, once enough teams are enrolled) → `IN_PREPARATION` → (`begin`) → `IN_PROGRESS` → `FINISHED`. For a `GROUPS` tournament, `prepare` requires exactly 8, 16 or 32 enrolled teams and generates the group-stage matchups; the elimination bracket is generated automatically once every group match is finished (or via `POST /tournaments/{tournamentId}/bracket`, see below).
 
 ### Pause / resume tournament
 
@@ -108,6 +112,10 @@ Content-Type: application/json
 | Method | Endpoint | Description | Intended role |
 |---|---|---|---|
 | `GET` | `/tournaments/{tournamentId}/matchups` | View bracket / matchups with results | Public |
+| `GET` | `/tournaments/{tournamentId}/standings` | Group-stage standings (one table per group, computed on the fly from finished matches) | Public |
+| `POST` | `/tournaments/{tournamentId}/bracket` | Manually generate the elimination bracket (normally auto-triggered once every group match is finished) | Organizer |
+| `GET` | `/tournaments/{tournamentId}/bracket` | View the elimination bracket nodes (round, slots, winner/loser, next node) | Public |
+| `POST` | `/tournaments/{tournamentId}/matches/{matchId}/penalty-shootout` | Record the penalty-shootout winner for a node stuck `PENDING_PENALTIES` (regulation-time tie in an elimination match) | Organizer |
 | `GET` | `/tournaments/matches/{matchId}/court` | View the court assigned to a match | Authenticated |
 | `POST` | `/tournaments/{tournamentId}/matches/{matchId}/champion` | Assign champion (final match finished) | Organizer |
 | `GET` | `/tournaments/{tournamentId}/champion` | Get the tournament champion | Public |
@@ -122,6 +130,7 @@ Controller: `MatchController`.
 |---|---|---|---|
 | `POST` | `/matches` | Schedule match (matchup + court + referee + date/time) | Organizer |
 | `PATCH` | `/matches/{matchId}/activation` | Inactivate / reactivate a match (`action: INACTIVATE \| REACTIVATE`) | Organizer |
+| `POST` | `/matches/{matchId}/resend-definition` | Manually retry pushing the match definition to Matches, for a match whose original push failed | Organizer |
 
 ### Schedule match
 
@@ -139,6 +148,16 @@ Content-Type: application/json
   "refereeId": "ref-1"
 }
 ```
+
+Scheduling a match also pushes its definition to the **Matches** service (`POST {matches-service.base-url}/api/partidos`, authenticated with the `X-Internal-Api-Key` header — see `matches-service.base-url` / `matches-service.internal-api-key` in `application.yml`). This push is synchronous but **not** allowed to fail the scheduling call itself: if Matches is unreachable or rejects the push, the match is marked `definitionSyncPending` (logged as an error) instead of throwing, and can be retried later with `POST /matches/{matchId}/resend-definition` — which, unlike the automatic push, does propagate the failure to the caller.
+
+### Resend match definition
+
+```http
+POST /matches/{matchId}/resend-definition
+```
+
+**200 response:** empty body. Re-sends the same `MatchDefinition` payload described above; throws if Matches still rejects it.
 
 ### Inactivate / reactivate match
 
@@ -162,6 +181,60 @@ Content-Type: application/json
 ```
 
 An inactive match **keeps the data already recorded** (score, status) but blocks `finish()`, recording the penalty shootout winner, and marking a no-show. Cards, substitutions and clock management are not implemented in this service — they are the responsibility of the future **Match Service**, which must check this status before accepting those events.
+
+---
+
+## Asynchronous integration — RabbitMQ
+
+This service both publishes to and consumes from a shared topic exchange, **`techcup.exchange`** (durable, declared in `RabbitMQConfig`). Configuration (host/credentials/exchange name) is env-driven — see `spring.rabbitmq.*` and `techcup.rabbitmq.exchange` in `application.yml`.
+
+**Consumes** — `techcup.match.finished` (routing key), queue `techcup.tournament.match-finished`, handled by `MatchFinishedListener`. Published by Matches when a match is finished. Payload (`MatchFinishedEvent`):
+
+```json
+{
+  "matchId": "m01",
+  "tournamentId": "t01",
+  "fase": "GRUPOS",
+  "golesA": 2,
+  "golesB": 1,
+  "ganadorId": "team-A",
+  "eliminadoId": null,
+  "ausenteId": null,
+  "finishedAt": "2026-08-05T12:34:56Z"
+}
+```
+
+The listener delegates entirely to `ProcessMatchResultUseCase`, the same use case `POST /sim/partidos/{matchId}/resultado` calls directly (see below). `ausenteId` non-null means the match was a walkover: the present team wins administratively (3 points, 0-0 in the group table), the absent team is marked `FINISHED_NO_SHOW`. Processing this event is what automatically closes the group stage (generating the elimination bracket once every group match is resolved), advances the elimination bracket, and serves one match of suspension for every active sanction via `RecordMatchFinishedForSanctionsUseCase` (see the note on `POST /sanctions/match-finished` below).
+
+**Publishes** — the outbound push of a match definition to Matches (`POST /api/partidos`, see "Schedule match" above) is a plain synchronous REST call, not a RabbitMQ message.
+
+---
+
+## Simulation (dev only) — `/sim`
+
+Controller: `SimulationController`, only registered under the `dev` Spring profile. Lets you trigger `ProcessMatchResultUseCase` directly — same code path as the `techcup.match.finished` listener — without needing a RabbitMQ broker or the Matches service running.
+
+| Method | Endpoint | Description | Intended role |
+|---|---|---|---|
+| `POST` | `/sim/partidos/{matchId}/resultado` | Simulate a match result for the given tournament matchId | Dev only |
+
+```http
+POST /sim/partidos/{matchId}/resultado
+Content-Type: application/json
+```
+
+```json
+{
+  "golesA": 2,
+  "golesB": 1,
+  "ganadorId": "team-A",
+  "eliminadoId": null,
+  "ausenteId": null,
+  "fase": "GRUPOS"
+}
+```
+
+Same field shape as `MatchFinishedEvent` (see above), minus `matchId`/`tournamentId` (resolved from the URL) and `finishedAt` (unused).
 
 ---
 
@@ -199,7 +272,7 @@ Controller: `SanctionController`.
 |---|---|---|---|
 | `POST` | `/sanctions` | Apply sanction to a player | Referee / Organizer |
 | `GET` | `/sanctions/{playerId}` | View a player's active sanctions | Authenticated |
-| `POST` | `/sanctions/match-finished` | Integration point: serves one match of suspension when a match finishes | *(pending — no automatic trigger yet)* |
+| `POST` | `/sanctions/match-finished` | Manually serve one match of suspension for every active sanction (same use case, `RecordMatchFinishedForSanctionsUseCase`) | *(redundant for normal operation — `ProcessMatchResultService` already calls this use case automatically on every match result, whether it arrived via the RabbitMQ listener or `/sim`; this endpoint remains available as a manual trigger)* |
 
 ---
 

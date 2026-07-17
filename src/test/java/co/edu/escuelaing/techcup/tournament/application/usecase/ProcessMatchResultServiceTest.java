@@ -67,9 +67,10 @@ class ProcessMatchResultServiceTest {
     void process_torneoNoExiste_lanzaTournamentNotFoundException() {
         UUID tournamentId = UUID.randomUUID();
         when(repository.findById(tournamentId)).thenReturn(Optional.empty());
+        ProcessMatchResultCommand command =
+                new ProcessMatchResultCommand(UUID.randomUUID(), tournamentId, MatchPhase.GRUPOS, 1, 0, null, null);
 
-        assertThrows(TournamentNotFoundException.class, () -> service.process(
-                new ProcessMatchResultCommand(UUID.randomUUID(), tournamentId, MatchPhase.GRUPOS, 1, 0, null, null)));
+        assertThrows(TournamentNotFoundException.class, () -> service.process(command));
     }
 
     @Test
@@ -77,9 +78,10 @@ class ProcessMatchResultServiceTest {
         UUID tournamentId = UUID.randomUUID();
         Tournament tournament = buildTournament(tournamentId, TournamentStatus.IN_PROGRESS, List.of());
         when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
+        ProcessMatchResultCommand command =
+                new ProcessMatchResultCommand(UUID.randomUUID(), tournamentId, MatchPhase.GRUPOS, 1, 0, null, null);
 
-        assertThrows(MatchNotFoundException.class, () -> service.process(
-                new ProcessMatchResultCommand(UUID.randomUUID(), tournamentId, MatchPhase.GRUPOS, 1, 0, null, null)));
+        assertThrows(MatchNotFoundException.class, () -> service.process(command));
     }
 
     @Test

@@ -154,9 +154,10 @@ class TournamentChampionTest {
     @Test
     void match_finishWithExternalResult_ganadorQueNoEsDelPartido_lanzaExcepcion() {
         Match match = new Match(UUID.randomUUID(), homeTeamId, awayTeamId, MatchStatus.PENDING);
+        UUID outsiderTeamId = UUID.randomUUID();
 
         assertThrows(ChampionAssignmentNotAllowedException.class,
-                () -> match.finishWithExternalResult(1, 1, UUID.randomUUID()));
+                () -> match.finishWithExternalResult(1, 1, outsiderTeamId));
     }
 
     @Test
@@ -173,9 +174,10 @@ class TournamentChampionTest {
     @Test
     void match_markWalkover_equipoQueNoEsDelPartido_lanzaExcepcion() {
         Match match = new Match(UUID.randomUUID(), homeTeamId, awayTeamId, MatchStatus.PENDING);
+        UUID outsiderTeamId = UUID.randomUUID();
 
         assertThrows(ChampionAssignmentNotAllowedException.class,
-                () -> match.markWalkover(UUID.randomUUID()));
+                () -> match.markWalkover(outsiderTeamId));
     }
 
     @Test

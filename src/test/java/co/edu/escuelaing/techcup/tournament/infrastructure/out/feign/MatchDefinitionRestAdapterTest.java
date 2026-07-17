@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.Month;
 import java.util.Map;
 import java.util.UUID;
 
@@ -41,7 +42,7 @@ class MatchDefinitionRestAdapterTest {
         return new MatchDefinition(
                 matchId, tournamentId, MatchPhase.GRUPOS, homeTeamId, awayTeamId,
                 "Los Tigres", "Los Leones",
-                LocalDate.of(2026, 8, 1), LocalTime.of(15, 0), refereeId, courtId);
+                LocalDate.of(2026, Month.AUGUST, 1), LocalTime.of(15, 0), refereeId, courtId);
     }
 
     @Test
@@ -50,16 +51,16 @@ class MatchDefinitionRestAdapterTest {
 
         MatchesServiceFeignClient.MatchDefinitionRequest expected = new MatchesServiceFeignClient.MatchDefinitionRequest(
                 matchId, tournamentId, "GRUPOS", homeTeamId, awayTeamId, "Los Tigres", "Los Leones",
-                LocalDate.of(2026, 8, 1), LocalTime.of(15, 0), refereeId, courtId);
+                LocalDate.of(2026, Month.AUGUST, 1), LocalTime.of(15, 0), refereeId, courtId);
 
-        verify(feignClient).createOrUpdateMatch(eq(API_KEY), eq(expected));
+        verify(feignClient).createOrUpdateMatch(API_KEY, expected);
     }
 
     @Test
     void sendDefinition_faseNull_seEnviaComoNullSinExplotar() {
         MatchDefinition definition = new MatchDefinition(
                 matchId, tournamentId, null, homeTeamId, awayTeamId, "Los Tigres", "Los Leones",
-                LocalDate.of(2026, 8, 1), LocalTime.of(15, 0), refereeId, courtId);
+                LocalDate.of(2026, Month.AUGUST, 1), LocalTime.of(15, 0), refereeId, courtId);
 
         adapter.sendDefinition(definition);
 
@@ -76,8 +77,9 @@ class MatchDefinitionRestAdapterTest {
     @Test
     void sendDefinition_otraFalla_lanzaMatchDefinitionPushFailedException() {
         when(feignClient.createOrUpdateMatch(any(), any())).thenThrow(new RuntimeException("timeout"));
+        MatchDefinition definition = sampleDefinition();
 
-        assertThrows(MatchDefinitionPushFailedException.class, () -> adapter.sendDefinition(sampleDefinition()));
+        assertThrows(MatchDefinitionPushFailedException.class, () -> adapter.sendDefinition(definition));
     }
 
     @Test

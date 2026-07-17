@@ -9,7 +9,7 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
 /**
- * Deserializa el evento {@code techcup.match.finished} y delega TODO a
+ * Deserializa el evento {@code techcup.match.finished} y delega enteramente a
  * {@link ProcessMatchResultUseCase} — sin lógica de negocio en el listener.
  */
 @Component

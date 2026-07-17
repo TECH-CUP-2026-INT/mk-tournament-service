@@ -18,10 +18,10 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -58,10 +58,6 @@ class TournamentEliminationBracketTest {
                 .filter(n -> n.getRound() == round)
                 .toList()
                 .get(index);
-    }
-
-    private Optional<BracketNode> nodeForMatch(Tournament tournament, UUID matchId) {
-        return tournament.getBracketNodes().stream().filter(n -> matchId.equals(n.getMatchId())).findFirst();
     }
 
     // --- Generación ---
@@ -102,6 +98,7 @@ class TournamentEliminationBracketTest {
         semis.forEach(n -> assertEquals(finalNode.getNodeId(), n.getAdvanceToNodeId()));
     }
 
+    /** 4 grupos de 4 = 16 equipos: 8 clasificados arman los cuartos de final. */
     @Test
     void generateEliminationBracket_conCuatroGrupos_armaCuartosSemisYFinalSinRematchesTempranos() {
         List<Match> matches = new ArrayList<>();
@@ -129,6 +126,59 @@ class TournamentEliminationBracketTest {
 
         // 1A-2B y 1C-2D deben cruzarse entre sí en semis (no 1A-2B con 1B-2A).
         assertEquals(nodeA.getAdvanceToNodeId(), nodeC.getAdvanceToNodeId());
+    }
+
+    /**
+     * 8 grupos de 4 = 32 equipos: 16 clasificados arman octavos de final
+     * (case 8 -&gt; ROUND_OF_16 de roundForNodeCount, sin cubrir hasta ahora).
+     */
+    @Test
+    void generateEliminationBracket_conOchoGrupos_armaOctavosCuartosSemisYFinalSinRematchesTempranos() {
+        List<Match> matches = new ArrayList<>();
+        List<UUID[]> groupTeams = new ArrayList<>();
+        for (String groupName : List.of("Grupo A", "Grupo B", "Grupo C", "Grupo D",
+                "Grupo E", "Grupo F", "Grupo G", "Grupo H")) {
+            UUID[] teams = {UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID()};
+            groupTeams.add(teams);
+            matches.addAll(fullyFinishedGroup(groupName, teams[0], teams[1], teams[2], teams[3]));
+        }
+        Tournament tournament = buildTournament(matches);
+
+        tournament.generateEliminationBracket();
+
+        assertEquals(15, tournament.getBracketNodes().size(), "8 octavos + 4 cuartos + 2 semis + 1 final");
+        assertEquals(8, tournament.getBracketNodes().stream().filter(n -> n.getRound() == Round.ROUND_OF_16).count());
+        assertEquals(4, tournament.getBracketNodes().stream().filter(n -> n.getRound() == Round.QUARTERFINAL).count());
+        assertEquals(2, tournament.getBracketNodes().stream().filter(n -> n.getRound() == Round.SEMIFINAL).count());
+        assertEquals(1, tournament.getBracketNodes().stream().filter(n -> n.getRound() == Round.FINAL).count());
+
+        tournament.getBracketNodes().stream().filter(n -> n.getRound() == Round.ROUND_OF_16).forEach(n -> {
+            assertEquals(BracketNodeStatus.SCHEDULED, n.getStatus());
+            assertTrue(tournament.getMatches().stream().anyMatch(m -> m.getMatchId().equals(n.getMatchId())));
+        });
+
+        UUID a1 = groupTeams.get(0)[0];
+        UUID c1 = groupTeams.get(2)[0];
+        BracketNode nodeA = tournament.getBracketNodes().stream()
+                .filter(n -> n.getRound() == Round.ROUND_OF_16 && a1.equals(n.getSlotA())).findFirst().orElseThrow();
+        BracketNode nodeC = tournament.getBracketNodes().stream()
+                .filter(n -> n.getRound() == Round.ROUND_OF_16 && c1.equals(n.getSlotA())).findFirst().orElseThrow();
+
+        // 1A-2B y 1C-2D deben cruzarse entre sí en cuartos (no 1A-2B con su propio 1B-2A).
+        assertEquals(nodeA.getAdvanceToNodeId(), nodeC.getAdvanceToNodeId());
+    }
+
+    /** Cantidad de grupos que no es 1/2/4/8: rama default de roundForNodeCount, sin cubrir hasta ahora. */
+    @Test
+    void generateEliminationBracket_cantidadDeGruposInvalida_lanzaGroupStageNotCompleteException() {
+        List<Match> matches = new ArrayList<>();
+        for (String groupName : List.of("Grupo A", "Grupo B", "Grupo C")) {
+            matches.addAll(fullyFinishedGroup(
+                    groupName, UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID()));
+        }
+        Tournament tournament = buildTournament(matches);
+
+        assertThrows(GroupStageNotCompleteException.class, tournament::generateEliminationBracket);
     }
 
     @Test
@@ -205,7 +255,7 @@ class TournamentEliminationBracketTest {
 
         BracketNode finalNode = findByRound(tournament, Round.FINAL, 0);
         assertEquals(BracketNodeStatus.SCHEDULED, finalNode.getStatus());
-        assertTrue(finalNode.getMatchId() != null);
+        assertNotNull(finalNode.getMatchId());
         Match finalMatch = tournament.getMatches().stream()
                 .filter(m -> m.getMatchId().equals(finalNode.getMatchId())).findFirst().orElseThrow();
         assertTrue(finalMatch.isFinalMatch());
@@ -308,8 +358,9 @@ class TournamentEliminationBracketTest {
     @Test
     void advanceBracket_matchNoPerteneceALaLlave_lanzaBracketNodeNotFoundException() {
         Tournament tournament = twoGroupBracket();
+        UUID unrelatedMatchId = UUID.randomUUID();
 
-        assertThrows(BracketNodeNotFoundException.class, () -> tournament.advanceBracket(UUID.randomUUID()));
+        assertThrows(BracketNodeNotFoundException.class, () -> tournament.advanceBracket(unrelatedMatchId));
     }
 
     private void resolveMatch(Tournament tournament, UUID matchId, UUID winnerTeamId) {
