@@ -31,6 +31,10 @@
 		<cucumber.version>7.20.1</cucumber.version>
 		<jacoco.version>0.8.12</jacoco.version>
 		<spring-cloud.version>2025.0.0</spring-cloud.version>
+		<!-- smoke-test/ es tooling de prueba (harness Python/Docker), no código de
+		     producción: se excluye del análisis para que no arrastre issues/duplicación
+		     de un script ajeno al servicio. -->
+		<sonar.exclusions>smoke-test/**</sonar.exclusions>
 	</properties>
 	<dependencyManagement>
 		<dependencies>
