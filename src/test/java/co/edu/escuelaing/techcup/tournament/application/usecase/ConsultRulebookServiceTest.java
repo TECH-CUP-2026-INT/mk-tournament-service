@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -31,17 +32,18 @@ class ConsultRulebookServiceTest {
 
     @Test
     void consult_whenRulebookExists_returnsResource() {
-        Tournament tournament = new Tournament("t1", "Copa ECI", TournamentStatus.ACTIVE);
+        UUID id = UUID.randomUUID();
+        Tournament tournament = new Tournament(id, "Copa ECI", TournamentStatus.ACTIVE);
         tournament.setRulebookFileId("file123");
 
         RulebookRetrievalPort.RulebookFile file = new RulebookRetrievalPort.RulebookFile(
                 "reglamento.pdf", "application/pdf", new ByteArrayInputStream(new byte[]{1, 2, 3})
         );
 
-        when(tournamentRepository.findById("t1")).thenReturn(Optional.of(tournament));
+        when(tournamentRepository.findById(id)).thenReturn(Optional.of(tournament));
         when(rulebookRetrieval.retrieve("file123")).thenReturn(file);
 
-        ConsultRulebookUseCase.RulebookResource result = service.consult("t1");
+        ConsultRulebookUseCase.RulebookResource result = service.consult(id);
 
         assertEquals("reglamento.pdf", result.fileName());
         assertEquals("application/pdf", result.contentType());
@@ -51,30 +53,33 @@ class ConsultRulebookServiceTest {
 
     @Test
     void consult_whenTournamentNotFound_throwsTournamentNotFoundException() {
-        when(tournamentRepository.findById("unknown")).thenReturn(Optional.empty());
+        UUID id = UUID.randomUUID();
+        when(tournamentRepository.findById(id)).thenReturn(Optional.empty());
 
-        assertThrows(TournamentNotFoundException.class, () -> service.consult("unknown"));
+        assertThrows(TournamentNotFoundException.class, () -> service.consult(id));
         verifyNoInteractions(rulebookRetrieval);
     }
 
     @Test
     void consult_whenNoRulebookAttached_throwsRulebookNotAttachedException() {
-        Tournament tournament = new Tournament("t2", "Copa ECI", TournamentStatus.ACTIVE);
+        UUID id = UUID.randomUUID();
+        Tournament tournament = new Tournament(id, "Copa ECI", TournamentStatus.ACTIVE);
 
-        when(tournamentRepository.findById("t2")).thenReturn(Optional.of(tournament));
+        when(tournamentRepository.findById(id)).thenReturn(Optional.of(tournament));
 
-        assertThrows(RulebookNotAttachedException.class, () -> service.consult("t2"));
+        assertThrows(RulebookNotAttachedException.class, () -> service.consult(id));
         verifyNoInteractions(rulebookRetrieval);
     }
 
     @Test
     void consult_whenRulebookFileIdIsBlank_throwsRulebookNotAttachedException() {
-        Tournament tournament = new Tournament("t3", "Copa ECI", TournamentStatus.ACTIVE);
+        UUID id = UUID.randomUUID();
+        Tournament tournament = new Tournament(id, "Copa ECI", TournamentStatus.ACTIVE);
         tournament.setRulebookFileId("   ");
 
-        when(tournamentRepository.findById("t3")).thenReturn(Optional.of(tournament));
+        when(tournamentRepository.findById(id)).thenReturn(Optional.of(tournament));
 
-        assertThrows(RulebookNotAttachedException.class, () -> service.consult("t3"));
+        assertThrows(RulebookNotAttachedException.class, () -> service.consult(id));
         verifyNoInteractions(rulebookRetrieval);
     }
 }

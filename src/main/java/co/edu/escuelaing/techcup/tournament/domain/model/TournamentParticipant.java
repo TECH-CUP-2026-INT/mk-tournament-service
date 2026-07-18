@@ -1,23 +1,30 @@
 package co.edu.escuelaing.techcup.tournament.domain.model;
 
+import java.util.UUID;
+
+/**
+ * Participante (jugador) dentro de un torneo, independiente del equipo al que
+ * pertenece.
+ */
+@SuppressWarnings("java:S2160") // identidad por id (heredada de AggregateRoot), no por campos: patron DDD intencional
 public class TournamentParticipant extends AggregateRoot {
 
-    private final String tournamentId;
-    private final String userId;
+    private final UUID tournamentId;
+    private final UUID userId;
     private ParticipantStatus status;
 
-    private TournamentParticipant(String id, String tournamentId, String userId, ParticipantStatus status) {
+    private TournamentParticipant(UUID id, UUID tournamentId, UUID userId, ParticipantStatus status) {
         super(id);
         this.tournamentId = tournamentId;
         this.userId = userId;
         this.status = status;
     }
 
-    public static TournamentParticipant create(String tournamentId, String userId) {
-        return new TournamentParticipant(null, tournamentId, userId, ParticipantStatus.ACTIVE);
+    public static TournamentParticipant create(UUID tournamentId, UUID userId) {
+        return new TournamentParticipant(UUID.randomUUID(), tournamentId, userId, ParticipantStatus.ACTIVE);
     }
 
-    public static TournamentParticipant reconstruct(String id, String tournamentId, String userId, ParticipantStatus status) {
+    public static TournamentParticipant reconstruct(UUID id, UUID tournamentId, UUID userId, ParticipantStatus status) {
         return new TournamentParticipant(id, tournamentId, userId, status);
     }
 
@@ -29,7 +36,7 @@ public class TournamentParticipant extends AggregateRoot {
         return this.status == ParticipantStatus.INACTIVE;
     }
 
-    public String getTournamentId() { return tournamentId; }
-    public String getUserId() { return userId; }
+    public UUID getTournamentId() { return tournamentId; }
+    public UUID getUserId() { return userId; }
     public ParticipantStatus getStatus() { return status; }
 }

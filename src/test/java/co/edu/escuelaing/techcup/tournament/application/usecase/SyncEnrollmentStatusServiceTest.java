@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -35,18 +36,19 @@ class SyncEnrollmentStatusServiceTest {
     }
 
     private Tournament tournamentWith(Enrollment enrollment) {
-        return Tournament.reconstruct(
-                "t1", "Copa ECI", TournamentType.NORMAL, TournamentFormat.BRACKETS,
-                8, BigDecimal.valueOf(50000),
-                LocalDate.now().plusDays(10), LocalDate.now().plusDays(20), LocalDate.now().plusDays(1),
-                null, null, TournamentStatus.ACTIVE,
-                List.of(), List.of(), null, null, false, true, List.of(enrollment), null
-        );
+        return Tournament.builder()
+                .id(UUID.randomUUID()).name("Copa ECI").type(TournamentType.NORMAL).format(TournamentFormat.BRACKETS)
+                .numberOfTeams(8).cost(BigDecimal.valueOf(50000))
+                .startDate(LocalDate.now().plusDays(10)).endDate(LocalDate.now().plusDays(20))
+                .registrationDeadline(LocalDate.now().plusDays(1))
+                .status(TournamentStatus.ACTIVE).teams(List.of()).matches(List.of())
+                .enrollments(List.of(enrollment))
+                .reconstruct();
     }
 
     @Test
     void sync_paymentServiceApproved_pasaAEnrolledYFijaConfirmationDate() {
-        Enrollment reserved = new Enrollment("team1", "Los Tigres", EnrollmentStatus.RESERVED);
+        Enrollment reserved = new Enrollment(UUID.randomUUID(), "Los Tigres", EnrollmentStatus.RESERVED);
         Tournament tournament = tournamentWith(reserved);
         when(tournamentRepository.findAllWithReservedEnrollments()).thenReturn(List.of(tournament));
         when(paymentServiceClient.getOrderStatus(reserved.getEnrollmentId())).thenReturn(PaymentOrderStatus.APPROVED);
@@ -60,7 +62,7 @@ class SyncEnrollmentStatusServiceTest {
 
     @Test
     void sync_paymentServiceRejected_pasaARejected() {
-        Enrollment reserved = new Enrollment("team1", "Los Tigres", EnrollmentStatus.RESERVED);
+        Enrollment reserved = new Enrollment(UUID.randomUUID(), "Los Tigres", EnrollmentStatus.RESERVED);
         Tournament tournament = tournamentWith(reserved);
         when(tournamentRepository.findAllWithReservedEnrollments()).thenReturn(List.of(tournament));
         when(paymentServiceClient.getOrderStatus(reserved.getEnrollmentId())).thenReturn(PaymentOrderStatus.REJECTED);
@@ -73,7 +75,7 @@ class SyncEnrollmentStatusServiceTest {
 
     @Test
     void sync_paymentServicePendiente_noCambiaNiGuarda() {
-        Enrollment reserved = new Enrollment("team1", "Los Tigres", EnrollmentStatus.RESERVED);
+        Enrollment reserved = new Enrollment(UUID.randomUUID(), "Los Tigres", EnrollmentStatus.RESERVED);
         Tournament tournament = tournamentWith(reserved);
         when(tournamentRepository.findAllWithReservedEnrollments()).thenReturn(List.of(tournament));
         when(paymentServiceClient.getOrderStatus(reserved.getEnrollmentId())).thenReturn(PaymentOrderStatus.PENDING);
@@ -87,7 +89,7 @@ class SyncEnrollmentStatusServiceTest {
 
     @Test
     void sync_paymentServiceUnknown_noCambiaNiGuarda() {
-        Enrollment reserved = new Enrollment("team1", "Los Tigres", EnrollmentStatus.RESERVED);
+        Enrollment reserved = new Enrollment(UUID.randomUUID(), "Los Tigres", EnrollmentStatus.RESERVED);
         Tournament tournament = tournamentWith(reserved);
         when(tournamentRepository.findAllWithReservedEnrollments()).thenReturn(List.of(tournament));
         when(paymentServiceClient.getOrderStatus(reserved.getEnrollmentId())).thenReturn(PaymentOrderStatus.UNKNOWN);

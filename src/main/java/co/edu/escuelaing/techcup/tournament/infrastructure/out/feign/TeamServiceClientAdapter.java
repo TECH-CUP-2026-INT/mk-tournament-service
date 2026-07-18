@@ -5,6 +5,8 @@ import co.edu.escuelaing.techcup.tournament.infrastructure.out.feign.TeamService
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TeamServiceClientPort;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 /**
  * Cliente hacia el Team Service, vía Feign ({@link TeamServiceFeignClient}).
  * El contrato exacto de esa API aún no está definido en este repo; a
@@ -21,7 +23,7 @@ public class TeamServiceClientAdapter implements TeamServiceClientPort {
     }
 
     @Override
-    public TeamInfo getTeamInfo(String teamId) {
+    public TeamInfo getTeamInfo(UUID teamId) {
         try {
             TeamServiceFeignClient.TeamInfoResponse response = feignClient.getTeamInfo(teamId);
             if (response == null) {

@@ -1,0 +1,343 @@
+package co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.controller.swagger;
+
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.ActiveTournamentResponse;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.BracketNodeResponse;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.CreateTournamentRequest;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.DisqualifyTeamRequest;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.EditTournamentRequest;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.EnrollTeamRequest;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.InactivateTournamentRequest;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.PauseTournamentRequest;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request.RecordPenaltyShootoutWinnerRequest;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.ChampionResponse;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.CourtMapEntryResponse;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.CourtResponse;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.DeleteTournamentResponse;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.DisqualifyTeamResponse;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.EnrollmentResponse;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.GroupStandingsResponse;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.HistoricalTournamentResponse;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.InactivateTeamResponse;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.InactivateTournamentResponse;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.InactivateUserResponse;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.MatchCourtResponse;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.MatchupResponse;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.PauseTournamentResponse;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.PreparationResponse;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.RegisteredTeamResponse;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.RegisteredTeamsResponse;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.RulebookResponse;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.TournamentResponse;
+import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.TeamActiveEnrollmentResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
+
+@Tag(name = "Tournaments", description = "Creating, editing, and managing the full tournament lifecycle")
+public interface TournamentControllerSwagger {
+
+    @Operation(summary = "Create tournament",
+            description = "Creates a tournament in DRAFT status. See CreateTournamentRequest for the "
+                    + "NORMAL vs LIGHTNING field rules. Call activate() to open it for enrollment.")
+    @ApiResponse(responseCode = "201", description = "Tournament created",
+            content = @Content(schema = @Schema(implementation = TournamentResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content)
+    ResponseEntity<TournamentResponse> create(CreateTournamentRequest request);
+
+    @Operation(summary = "Activate tournament",
+            description = "Moves the tournament from DRAFT to ACTIVE, opening it up for team enrollment.")
+    @ApiResponse(responseCode = "200", description = "Tournament activated",
+            content = @Content(schema = @Schema(implementation = TournamentResponse.class)))
+    @ApiResponse(responseCode = "409", description = "The tournament is not in DRAFT status", content = @Content)
+    ResponseEntity<TournamentResponse> activate(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID id);
+
+    @Operation(summary = "Begin tournament",
+            description = "Moves the tournament from IN_PREPARATION to IN_PROGRESS, starting play of the "
+                    + "already-scheduled matches.")
+    @ApiResponse(responseCode = "200", description = "Tournament started",
+            content = @Content(schema = @Schema(implementation = TournamentResponse.class)))
+    @ApiResponse(responseCode = "409", description = "The tournament is not in IN_PREPARATION status", content = @Content)
+    ResponseEntity<TournamentResponse> begin(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID id);
+
+    @Operation(summary = "Finalize tournament",
+            description = "Moves the tournament to FINISHED and archives it to the historical read-only view. "
+                    + "Only allowed once the tournament is In Progress and the end date has been reached.")
+    @ApiResponse(responseCode = "200", description = "Tournament finalized",
+            content = @Content(schema = @Schema(implementation = TournamentResponse.class)))
+    @ApiResponse(responseCode = "409", description = "The tournament cannot be finalized in its current state", content = @Content)
+    ResponseEntity<TournamentResponse> finalizeTournament(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID id);
+
+    @Operation(summary = "Start preparation phase",
+            description = "Moves the tournament to IN_PREPARATION and generates its fixture (matchups) at random, "
+                    + "based on the tournament's format. Requires at least 3 approved teams.")
+    @ApiResponse(responseCode = "200", description = "Preparation started, fixture generated",
+            content = @Content(schema = @Schema(implementation = TournamentResponse.class)))
+    @ApiResponse(responseCode = "409", description = "The tournament does not meet the requirements to enter preparation", content = @Content)
+    ResponseEntity<TournamentResponse> prepare(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID id);
+
+    @Operation(summary = "Check preparation readiness",
+            description = "Reports whether the tournament already meets the requirements to move into preparation "
+                    + "(at least 3 approved teams), and lists what's missing otherwise.")
+    @ApiResponse(responseCode = "200", description = "Tournament preparation readiness",
+            content = @Content(schema = @Schema(implementation = PreparationResponse.class)))
+    ResponseEntity<PreparationResponse> checkPreparation(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId);
+
+    @Operation(summary = "Assign tournament champion",
+            description = "Triggered when the match marked as the final finishes. If the score is tied in "
+                    + "regulation time, the penalty shootout winner must already have been recorded first.")
+    @ApiResponse(responseCode = "200", description = "Champion assigned",
+            content = @Content(schema = @Schema(implementation = ChampionResponse.class)))
+    ResponseEntity<ChampionResponse> assignChampion(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId,
+            @Parameter(description = "ID of the final match", example = "m01") UUID matchId);
+
+    @Operation(summary = "Record penalty shootout winner",
+            description = "Records the winner of the penalty shootout for a match tied in regulation time. "
+                    + "Required before the champion can be assigned for that match.")
+    @ApiResponse(responseCode = "200", description = "Penalty shootout winner recorded")
+    @ApiResponse(responseCode = "400", description = "Invalid input data, or the match isn't tied in regulation time", content = @Content)
+    @ApiResponse(responseCode = "404", description = "The tournament or the match doesn't exist", content = @Content)
+    ResponseEntity<Void> recordPenaltyShootoutWinner(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId,
+            @Parameter(description = "Match ID", example = "m01") UUID matchId,
+            RecordPenaltyShootoutWinnerRequest request);
+
+    @Operation(summary = "Get tournament champion")
+    @ApiResponse(responseCode = "200", description = "Tournament champion",
+            content = @Content(schema = @Schema(implementation = ChampionResponse.class)))
+    ResponseEntity<ChampionResponse> getChampion(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId);
+
+    @Operation(summary = "Delete tournament (Draft status only)",
+            description = "Permanently deletes a tournament. Only allowed while it is still in Draft status.")
+    @ApiResponse(responseCode = "200", description = "Tournament deleted",
+            content = @Content(schema = @Schema(implementation = DeleteTournamentResponse.class)))
+    @ApiResponse(responseCode = "409", description = "The tournament is not in Draft status", content = @Content)
+    ResponseEntity<DeleteTournamentResponse> delete(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID id);
+
+    @Operation(summary = "Get fixture / bracket",
+            description = "Returns every matchup generated for the tournament, with current results. Slots not yet "
+                    + "resolved (future bracket rounds) are returned with null team IDs.")
+    @ApiResponse(responseCode = "200", description = "List of tournament matchups",
+            content = @Content(schema = @Schema(implementation = MatchupResponse.class)))
+    ResponseEntity<List<MatchupResponse>> getMatchups(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId);
+
+    @Operation(summary = "Get group stage standings",
+            description = "Returns the standings table for each group of the tournament's group stage, recomputed "
+                    + "from finished matches (points, then goal difference, then goals for, then head-to-head). "
+                    + "Empty if the tournament's format has no group stage.")
+    @ApiResponse(responseCode = "200", description = "Standings table per group",
+            content = @Content(schema = @Schema(implementation = GroupStandingsResponse.class)))
+    ResponseEntity<List<GroupStandingsResponse>> getStandings(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId);
+
+    @Operation(summary = "Generate the elimination bracket",
+            description = "Takes positions 1 and 2 of every group (once ALL group matches are finished) and builds "
+                    + "the full elimination bracket tree, cross-seeding the first round (1A-2B, 1B-2A, ...). Future "
+                    + "rounds are created with both slots \"To be defined\" until the previous round resolves them.")
+    @ApiResponse(responseCode = "201", description = "Bracket generated",
+            content = @Content(schema = @Schema(implementation = BracketNodeResponse.class)))
+    @ApiResponse(responseCode = "409", description = "Group stage not finished yet, or bracket already generated", content = @Content)
+    ResponseEntity<List<BracketNodeResponse>> generateBracket(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId);
+
+    @Operation(summary = "Get the elimination bracket",
+            description = "Returns every node of the elimination bracket tree with its current result. Empty if "
+                    + "the bracket hasn't been generated yet.")
+    @ApiResponse(responseCode = "200", description = "Elimination bracket nodes",
+            content = @Content(schema = @Schema(implementation = BracketNodeResponse.class)))
+    ResponseEntity<List<BracketNodeResponse>> getBracket(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId);
+
+    @Operation(summary = "Get the court assigned to a match",
+            description = "Returns a pending placeholder (200, with a message) instead of 404 if the match hasn't "
+                    + "been scheduled to a court yet.")
+    @ApiResponse(responseCode = "200", description = "Court assigned to the match (or a pending state if not scheduled yet)",
+            content = @Content(schema = @Schema(implementation = MatchCourtResponse.class)))
+    ResponseEntity<MatchCourtResponse> getMatchCourt(
+            @Parameter(description = "Match ID", example = "m01") UUID matchId);
+
+    @Operation(summary = "Get tournament by match ID",
+            description = "Looks up which tournament a given match (fixture entry) belongs to. Intended for other "
+                    + "services (e.g. the Match/Competition service) that only have a matchId and need the "
+                    + "tournamentId to correlate events.")
+    @ApiResponse(responseCode = "200", description = "Tournament found",
+            content = @Content(schema = @Schema(implementation = TournamentResponse.class)))
+    @ApiResponse(responseCode = "404", description = "No tournament has a match with that ID", content = @Content)
+    ResponseEntity<TournamentResponse> getByMatch(
+            @Parameter(description = "Match ID", example = "550e8400-e29b-41d4-a716-446655440000") UUID matchId);
+
+    @Operation(summary = "Get the active tournament",
+            description = "Resolves the tournament currently IN_PROGRESS. Intended for other services (e.g. "
+                    + "Estadísticas' TournamentClientImpl) that need to know which tournament is live right now. "
+                    + "If more than one tournament is IN_PROGRESS, the one with the most recent startDate wins.")
+    @ApiResponse(responseCode = "200", description = "Active tournament found",
+            content = @Content(schema = @Schema(implementation = ActiveTournamentResponse.class)))
+    @ApiResponse(responseCode = "404", description = "No tournament is currently IN_PROGRESS", content = @Content)
+    ResponseEntity<ActiveTournamentResponse> getActive();
+
+    @Operation(summary = "Check if a team has an active tournament enrollment",
+            description = "Returns whether the team has a confirmed (ENROLLED) enrollment in a tournament that is "
+                    + "currently ACTIVE or IN_PROGRESS. Intended for other services (e.g. the Teams service) that "
+                    + "need to block an action — such as updating team info — while the team is competing.")
+    @ApiResponse(responseCode = "200", description = "Check result",
+            content = @Content(schema = @Schema(implementation = TeamActiveEnrollmentResponse.class)))
+    ResponseEntity<TeamActiveEnrollmentResponse> hasActiveEnrollment(
+            @Parameter(description = "Team ID", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6") UUID teamId);
+
+    @Operation(summary = "List registered teams",
+            description = "Legacy registration view (name + status). For payment/reservation details, use "
+                    + "GET /tournaments/{tournamentId}/enrollments instead.")
+    @ApiResponse(responseCode = "200", description = "List of teams registered in the tournament",
+            content = @Content(schema = @Schema(implementation = RegisteredTeamResponse.class)))
+    ResponseEntity<List<RegisteredTeamResponse>> getRegisteredTeams(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId);
+
+    @Operation(summary = "List enrolled and reserved teams",
+            description = "Returns teams with a confirmed (paid) enrollment separately from teams with a slot "
+                    + "reservation still awaiting payment confirmation, plus how many slots remain open.")
+    @ApiResponse(responseCode = "200", description = "Enrolled teams and reserved teams",
+            content = @Content(schema = @Schema(implementation = RegisteredTeamsResponse.class)))
+    ResponseEntity<RegisteredTeamsResponse> getEnrolledTeams(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId);
+
+    @Operation(summary = "Enroll team in tournament",
+            description = "The team captain enrolls their team. The tournament must be ACTIVE and have open slots; "
+                    + "the enrollment starts as RESERVED/PENDING_PAYMENT until payment-service confirms payment.")
+    @ApiResponse(responseCode = "201", description = "Team enrolled",
+            content = @Content(schema = @Schema(implementation = EnrollmentResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content)
+    @ApiResponse(responseCode = "409", description = "The team is already enrolled, or there are no open slots", content = @Content)
+    ResponseEntity<EnrollmentResponse> enrollTeam(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId,
+            EnrollTeamRequest request);
+
+    @Operation(summary = "List historical tournaments",
+            description = "Read-only list of every finished tournament, accessible without authentication.")
+    @ApiResponse(responseCode = "200", description = "List of finished tournaments",
+            content = @Content(schema = @Schema(implementation = HistoricalTournamentResponse.class)))
+    ResponseEntity<List<HistoricalTournamentResponse>> getHistory();
+
+    @Operation(summary = "Get historical tournament by ID")
+    @ApiResponse(responseCode = "200", description = "Historical tournament found",
+            content = @Content(schema = @Schema(implementation = HistoricalTournamentResponse.class)))
+    @ApiResponse(responseCode = "404", description = "The tournament doesn't exist or hasn't finished yet", content = @Content)
+    ResponseEntity<HistoricalTournamentResponse> getHistoricalById(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId);
+
+    @Operation(summary = "Download rulebook (PDF)",
+            description = "Streams the tournament's rulebook file inline as application/pdf.")
+    @ApiResponse(responseCode = "200", description = "Rulebook PDF file",
+            content = @Content(mediaType = MediaType.APPLICATION_PDF_VALUE))
+    @ApiResponse(responseCode = "404", description = "The tournament has no rulebook attached", content = @Content)
+    ResponseEntity<InputStreamResource> consultRulebook(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId);
+
+    @Operation(summary = "Attach rulebook (PDF)",
+            description = "Uploads and attaches the official rulebook PDF (max. 10 MB) to the tournament. "
+                    + "The request body is multipart/form-data.")
+    @ApiResponse(responseCode = "200", description = "Rulebook attached",
+            content = @Content(schema = @Schema(implementation = RulebookResponse.class)))
+    ResponseEntity<RulebookResponse> attachRulebook(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId,
+            @Parameter(description = "Rulebook PDF file (max. 10 MB)") MultipartFile file) throws IOException;
+
+    @Operation(summary = "Register court",
+            description = "Registers a court on one of the 4 campus map sections, with an optional description and "
+                    + "image. The request body is multipart/form-data.")
+    @ApiResponse(responseCode = "201", description = "Court registered",
+            content = @Content(schema = @Schema(implementation = CourtResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid court section or invalid image", content = @Content)
+    ResponseEntity<CourtResponse> registerCourt(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId,
+            @Parameter(description = "Campus map section for the court: CANCHA_1, CANCHA_2, CANCHA_3 or CANCHA_4",
+                    example = "CANCHA_1") String section,
+            @Parameter(description = "Court description", example = "Synthetic grass court, north side of campus")
+            String description,
+            @Parameter(description = "Court image file") MultipartFile image) throws IOException;
+
+    @Operation(summary = "Consult interactive court map",
+            description = "Returns every court registered for the tournament, with its assigned match (if any), "
+                    + "schedule and status. Courts without a match assigned are shown as available. Status is always "
+                    + "returned as both a machine-readable code and a human-readable label — never color alone "
+                    + "(WCAG 2.1 AA).")
+    @ApiResponse(responseCode = "200", description = "Campus court map",
+            content = @Content(schema = @Schema(implementation = CourtMapEntryResponse.class)))
+    ResponseEntity<List<CourtMapEntryResponse>> getCourtMap(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId);
+
+    @Operation(summary = "Edit tournament",
+            description = "Updates any field defined at tournament creation. Every field in the request body is "
+                    + "optional — omitted (null) fields keep their current value. Blocked once the tournament is FINISHED.")
+    @ApiResponse(responseCode = "200", description = "Tournament edited",
+            content = @Content(schema = @Schema(implementation = TournamentResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content)
+    @ApiResponse(responseCode = "404", description = "The tournament doesn't exist", content = @Content)
+    ResponseEntity<TournamentResponse> edit(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID id,
+            EditTournamentRequest request);
+
+    @Operation(summary = "Pause or resume tournament",
+            description = "Pausing suspends new event registration but keeps all existing data queryable; "
+                    + "resuming lifts that suspension.")
+    @ApiResponse(responseCode = "200", description = "Tournament paused or resumed",
+            content = @Content(schema = @Schema(implementation = PauseTournamentResponse.class)))
+    ResponseEntity<PauseTournamentResponse> pause(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID id,
+            PauseTournamentRequest request);
+
+    @Operation(summary = "Inactivate or reactivate tournament",
+            description = "Inactivating blocks ALL functionality of the tournament, including read queries — "
+                    + "not just writes (unlike pause).")
+    @ApiResponse(responseCode = "200", description = "Tournament inactivated or reactivated",
+            content = @Content(schema = @Schema(implementation = InactivateTournamentResponse.class)))
+    ResponseEntity<InactivateTournamentResponse> inactivate(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID id,
+            InactivateTournamentRequest request);
+
+    @Operation(summary = "Disqualify team",
+            description = "Marks the team as disqualified. It stays in the records with its past results, but is "
+                    + "excluded from any future matchups.")
+    @ApiResponse(responseCode = "200", description = "Team disqualified",
+            content = @Content(schema = @Schema(implementation = DisqualifyTeamResponse.class)))
+    ResponseEntity<DisqualifyTeamResponse> disqualifyTeam(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId,
+            @Parameter(description = "Team ID", example = "team_xyz789") UUID teamId,
+            DisqualifyTeamRequest request);
+
+    @Operation(summary = "Inactivate team in tournament",
+            description = "The inactivated team receives no scheduling or points; this is a temporary "
+                    + "administrative measure, distinct from disqualification.")
+    @ApiResponse(responseCode = "200", description = "Team inactivated",
+            content = @Content(schema = @Schema(implementation = InactivateTeamResponse.class)))
+    ResponseEntity<InactivateTeamResponse> inactivateTeam(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId,
+            @Parameter(description = "Team ID", example = "team_xyz789") UUID teamId);
+
+    @Operation(summary = "Inactivate participant user",
+            description = "The inactivated user cannot be included in lineups or accumulate statistics in that "
+                    + "tournament.")
+    @ApiResponse(responseCode = "200", description = "User inactivated",
+            content = @Content(schema = @Schema(implementation = InactivateUserResponse.class)))
+    ResponseEntity<InactivateUserResponse> inactivateUser(
+            @Parameter(description = "Tournament ID", example = "abc123") UUID tournamentId,
+            @Parameter(description = "User ID", example = "user_123") UUID userId);
+}

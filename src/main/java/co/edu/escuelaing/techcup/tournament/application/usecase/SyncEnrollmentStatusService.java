@@ -1,5 +1,7 @@
 package co.edu.escuelaing.techcup.tournament.application.usecase;
 
+import lombok.RequiredArgsConstructor;
+
 import co.edu.escuelaing.techcup.tournament.domain.model.Enrollment;
 import co.edu.escuelaing.techcup.tournament.domain.model.EnrollmentStatus;
 import co.edu.escuelaing.techcup.tournament.domain.model.PaymentOrderStatus;
@@ -11,6 +13,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 /**
  * Sincroniza periódicamente el estado de los Enrollment RESERVED con el
@@ -19,16 +22,12 @@ import java.time.LocalDateTime;
  * el que efectivamente transiciona RESERVED -> ENROLLED/REJECTED con el tiempo.
  */
 @Service
+@RequiredArgsConstructor
 public class SyncEnrollmentStatusService implements SyncEnrollmentStatusUseCase {
 
     private final TournamentRepositoryPort tournamentRepository;
     private final PaymentServiceClientPort paymentServiceClient;
 
-    public SyncEnrollmentStatusService(TournamentRepositoryPort tournamentRepository,
-                                        PaymentServiceClientPort paymentServiceClient) {
-        this.tournamentRepository = tournamentRepository;
-        this.paymentServiceClient = paymentServiceClient;
-    }
 
     @Override
     @Scheduled(fixedRate = 300_000)
@@ -47,7 +46,7 @@ public class SyncEnrollmentStatusService implements SyncEnrollmentStatusUseCase 
 
             PaymentOrderStatus paymentStatus = paymentServiceClient.getOrderStatus(enrollment.getEnrollmentId());
             if (paymentStatus == PaymentOrderStatus.APPROVED) {
-                enrollment.markEnrolled(LocalDateTime.now());
+                enrollment.markEnrolled(LocalDateTime.now(ZoneOffset.UTC));
                 changed = true;
             } else if (paymentStatus == PaymentOrderStatus.REJECTED) {
                 enrollment.markRejected();

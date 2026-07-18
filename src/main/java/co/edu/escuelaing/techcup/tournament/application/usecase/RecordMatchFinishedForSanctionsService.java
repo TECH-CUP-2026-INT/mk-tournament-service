@@ -1,5 +1,7 @@
 package co.edu.escuelaing.techcup.tournament.application.usecase;
 
+import lombok.RequiredArgsConstructor;
+
 import co.edu.escuelaing.techcup.tournament.domain.model.PlayerSanction;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.PlayerSanctionRepositoryPort;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.RecordMatchFinishedForSanctionsUseCase;
@@ -13,13 +15,11 @@ import org.springframework.stereotype.Service;
  * sancionado efectivamente jugaba ese partido (decisión explícita).
  */
 @Service
+@RequiredArgsConstructor
 public class RecordMatchFinishedForSanctionsService implements RecordMatchFinishedForSanctionsUseCase {
 
     private final PlayerSanctionRepositoryPort repository;
 
-    public RecordMatchFinishedForSanctionsService(PlayerSanctionRepositoryPort repository) {
-        this.repository = repository;
-    }
 
     @Override
     public void recordMatchFinished() {

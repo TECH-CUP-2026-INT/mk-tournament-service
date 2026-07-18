@@ -11,7 +11,9 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -22,25 +24,27 @@ import static org.mockito.Mockito.when;
 
 class InactivateTournamentServiceTest {
 
-    private Tournament sampleTournament(TournamentStatus status) {
-        return Tournament.reconstruct(
-                "1", "Copa Enero", 8, BigDecimal.valueOf(50000),
-                LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 20), LocalDate.of(2026, 2, 20),
-                status
-        );
+    private Tournament sampleTournament(UUID id, TournamentStatus status) {
+        return Tournament.builder()
+                .id(id).name("Copa Enero").numberOfTeams(8).cost(BigDecimal.valueOf(50000))
+                .startDate(LocalDate.of(2026, Month.MARCH, 1)).endDate(LocalDate.of(2026, Month.MARCH, 20))
+                .registrationDeadline(LocalDate.of(2026, Month.FEBRUARY, 20))
+                .status(status)
+                .reconstruct();
     }
 
     @Test
     void execute_inactivate_inactivaYGuardaElTorneo() {
+        UUID id = UUID.randomUUID();
         TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
-        Tournament tournament = sampleTournament(TournamentStatus.ACTIVE);
+        Tournament tournament = sampleTournament(id, TournamentStatus.ACTIVE);
 
-        when(repositoryMock.findById("1")).thenReturn(Optional.of(tournament));
+        when(repositoryMock.findById(id)).thenReturn(Optional.of(tournament));
         when(repositoryMock.save(tournament)).thenReturn(tournament);
 
         InactivateTournamentService service = new InactivateTournamentService(repositoryMock);
 
-        Tournament result = service.execute(new InactivateTournamentCommand("1", TournamentInactivationAction.INACTIVATE));
+        Tournament result = service.execute(new InactivateTournamentCommand(id, TournamentInactivationAction.INACTIVATE));
 
         assertFalse(result.isActive());
         verify(repositoryMock).save(tournament);
@@ -48,16 +52,17 @@ class InactivateTournamentServiceTest {
 
     @Test
     void execute_reactivate_reactivaYGuardaElTorneo() {
+        UUID id = UUID.randomUUID();
         TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
-        Tournament tournament = sampleTournament(TournamentStatus.ACTIVE);
+        Tournament tournament = sampleTournament(id, TournamentStatus.ACTIVE);
         tournament.inactivate();
 
-        when(repositoryMock.findById("1")).thenReturn(Optional.of(tournament));
+        when(repositoryMock.findById(id)).thenReturn(Optional.of(tournament));
         when(repositoryMock.save(tournament)).thenReturn(tournament);
 
         InactivateTournamentService service = new InactivateTournamentService(repositoryMock);
 
-        Tournament result = service.execute(new InactivateTournamentCommand("1", TournamentInactivationAction.REACTIVATE));
+        Tournament result = service.execute(new InactivateTournamentCommand(id, TournamentInactivationAction.REACTIVATE));
 
         assertTrue(result.isActive());
         verify(repositoryMock).save(tournament);
@@ -65,24 +70,26 @@ class InactivateTournamentServiceTest {
 
     @Test
     void execute_torneoNoExiste_lanzaTournamentNotFoundException() {
+        UUID id = UUID.randomUUID();
         TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
-        when(repositoryMock.findById("99")).thenReturn(Optional.empty());
+        when(repositoryMock.findById(id)).thenReturn(Optional.empty());
 
         InactivateTournamentService service = new InactivateTournamentService(repositoryMock);
 
-        assertThrows(TournamentNotFoundException.class,
-                () -> service.execute(new InactivateTournamentCommand("99", TournamentInactivationAction.INACTIVATE)));
+        InactivateTournamentCommand command = new InactivateTournamentCommand(id, TournamentInactivationAction.INACTIVATE);
+        assertThrows(TournamentNotFoundException.class, () -> service.execute(command));
     }
 
     @Test
     void execute_torneoFinalizado_lanzaTournamentInactivationNotAllowedException() {
+        UUID id = UUID.randomUUID();
         TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
-        Tournament tournament = sampleTournament(TournamentStatus.FINISHED);
-        when(repositoryMock.findById("1")).thenReturn(Optional.of(tournament));
+        Tournament tournament = sampleTournament(id, TournamentStatus.FINISHED);
+        when(repositoryMock.findById(id)).thenReturn(Optional.of(tournament));
 
         InactivateTournamentService service = new InactivateTournamentService(repositoryMock);
 
-        assertThrows(TournamentInactivationNotAllowedException.class,
-                () -> service.execute(new InactivateTournamentCommand("1", TournamentInactivationAction.INACTIVATE)));
+        InactivateTournamentCommand command = new InactivateTournamentCommand(id, TournamentInactivationAction.INACTIVATE);
+        assertThrows(TournamentInactivationNotAllowedException.class, () -> service.execute(command));
     }
 }

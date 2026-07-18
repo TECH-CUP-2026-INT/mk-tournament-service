@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 /**
  * Cliente Feign hacia el Payment Service. El contrato exacto de esa API aún
@@ -18,14 +19,14 @@ import java.math.BigDecimal;
 public interface PaymentServiceFeignClient {
 
     @GetMapping("/payment-orders/{enrollmentId}")
-    PaymentOrderResponse getOrderStatus(@PathVariable("enrollmentId") String enrollmentId);
+    PaymentOrderResponse getOrderStatus(@PathVariable("enrollmentId") UUID enrollmentId);
 
     @PostMapping("/payment-orders")
     CreateOrderResponse createOrder(@RequestBody CreateOrderRequest request);
 
     record PaymentOrderResponse(PaymentOrderStatus status) {}
 
-    record CreateOrderRequest(String enrollmentId, String teamId, String tournamentId, BigDecimal amount) {}
+    record CreateOrderRequest(UUID enrollmentId, UUID teamId, UUID tournamentId, BigDecimal amount) {}
 
     record CreateOrderResponse(String paymentOrderId, PaymentOrderStatus status) {}
 }

@@ -1,22 +1,24 @@
 package co.edu.escuelaing.techcup.tournament.application.usecase;
 
+import lombok.RequiredArgsConstructor;
+
 import co.edu.escuelaing.techcup.tournament.domain.exception.UserInactivationNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.domain.model.TournamentParticipant;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.InactivateUserUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentParticipantRepositoryPort;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
+@RequiredArgsConstructor
 public class InactivateUserService implements InactivateUserUseCase {
 
     private final TournamentParticipantRepositoryPort participantRepository;
 
-    public InactivateUserService(TournamentParticipantRepositoryPort participantRepository) {
-        this.participantRepository = participantRepository;
-    }
 
     @Override
-    public TournamentParticipant inactivate(String tournamentId, String userId) {
+    public TournamentParticipant inactivate(UUID tournamentId, UUID userId) {
         TournamentParticipant participant = participantRepository
                 .findByTournamentIdAndUserId(tournamentId, userId)
                 .orElseThrow(() -> new UserInactivationNotAllowedException(

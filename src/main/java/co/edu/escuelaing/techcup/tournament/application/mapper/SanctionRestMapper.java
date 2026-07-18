@@ -5,6 +5,10 @@ import co.edu.escuelaing.techcup.tournament.domain.model.PlayerSanction;
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")
+/**
+ * Mapper MapStruct: {@link co.edu.escuelaing.techcup.tournament.domain.model.PlayerSanction}
+ * a su DTO de respuesta REST.
+ */
 public interface SanctionRestMapper {
     SanctionResponse toResponse(PlayerSanction sanction);
 }

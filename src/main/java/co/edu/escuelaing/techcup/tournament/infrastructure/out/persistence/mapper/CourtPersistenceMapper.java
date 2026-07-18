@@ -6,6 +6,10 @@ import co.edu.escuelaing.techcup.tournament.domain.model.CourtSection;
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")
+/**
+ * Mapper MapStruct: {@link co.edu.escuelaing.techcup.tournament.domain.model.Court}
+ * ↔ documento de Mongo.
+ */
 public interface CourtPersistenceMapper {
 
     default Court toDomain(CourtDocument document) {

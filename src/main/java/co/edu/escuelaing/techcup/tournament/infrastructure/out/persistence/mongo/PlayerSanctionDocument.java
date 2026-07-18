@@ -7,6 +7,8 @@ import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.UUID;
+
 @Document(collection = "player_sanctions")
 @Getter
 @Setter
@@ -15,8 +17,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class PlayerSanctionDocument {
 
     @Id
-    private String id;
-    private String playerId;
+    private UUID id;
+    private UUID playerId;
     private String type;
     private int matchesRemaining;
 }

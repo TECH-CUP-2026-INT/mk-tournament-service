@@ -6,6 +6,7 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.PlayerSanct
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -19,8 +20,8 @@ class RecordMatchFinishedForSanctionsServiceTest {
     @Test
     void recordMatchFinished_decrementaTodasLasActivasYLasGuarda() {
         PlayerSanctionRepositoryPort repository = mock(PlayerSanctionRepositoryPort.class);
-        PlayerSanction sanction1 = PlayerSanction.reconstruct("s1", "p1", SanctionType.RED_CARD, 1);
-        PlayerSanction sanction2 = PlayerSanction.reconstruct("s2", "p2", SanctionType.CONDUCT, 3);
+        PlayerSanction sanction1 = PlayerSanction.reconstruct(UUID.randomUUID(), UUID.randomUUID(), SanctionType.RED_CARD, 1);
+        PlayerSanction sanction2 = PlayerSanction.reconstruct(UUID.randomUUID(), UUID.randomUUID(), SanctionType.CONDUCT, 3);
 
         when(repository.findAllActive()).thenReturn(List.of(sanction1, sanction2));
 

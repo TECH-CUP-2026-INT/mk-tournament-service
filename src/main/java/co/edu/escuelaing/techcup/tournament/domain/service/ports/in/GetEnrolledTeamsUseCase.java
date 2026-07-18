@@ -4,10 +4,11 @@ import co.edu.escuelaing.techcup.tournament.domain.model.Enrollment;
 import co.edu.escuelaing.techcup.tournament.domain.model.PaymentOrderStatus;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface GetEnrolledTeamsUseCase {
 
-    EnrolledTeamsView getEnrolledTeams(String tournamentId);
+    EnrolledTeamsView getEnrolledTeams(UUID tournamentId);
 
     record EnrolledTeamsView(List<Enrollment> enrolled, List<ReservedTeamView> reserved, int availableSlots) {}
 

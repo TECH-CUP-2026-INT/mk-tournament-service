@@ -16,6 +16,7 @@ import org.mockito.MockitoAnnotations;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -36,17 +37,19 @@ class InactivateTeamServiceTest {
 
     @Test
     void inactivate_whenTeamIsEnrolled_setsStatusToInactive() {
-        Tournament tournament = new Tournament("t-1", "MK Cup", TournamentStatus.ACTIVE);
-        TeamRegistration team = new TeamRegistration("team-1", "Team Alpha", RegistrationStatus.APPROVED);
+        UUID tournamentId = UUID.randomUUID();
+        UUID teamId = UUID.randomUUID();
+        Tournament tournament = new Tournament(tournamentId, "MK Cup", TournamentStatus.ACTIVE);
+        TeamRegistration team = new TeamRegistration(teamId, "Team Alpha", RegistrationStatus.APPROVED);
         tournament.setTeams(new ArrayList<>(List.of(team)));
 
-        when(repository.findById("t-1")).thenReturn(Optional.of(tournament));
+        when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
         when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        Tournament result = inactivateTeamService.inactivate("t-1", "team-1");
+        Tournament result = inactivateTeamService.inactivate(tournamentId, teamId);
 
         TeamRegistration updated = result.getTeams().stream()
-                .filter(t -> t.getTeamId().equals("team-1"))
+                .filter(t -> t.getTeamId().equals(teamId))
                 .findFirst().orElseThrow();
 
         assertEquals(RegistrationStatus.INACTIVE, updated.getRegistrationStatus());
@@ -55,35 +58,41 @@ class InactivateTeamServiceTest {
 
     @Test
     void inactivate_whenTournamentNotFound_throwsTournamentNotFoundException() {
-        when(repository.findById("t-99")).thenReturn(Optional.empty());
+        UUID tournamentId = UUID.randomUUID();
+        UUID teamId = UUID.randomUUID();
+        when(repository.findById(tournamentId)).thenReturn(Optional.empty());
 
         assertThrows(TournamentNotFoundException.class,
-                () -> inactivateTeamService.inactivate("t-99", "team-1"));
+                () -> inactivateTeamService.inactivate(tournamentId, teamId));
         verify(repository, never()).save(any());
     }
 
     @Test
     void inactivate_whenTeamNotEnrolled_throwsTeamInactivationNotAllowedException() {
-        Tournament tournament = new Tournament("t-1", "MK Cup", TournamentStatus.ACTIVE);
+        UUID tournamentId = UUID.randomUUID();
+        UUID teamId = UUID.randomUUID();
+        Tournament tournament = new Tournament(tournamentId, "MK Cup", TournamentStatus.ACTIVE);
         tournament.setTeams(new ArrayList<>());
 
-        when(repository.findById("t-1")).thenReturn(Optional.of(tournament));
+        when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
 
         assertThrows(TeamInactivationNotAllowedException.class,
-                () -> inactivateTeamService.inactivate("t-1", "team-99"));
+                () -> inactivateTeamService.inactivate(tournamentId, teamId));
         verify(repository, never()).save(any());
     }
 
     @Test
     void inactivate_whenTeamAlreadyInactive_throwsTeamInactivationNotAllowedException() {
-        Tournament tournament = new Tournament("t-1", "MK Cup", TournamentStatus.ACTIVE);
-        TeamRegistration team = new TeamRegistration("team-1", "Team Alpha", RegistrationStatus.INACTIVE);
+        UUID tournamentId = UUID.randomUUID();
+        UUID teamId = UUID.randomUUID();
+        Tournament tournament = new Tournament(tournamentId, "MK Cup", TournamentStatus.ACTIVE);
+        TeamRegistration team = new TeamRegistration(teamId, "Team Alpha", RegistrationStatus.INACTIVE);
         tournament.setTeams(new ArrayList<>(List.of(team)));
 
-        when(repository.findById("t-1")).thenReturn(Optional.of(tournament));
+        when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
 
         assertThrows(TeamInactivationNotAllowedException.class,
-                () -> inactivateTeamService.inactivate("t-1", "team-1"));
+                () -> inactivateTeamService.inactivate(tournamentId, teamId));
         verify(repository, never()).save(any());
     }
 }

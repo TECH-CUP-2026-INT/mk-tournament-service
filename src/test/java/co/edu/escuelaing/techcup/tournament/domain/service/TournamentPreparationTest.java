@@ -17,6 +17,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -24,20 +25,19 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class TournamentPreparationTest {
 
     private Tournament buildTournament(TournamentStatus status, List<TeamRegistration> teams) {
-        return Tournament.reconstruct(
-                "t1", "TechCup", TournamentType.NORMAL, TournamentFormat.BRACKETS, 8, BigDecimal.ZERO,
-                LocalDate.now().plusDays(2), LocalDate.now().plusDays(10), LocalDate.now(),
-                null, null,
-                status,
-                new ArrayList<>(teams), new ArrayList<>(),
-                null, null
-        );
+        return Tournament.builder()
+                .id(UUID.randomUUID()).name("TechCup").type(TournamentType.NORMAL).format(TournamentFormat.BRACKETS)
+                .numberOfTeams(8).cost(BigDecimal.ZERO)
+                .startDate(LocalDate.now().plusDays(2)).endDate(LocalDate.now().plusDays(10))
+                .registrationDeadline(LocalDate.now())
+                .status(status).teams(new ArrayList<>(teams)).matches(new ArrayList<>())
+                .reconstruct();
     }
 
     private List<TeamRegistration> approvedTeams(int count) {
         List<TeamRegistration> teams = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            teams.add(new TeamRegistration("e" + i, "Equipo " + i, RegistrationStatus.APPROVED));
+            teams.add(new TeamRegistration(UUID.randomUUID(), "Equipo " + i, RegistrationStatus.APPROVED));
         }
         return teams;
     }
@@ -45,7 +45,7 @@ class TournamentPreparationTest {
     @Test
     void startPreparation_activoConTresAprobados_pasaAInPreparationYFijaMatches() {
         Tournament tournament = buildTournament(TournamentStatus.ACTIVE, approvedTeams(3));
-        List<Match> generated = List.of(new Match("m1", "e0", "e1", MatchStatus.PENDING));
+        List<Match> generated = List.of(new Match(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), MatchStatus.PENDING));
 
         tournament.startPreparation(generated);
 

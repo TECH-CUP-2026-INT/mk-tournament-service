@@ -5,12 +5,15 @@ import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentNotFoundE
 import co.edu.escuelaing.techcup.tournament.domain.model.Tournament;
 import co.edu.escuelaing.techcup.tournament.domain.model.TournamentStatus;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.RecognitionAwardPort;
+import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentEventPublisherPort;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentRepositoryPort;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -22,44 +25,50 @@ import static org.mockito.Mockito.when;
 
 class FinalizeTournamentServiceTest {
 
-    private Tournament inProgressTournament() {
-        return Tournament.reconstruct(
-                "1", "Copa Enero", 8, BigDecimal.valueOf(50000),
-                LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 10), LocalDate.of(2026, 2, 20),
-                TournamentStatus.IN_PROGRESS
-        );
+    private Tournament inProgressTournament(UUID id) {
+        return Tournament.builder()
+                .id(id).name("Copa Enero").numberOfTeams(8).cost(BigDecimal.valueOf(50000))
+                .startDate(LocalDate.of(2026, Month.MARCH, 1)).endDate(LocalDate.of(2026, Month.MARCH, 10))
+                .registrationDeadline(LocalDate.of(2026, Month.FEBRUARY, 20))
+                .status(TournamentStatus.IN_PROGRESS)
+                .reconstruct();
     }
 
     @Test
     void finalizeTournament_whenInProgressAndEndDateReached_setsStatusFinishedYDisparaPremios() {
+        UUID id = UUID.randomUUID();
         TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
         RecognitionAwardPort awardPortMock = mock(RecognitionAwardPort.class);
-        Tournament tournament = inProgressTournament();
+        TournamentEventPublisherPort eventPublisherMock = mock(TournamentEventPublisherPort.class);
+        Tournament tournament = inProgressTournament(id);
 
-        when(repositoryMock.findById("1")).thenReturn(Optional.of(tournament));
+        when(repositoryMock.findById(id)).thenReturn(Optional.of(tournament));
         when(repositoryMock.save(tournament)).thenReturn(tournament);
 
-        FinalizeTournamentService service = new FinalizeTournamentService(repositoryMock, awardPortMock);
-        Tournament result = service.finalizeTournament("1");
+        FinalizeTournamentService service = new FinalizeTournamentService(repositoryMock, awardPortMock, eventPublisherMock);
+        Tournament result = service.finalizeTournament(id);
 
         assertEquals(TournamentStatus.FINISHED, result.getStatus());
         verify(repositoryMock).save(tournament);
-        verify(awardPortMock).triggerAwards("1");
+        verify(awardPortMock).triggerAwards(id);
+        verify(eventPublisherMock).publishTournamentFinalized(id);
     }
 
     @Test
     void finalizeTournament_cuandoFallaElDisparoDePremios_igualFinalizaSinLanzarExcepcion() {
+        UUID id = UUID.randomUUID();
         TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
         RecognitionAwardPort awardPortMock = mock(RecognitionAwardPort.class);
-        Tournament tournament = inProgressTournament();
+        TournamentEventPublisherPort eventPublisherMock = mock(TournamentEventPublisherPort.class);
+        Tournament tournament = inProgressTournament(id);
 
-        when(repositoryMock.findById("1")).thenReturn(Optional.of(tournament));
+        when(repositoryMock.findById(id)).thenReturn(Optional.of(tournament));
         when(repositoryMock.save(tournament)).thenReturn(tournament);
-        doThrow(new RuntimeException("proveedor de premios caído")).when(awardPortMock).triggerAwards("1");
+        doThrow(new RuntimeException("proveedor de premios caído")).when(awardPortMock).triggerAwards(id);
 
-        FinalizeTournamentService service = new FinalizeTournamentService(repositoryMock, awardPortMock);
+        FinalizeTournamentService service = new FinalizeTournamentService(repositoryMock, awardPortMock, eventPublisherMock);
 
-        Tournament result = assertDoesNotThrow(() -> service.finalizeTournament("1"));
+        Tournament result = assertDoesNotThrow(() -> service.finalizeTournament(id));
 
         assertEquals(TournamentStatus.FINISHED, result.getStatus());
         verify(repositoryMock).save(tournament);
@@ -67,50 +76,58 @@ class FinalizeTournamentServiceTest {
 
     @Test
     void finalizeTournament_whenTournamentNotFound_throwsException() {
+        UUID id = UUID.randomUUID();
         TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
         RecognitionAwardPort awardPortMock = mock(RecognitionAwardPort.class);
-        when(repositoryMock.findById("99")).thenReturn(Optional.empty());
+        TournamentEventPublisherPort eventPublisherMock = mock(TournamentEventPublisherPort.class);
+        when(repositoryMock.findById(id)).thenReturn(Optional.empty());
 
-        FinalizeTournamentService service = new FinalizeTournamentService(repositoryMock, awardPortMock);
+        FinalizeTournamentService service = new FinalizeTournamentService(repositoryMock, awardPortMock, eventPublisherMock);
 
-        assertThrows(TournamentNotFoundException.class, () -> service.finalizeTournament("99"));
+        assertThrows(TournamentNotFoundException.class, () -> service.finalizeTournament(id));
     }
 
     @Test
     void finalizeTournament_whenEndDateNotReached_throwsException() {
+        UUID id = UUID.randomUUID();
         TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
         RecognitionAwardPort awardPortMock = mock(RecognitionAwardPort.class);
+        TournamentEventPublisherPort eventPublisherMock = mock(TournamentEventPublisherPort.class);
 
-        Tournament tournament = Tournament.reconstruct(
-                "1", "Copa Enero", 8, BigDecimal.valueOf(50000),
-                LocalDate.of(2026, 3, 1), LocalDate.now().plusDays(10), LocalDate.of(2026, 2, 20),
-                TournamentStatus.IN_PROGRESS
-        );
+        Tournament tournament = Tournament.builder()
+                .id(id).name("Copa Enero").numberOfTeams(8).cost(BigDecimal.valueOf(50000))
+                .startDate(LocalDate.of(2026, Month.MARCH, 1)).endDate(LocalDate.now().plusDays(10))
+                .registrationDeadline(LocalDate.of(2026, Month.FEBRUARY, 20))
+                .status(TournamentStatus.IN_PROGRESS)
+                .reconstruct();
 
-        when(repositoryMock.findById("1")).thenReturn(Optional.of(tournament));
+        when(repositoryMock.findById(id)).thenReturn(Optional.of(tournament));
 
-        FinalizeTournamentService service = new FinalizeTournamentService(repositoryMock, awardPortMock);
+        FinalizeTournamentService service = new FinalizeTournamentService(repositoryMock, awardPortMock, eventPublisherMock);
 
         assertThrows(TournamentCannotBeFinalizedException.class,
-                () -> service.finalizeTournament("1"));
+                () -> service.finalizeTournament(id));
     }
 
     @Test
     void finalizeTournament_whenAlreadyFinished_throwsException() {
+        UUID id = UUID.randomUUID();
         TournamentRepositoryPort repositoryMock = mock(TournamentRepositoryPort.class);
         RecognitionAwardPort awardPortMock = mock(RecognitionAwardPort.class);
+        TournamentEventPublisherPort eventPublisherMock = mock(TournamentEventPublisherPort.class);
 
-        Tournament tournament = Tournament.reconstruct(
-                "1", "Copa Enero", 8, BigDecimal.valueOf(50000),
-                LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 10), LocalDate.of(2026, 2, 20),
-                TournamentStatus.FINISHED
-        );
+        Tournament tournament = Tournament.builder()
+                .id(id).name("Copa Enero").numberOfTeams(8).cost(BigDecimal.valueOf(50000))
+                .startDate(LocalDate.of(2026, Month.MARCH, 1)).endDate(LocalDate.of(2026, Month.MARCH, 10))
+                .registrationDeadline(LocalDate.of(2026, Month.FEBRUARY, 20))
+                .status(TournamentStatus.FINISHED)
+                .reconstruct();
 
-        when(repositoryMock.findById("1")).thenReturn(Optional.of(tournament));
+        when(repositoryMock.findById(id)).thenReturn(Optional.of(tournament));
 
-        FinalizeTournamentService service = new FinalizeTournamentService(repositoryMock, awardPortMock);
+        FinalizeTournamentService service = new FinalizeTournamentService(repositoryMock, awardPortMock, eventPublisherMock);
 
         assertThrows(TournamentCannotBeFinalizedException.class,
-                () -> service.finalizeTournament("1"));
+                () -> service.finalizeTournament(id));
     }
 }

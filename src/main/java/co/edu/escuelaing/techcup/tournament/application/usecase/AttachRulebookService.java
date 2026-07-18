@@ -1,6 +1,8 @@
 // application/service/AttachRulebookService.java
 package co.edu.escuelaing.techcup.tournament.application.usecase;
 
+import lombok.RequiredArgsConstructor;
+
 import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentNotFoundException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidRulebookFileException;
 import co.edu.escuelaing.techcup.tournament.domain.model.Tournament;
@@ -10,21 +12,18 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentR
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class AttachRulebookService implements AttachRulebookUseCase {
+
 
     private final TournamentRepositoryPort tournamentRepository;
     private final RulebookStoragePort rulebookStorage;
 
-    public AttachRulebookService(TournamentRepositoryPort tournamentRepository,
-                                 RulebookStoragePort rulebookStorage) {
-        this.tournamentRepository = tournamentRepository;
-        this.rulebookStorage = rulebookStorage;
-    }
 
     @Override
     public Tournament attach(AttachRulebookCommand command) {
         Tournament tournament = tournamentRepository.findById(command.tournamentId())
-                .orElseThrow(() -> new TournamentNotFoundException(command.tournamentId()));
+                .orElseThrow(() -> new TournamentNotFoundException(command.tournamentId().toString()));
 
         validateFile(command.contentType(), command.sizeBytes());
 

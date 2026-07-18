@@ -7,6 +7,7 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.PaymentServ
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 /**
  * Cliente hacia el Payment Service, vía Feign ({@link PaymentServiceFeignClient}).
@@ -26,7 +27,7 @@ public class PaymentServiceClientAdapter implements PaymentServiceClientPort {
     }
 
     @Override
-    public PaymentOrderStatus getOrderStatus(String enrollmentId) {
+    public PaymentOrderStatus getOrderStatus(UUID enrollmentId) {
         try {
             PaymentServiceFeignClient.PaymentOrderResponse response = feignClient.getOrderStatus(enrollmentId);
             return response != null && response.status() != null ? response.status() : PaymentOrderStatus.UNKNOWN;
@@ -36,7 +37,7 @@ public class PaymentServiceClientAdapter implements PaymentServiceClientPort {
     }
 
     @Override
-    public PaymentOrderReference createOrder(String enrollmentId, String teamId, String tournamentId, BigDecimal amount) {
+    public PaymentOrderReference createOrder(UUID enrollmentId, UUID teamId, UUID tournamentId, BigDecimal amount) {
         try {
             PaymentServiceFeignClient.CreateOrderResponse response = feignClient.createOrder(
                     new PaymentServiceFeignClient.CreateOrderRequest(enrollmentId, teamId, tournamentId, amount));

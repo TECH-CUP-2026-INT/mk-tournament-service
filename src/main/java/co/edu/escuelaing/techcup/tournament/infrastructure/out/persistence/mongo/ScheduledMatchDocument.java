@@ -9,6 +9,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.UUID;
 
 @Document(collection = "scheduled_matches")
 @Getter
@@ -18,10 +19,10 @@ import java.time.LocalTime;
 public class ScheduledMatchDocument {
 
     @Id
-    private String id;
-    private String matchupId;
-    private String courtId;
-    private String refereeId;
+    private UUID id;
+    private UUID matchupId;
+    private UUID courtId;
+    private UUID refereeId;
     private LocalDate matchDate;
     private LocalTime matchTime;
 }

@@ -4,6 +4,8 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
+import java.util.UUID;
+
 /**
  * Cliente Feign hacia el Team Service. El contrato exacto de esa API aún no
  * está definido/versionado en ese repo; se asume el mismo shape que ya usaba
@@ -13,7 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 public interface TeamServiceFeignClient {
 
     @GetMapping("/teams/{teamId}")
-    TeamInfoResponse getTeamInfo(@PathVariable("teamId") String teamId);
+    TeamInfoResponse getTeamInfo(@PathVariable("teamId") UUID teamId);
 
     record TeamInfoResponse(String teamName, int rosterSize) {}
 }

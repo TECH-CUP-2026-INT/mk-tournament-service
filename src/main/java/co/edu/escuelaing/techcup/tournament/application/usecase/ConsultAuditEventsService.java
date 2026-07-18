@@ -1,5 +1,7 @@
 package co.edu.escuelaing.techcup.tournament.application.usecase;
 
+import lombok.RequiredArgsConstructor;
+
 import co.edu.escuelaing.techcup.tournament.domain.model.AuditEvent;
 import co.edu.escuelaing.techcup.tournament.domain.model.AuditEventFilter;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.AuditEventRepositoryPort;
@@ -9,13 +11,11 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class ConsultAuditEventsService implements ConsultAuditEventsUseCase {
 
     private final AuditEventRepositoryPort repository;
 
-    public ConsultAuditEventsService(AuditEventRepositoryPort repository) {
-        this.repository = repository;
-    }
 
     @Override
     public List<AuditEvent> consult(AuditEventFilter filter) {

@@ -6,6 +6,7 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.AuditEventR
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,7 +20,7 @@ class ConsultAuditEventsServiceTest {
     void consult_delegaAlRepositorioConElFiltroRecibido() {
         AuditEventRepositoryPort repository = mock(AuditEventRepositoryPort.class);
         AuditEventFilter filter = new AuditEventFilter(
-                LocalDate.of(2026, 1, 1), LocalDate.of(2026, 1, 31), "CreateTournamentService.create", "t1");
+                LocalDate.of(2026, Month.JANUARY, 1), LocalDate.of(2026, Month.JANUARY, 31), "CreateTournamentService.create", "t1");
         AuditEvent event = AuditEvent.create("system", "CreateTournamentService.create", "t1");
 
         when(repository.search(filter)).thenReturn(List.of(event));

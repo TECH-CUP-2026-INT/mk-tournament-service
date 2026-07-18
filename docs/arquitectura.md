@@ -90,6 +90,20 @@ mk-tournament-service/
 
 ---
 
+## Asynchronous integration
+
+Besides the synchronous REST calls routed through the API Gateway, this service talks to **Matches** (`am-matches-service`) directly, on two separate channels:
+
+- **Outbound, synchronous (push):** when a match is scheduled (`POST /matches`), its definition is pushed straight to Matches via a Feign client (`MatchDefinitionRestAdapter` → `MatchesServiceFeignClient`, `POST {matches-service.base-url}/api/partidos`, authenticated with `X-Internal-Api-Key`). This is a plain REST call, not RabbitMQ. A failed push doesn't fail the scheduling request — the match is flagged `definitionSyncPending` for manual retry (`POST /matches/{matchId}/resend-definition`).
+- **Inbound, asynchronous (event):** when a match finishes, Matches publishes a `techcup.match.finished` event to the shared **RabbitMQ** topic exchange `techcup.exchange` (durable, declared in `RabbitMQConfig`). This service consumes it from queue `techcup.tournament.match-finished` via `MatchFinishedListener`, which deserializes the event into `MatchFinishedEvent` and delegates entirely to `ProcessMatchResultUseCase` — the same use case reachable synchronously via `POST /sim/partidos/{matchId}/resultado` (dev profile only, for testing without a broker or Matches running). Processing a result is what drives the group-stage table, closes the group stage and generates the elimination bracket, advances the bracket, and serves suspensions for carded players.
+
+See [REST API → Asynchronous integration — RabbitMQ](api.md) for the exact event payload and endpoint details.
+
+!!! note "Package structure diagram below is stale"
+    The tree in the previous section predates the current hexagonal layout (it still shows `controller/impl/`, `entity/document/`, `service/impl/`, none of which exist anymore — the real packages are `domain/{model,service}`, `application/usecase`, `infrastructure/{in/rest,in/messaging,out/persistence,out/feign}`). That's pre-existing drift, unrelated to the RabbitMQ/Matches integration described above; flagged here rather than silently redrawn, since fixing it is a separate, larger doc pass.
+
+---
+
 ## Security
 
 !!! warning "Current state"

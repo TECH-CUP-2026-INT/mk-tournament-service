@@ -2,6 +2,7 @@ package co.edu.escuelaing.techcup.tournament.application.usecase;
 
 import co.edu.escuelaing.techcup.tournament.domain.exception.FixtureGenerationFailedException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.InsufficientApprovedTeamsException;
+import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidGroupStageTeamCountException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentNotFoundException;
 import co.edu.escuelaing.techcup.tournament.domain.model.Enrollment;
 import co.edu.escuelaing.techcup.tournament.domain.model.EnrollmentStatus;
@@ -22,6 +23,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -33,37 +35,46 @@ import static org.mockito.Mockito.when;
 
 class StartTournamentPreparationServiceTest {
 
-    private Tournament buildTournament(TournamentStatus status, int approvedCount) {
+    private Tournament buildTournament(UUID tournamentId, TournamentStatus status, int approvedCount) {
+        return buildTournament(tournamentId, status, approvedCount, TournamentFormat.BRACKETS);
+    }
+
+    private Tournament buildTournament(UUID tournamentId, TournamentStatus status, int approvedCount,
+                                        TournamentFormat format) {
         List<TeamRegistration> teams = new ArrayList<>();
         List<Enrollment> enrollments = new ArrayList<>();
         for (int i = 0; i < approvedCount; i++) {
-            teams.add(new TeamRegistration("e" + i, "Equipo " + i, RegistrationStatus.APPROVED));
-            enrollments.add(new Enrollment("e" + i, "Equipo " + i, EnrollmentStatus.ENROLLED));
+            UUID teamId = UUID.randomUUID();
+            teams.add(new TeamRegistration(teamId, "Equipo " + i, RegistrationStatus.APPROVED));
+            enrollments.add(new Enrollment(teamId, "Equipo " + i, EnrollmentStatus.ENROLLED));
         }
-        Tournament tournament = Tournament.reconstruct(
-                "t1", "TechCup", TournamentType.NORMAL, TournamentFormat.BRACKETS, 8, BigDecimal.ZERO,
-                LocalDate.now().plusDays(2), LocalDate.now().plusDays(10), LocalDate.now(),
-                null, null, status, teams, new ArrayList<>(), null, null
-        );
+        Tournament tournament = Tournament.builder()
+                .id(tournamentId).name("TechCup").type(TournamentType.NORMAL).format(format)
+                .numberOfTeams(8).cost(BigDecimal.ZERO)
+                .startDate(LocalDate.now().plusDays(2)).endDate(LocalDate.now().plusDays(10))
+                .registrationDeadline(LocalDate.now())
+                .status(status).teams(teams).matches(new ArrayList<>())
+                .reconstruct();
         tournament.setEnrollments(enrollments);
         return tournament;
     }
 
     @Test
     void startPreparation_flujoFeliz_generaMatchesYGuardaEnInPreparation() {
+        UUID tournamentId = UUID.randomUUID();
         TournamentRepositoryPort repository = mock(TournamentRepositoryPort.class);
         FixtureGenerationPort fixturePort = mock(FixtureGenerationPort.class);
-        Tournament tournament = buildTournament(TournamentStatus.ACTIVE, 3);
-        List<Match> generated = List.of(new Match("m1", "e0", "e1", MatchStatus.PENDING));
+        Tournament tournament = buildTournament(tournamentId, TournamentStatus.ACTIVE, 3);
+        List<Match> generated = List.of(new Match(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), MatchStatus.PENDING));
 
-        when(repository.findById("t1")).thenReturn(Optional.of(tournament));
+        when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
         when(fixturePort.generateFixture(any())).thenReturn(generated);
         when(repository.save(tournament)).thenReturn(tournament);
 
         StartTournamentPreparationService service =
                 new StartTournamentPreparationService(repository, fixturePort);
 
-        Tournament result = service.startPreparation("t1");
+        Tournament result = service.startPreparation(tournamentId);
 
         assertEquals(TournamentStatus.IN_PREPARATION, result.getStatus());
         assertEquals(1, result.getMatches().size());
@@ -72,47 +83,108 @@ class StartTournamentPreparationServiceTest {
 
     @Test
     void startPreparation_torneoNoExiste_lanzaTournamentNotFoundException() {
+        UUID tournamentId = UUID.randomUUID();
         TournamentRepositoryPort repository = mock(TournamentRepositoryPort.class);
         FixtureGenerationPort fixturePort = mock(FixtureGenerationPort.class);
 
-        when(repository.findById("t99")).thenReturn(Optional.empty());
+        when(repository.findById(tournamentId)).thenReturn(Optional.empty());
 
         StartTournamentPreparationService service =
                 new StartTournamentPreparationService(repository, fixturePort);
 
-        assertThrows(TournamentNotFoundException.class, () -> service.startPreparation("t99"));
+        assertThrows(TournamentNotFoundException.class, () -> service.startPreparation(tournamentId));
     }
 
     @Test
     void startPreparation_menosDeTresAprobados_noLlamaAlPortNiGuarda() {
+        UUID tournamentId = UUID.randomUUID();
         TournamentRepositoryPort repository = mock(TournamentRepositoryPort.class);
         FixtureGenerationPort fixturePort = mock(FixtureGenerationPort.class);
-        Tournament tournament = buildTournament(TournamentStatus.ACTIVE, 2);
+        Tournament tournament = buildTournament(tournamentId, TournamentStatus.ACTIVE, 2);
 
-        when(repository.findById("t1")).thenReturn(Optional.of(tournament));
+        when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
 
         StartTournamentPreparationService service =
                 new StartTournamentPreparationService(repository, fixturePort);
 
-        assertThrows(InsufficientApprovedTeamsException.class, () -> service.startPreparation("t1"));
+        assertThrows(InsufficientApprovedTeamsException.class, () -> service.startPreparation(tournamentId));
 
         verify(fixturePort, never()).generateFixture(any());
         verify(repository, never()).save(any());
     }
 
     @Test
-    void startPreparation_fallaGeneracionInterna_lanzaFixtureGenerationFailedYNoGuardaNada() {
+    void startPreparation_formatoGrupos_conOchoEquipos_generaFixture() {
+        UUID tournamentId = UUID.randomUUID();
         TournamentRepositoryPort repository = mock(TournamentRepositoryPort.class);
         FixtureGenerationPort fixturePort = mock(FixtureGenerationPort.class);
-        Tournament tournament = buildTournament(TournamentStatus.ACTIVE, 3);
+        Tournament tournament = buildTournament(tournamentId, TournamentStatus.ACTIVE, 8, TournamentFormat.GROUPS);
+        List<Match> generated = List.of(new Match(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), MatchStatus.PENDING));
 
-        when(repository.findById("t1")).thenReturn(Optional.of(tournament));
+        when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
+        when(fixturePort.generateFixture(any())).thenReturn(generated);
+        when(repository.save(tournament)).thenReturn(tournament);
+
+        StartTournamentPreparationService service =
+                new StartTournamentPreparationService(repository, fixturePort);
+
+        Tournament result = service.startPreparation(tournamentId);
+
+        assertEquals(TournamentStatus.IN_PREPARATION, result.getStatus());
+    }
+
+    @Test
+    void startPreparation_formatoGrupos_conCantidadInvalida_lanzaInvalidGroupStageTeamCountException() {
+        UUID tournamentId = UUID.randomUUID();
+        TournamentRepositoryPort repository = mock(TournamentRepositoryPort.class);
+        FixtureGenerationPort fixturePort = mock(FixtureGenerationPort.class);
+        Tournament tournament = buildTournament(tournamentId, TournamentStatus.ACTIVE, 6, TournamentFormat.GROUPS);
+
+        when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
+
+        StartTournamentPreparationService service =
+                new StartTournamentPreparationService(repository, fixturePort);
+
+        assertThrows(InvalidGroupStageTeamCountException.class, () -> service.startPreparation(tournamentId));
+
+        verify(fixturePort, never()).generateFixture(any());
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void startPreparation_formatoBrackets_conCantidadNoMundial_noValidaElConteo() {
+        UUID tournamentId = UUID.randomUUID();
+        TournamentRepositoryPort repository = mock(TournamentRepositoryPort.class);
+        FixtureGenerationPort fixturePort = mock(FixtureGenerationPort.class);
+        Tournament tournament = buildTournament(tournamentId, TournamentStatus.ACTIVE, 3, TournamentFormat.BRACKETS);
+        List<Match> generated = List.of(new Match(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), MatchStatus.PENDING));
+
+        when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
+        when(fixturePort.generateFixture(any())).thenReturn(generated);
+        when(repository.save(tournament)).thenReturn(tournament);
+
+        StartTournamentPreparationService service =
+                new StartTournamentPreparationService(repository, fixturePort);
+
+        Tournament result = service.startPreparation(tournamentId);
+
+        assertEquals(TournamentStatus.IN_PREPARATION, result.getStatus());
+    }
+
+    @Test
+    void startPreparation_fallaGeneracionInterna_lanzaFixtureGenerationFailedYNoGuardaNada() {
+        UUID tournamentId = UUID.randomUUID();
+        TournamentRepositoryPort repository = mock(TournamentRepositoryPort.class);
+        FixtureGenerationPort fixturePort = mock(FixtureGenerationPort.class);
+        Tournament tournament = buildTournament(tournamentId, TournamentStatus.ACTIVE, 3);
+
+        when(repository.findById(tournamentId)).thenReturn(Optional.of(tournament));
         when(fixturePort.generateFixture(any())).thenThrow(new RuntimeException("timeout"));
 
         StartTournamentPreparationService service =
                 new StartTournamentPreparationService(repository, fixturePort);
 
-        assertThrows(FixtureGenerationFailedException.class, () -> service.startPreparation("t1"));
+        assertThrows(FixtureGenerationFailedException.class, () -> service.startPreparation(tournamentId));
 
         assertEquals(TournamentStatus.ACTIVE, tournament.getStatus());
         verify(repository, never()).save(any());

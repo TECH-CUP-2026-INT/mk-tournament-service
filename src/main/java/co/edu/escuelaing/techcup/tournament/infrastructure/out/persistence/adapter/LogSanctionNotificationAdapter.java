@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 /**
  * Implementación local de {@link SanctionNotificationPort} usada mientras se
  * define el proveedor real de notificaciones (email/SMS/push, TBD). Se
@@ -18,7 +20,7 @@ public class LogSanctionNotificationAdapter implements SanctionNotificationPort 
     private static final Logger log = LoggerFactory.getLogger(LogSanctionNotificationAdapter.class);
 
     @Override
-    public void notifyPlayerSanctioned(String playerId, SanctionType type, int matchesSuspended) {
+    public void notifyPlayerSanctioned(UUID playerId, SanctionType type, int matchesSuspended) {
         log.info("Notificación al jugador '{}': sancionado ({}) por {} partido(s)",
                 playerId, type, matchesSuspended);
     }

@@ -4,16 +4,22 @@ import co.edu.escuelaing.techcup.tournament.domain.exception.InvalidScheduledMat
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.UUID;
 
+/**
+ * Programación real de un partido: fecha, hora, cancha y árbitro asignados a un
+ * enfrentamiento ({@link Match}) ya generado en el fixture.
+ */
+@SuppressWarnings("java:S2160") // identidad por id (heredada de AggregateRoot), no por campos: patron DDD intencional
 public class ScheduledMatch extends AggregateRoot {
 
-    private final String matchupId;
-    private final String courtId;
-    private final String refereeId;
+    private final UUID matchupId;
+    private final UUID courtId;
+    private final UUID refereeId;
     private final LocalDate matchDate;
     private final LocalTime matchTime;
 
-    private ScheduledMatch(String id, String matchupId, String courtId, String refereeId,
+    private ScheduledMatch(UUID id, UUID matchupId, UUID courtId, UUID refereeId,
                            LocalDate matchDate, LocalTime matchTime) {
         super(id);
         this.matchupId = matchupId;
@@ -23,31 +29,31 @@ public class ScheduledMatch extends AggregateRoot {
         this.matchTime = matchTime;
     }
 
-    public static ScheduledMatch create(String matchupId, String courtId, String refereeId,
+    public static ScheduledMatch create(UUID matchupId, UUID courtId, UUID refereeId,
                                         LocalDate matchDate, LocalTime matchTime) {
-        validateNotBlank(matchupId, "La matchup pairing es obligatoria");
-        validateNotBlank(courtId, "La cancha es obligatoria");
-        validateNotBlank(refereeId, "El árbitro es obligatorio");
+        validateNotNull(matchupId, "La matchup pairing es obligatoria");
+        validateNotNull(courtId, "La cancha es obligatoria");
+        validateNotNull(refereeId, "El árbitro es obligatorio");
         if (matchDate == null)
             throw new InvalidScheduledMatchDataException("La fecha del partido es obligatoria");
         if (matchTime == null)
             throw new InvalidScheduledMatchDataException("La hora del partido es obligatoria");
-        return new ScheduledMatch(null, matchupId, courtId, refereeId, matchDate, matchTime);
+        return new ScheduledMatch(UUID.randomUUID(), matchupId, courtId, refereeId, matchDate, matchTime);
     }
 
-    public static ScheduledMatch reconstruct(String id, String matchupId, String courtId, String refereeId,
+    public static ScheduledMatch reconstruct(UUID id, UUID matchupId, UUID courtId, UUID refereeId,
                                              LocalDate matchDate, LocalTime matchTime) {
         return new ScheduledMatch(id, matchupId, courtId, refereeId, matchDate, matchTime);
     }
 
-    private static void validateNotBlank(String value, String message) {
-        if (value == null || value.isBlank())
+    private static void validateNotNull(UUID value, String message) {
+        if (value == null)
             throw new InvalidScheduledMatchDataException(message);
     }
 
-    public String getMatchupId() { return matchupId; }
-    public String getCourtId() { return courtId; }
-    public String getRefereeId() { return refereeId; }
+    public UUID getMatchupId() { return matchupId; }
+    public UUID getCourtId() { return courtId; }
+    public UUID getRefereeId() { return refereeId; }
     public LocalDate getMatchDate() { return matchDate; }
     public LocalTime getMatchTime() { return matchTime; }
 }

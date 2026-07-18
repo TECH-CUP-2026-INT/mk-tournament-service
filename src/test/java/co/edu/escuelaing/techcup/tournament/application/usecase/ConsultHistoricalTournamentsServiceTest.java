@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -26,8 +27,8 @@ class ConsultHistoricalTournamentsServiceTest {
 
     @Test
     void findAll_returnsFinishedTournaments() {
-        Tournament t1 = new Tournament("t1", "Copa ECI 2024", TournamentStatus.FINISHED);
-        Tournament t2 = new Tournament("t2", "Copa ECI 2025", TournamentStatus.FINISHED);
+        Tournament t1 = new Tournament(UUID.randomUUID(), "Copa ECI 2024", TournamentStatus.FINISHED);
+        Tournament t2 = new Tournament(UUID.randomUUID(), "Copa ECI 2025", TournamentStatus.FINISHED);
         when(tournamentRepository.findAllByStatus(TournamentStatus.FINISHED)).thenReturn(List.of(t1, t2));
 
         List<Tournament> result = service.findAll();
@@ -47,19 +48,21 @@ class ConsultHistoricalTournamentsServiceTest {
 
     @Test
     void findById_whenFinishedTournamentExists_returnsTournament() {
-        Tournament t1 = new Tournament("t1", "Copa ECI 2024", TournamentStatus.FINISHED);
-        when(tournamentRepository.findByIdAndStatus("t1", TournamentStatus.FINISHED)).thenReturn(Optional.of(t1));
+        UUID id = UUID.randomUUID();
+        Tournament t1 = new Tournament(id, "Copa ECI 2024", TournamentStatus.FINISHED);
+        when(tournamentRepository.findByIdAndStatus(id, TournamentStatus.FINISHED)).thenReturn(Optional.of(t1));
 
-        Tournament result = service.findById("t1");
+        Tournament result = service.findById(id);
 
-        assertEquals("t1", result.getId());
+        assertEquals(id, result.getId());
         assertEquals("Copa ECI 2024", result.getName());
     }
 
     @Test
     void findById_whenTournamentNotFinished_throwsHistoricalTournamentNotFoundException() {
-        when(tournamentRepository.findByIdAndStatus("t2", TournamentStatus.FINISHED)).thenReturn(Optional.empty());
+        UUID id = UUID.randomUUID();
+        when(tournamentRepository.findByIdAndStatus(id, TournamentStatus.FINISHED)).thenReturn(Optional.empty());
 
-        assertThrows(HistoricalTournamentNotFoundException.class, () -> service.findById("t2"));
+        assertThrows(HistoricalTournamentNotFoundException.class, () -> service.findById(id));
     }
 }

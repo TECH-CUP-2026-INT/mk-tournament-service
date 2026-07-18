@@ -1,7 +1,5 @@
 package co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.controller;
 
-import co.edu.escuelaing.techcup.tournament.application.usecase.CreateTournamentService;
-
 import co.edu.escuelaing.techcup.tournament.infrastructure.config.SecurityConfig;
 import co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response.AuditEventResponse;
 import co.edu.escuelaing.techcup.tournament.application.mapper.AuditEventRestMapper;
@@ -16,10 +14,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
+import java.time.Month;
 import java.util.List;
+import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -38,7 +37,7 @@ class AuditEventControllerTest {
 
     @Test
     void consult_sinFiltros_devuelve200() throws Exception {
-        AuditEvent event = AuditEvent.reconstruct("ev1", Instant.parse("2026-07-01T00:00:00Z"),
+        AuditEvent event = AuditEvent.reconstruct(UUID.randomUUID(), Instant.parse("2026-07-01T00:00:00Z"),
                 "system", "CreateTournamentService.create", "t1");
         when(consultAuditEventsUseCase.consult(any())).thenReturn(List.of(event));
         when(mapper.toResponse(any())).thenReturn(new AuditEventResponse(
@@ -62,8 +61,8 @@ class AuditEventControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isEmpty());
 
-        verify(consultAuditEventsUseCase).consult(eq(new AuditEventFilter(
-                java.time.LocalDate.of(2026, 1, 1), java.time.LocalDate.of(2026, 1, 31),
-                "CreateTournamentService.create", "t1")));
+        verify(consultAuditEventsUseCase).consult(new AuditEventFilter(
+                java.time.LocalDate.of(2026, Month.JANUARY, 1), java.time.LocalDate.of(2026, Month.JANUARY, 31),
+                "CreateTournamentService.create", "t1"));
     }
 }

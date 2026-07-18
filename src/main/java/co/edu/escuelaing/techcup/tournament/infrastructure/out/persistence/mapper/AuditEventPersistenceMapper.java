@@ -5,6 +5,10 @@ import co.edu.escuelaing.techcup.tournament.domain.model.AuditEvent;
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")
+/**
+ * Mapper MapStruct: {@link co.edu.escuelaing.techcup.tournament.domain.model.AuditEvent}
+ * ↔ documento de Mongo.
+ */
 public interface AuditEventPersistenceMapper {
 
     default AuditEvent toDomain(AuditEventDocument document) {

@@ -6,7 +6,9 @@ import co.edu.escuelaing.techcup.tournament.infrastructure.out.persistence.mongo
 import co.edu.escuelaing.techcup.tournament.domain.model.Court;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.CourtRepositoryPort;
 import org.springframework.stereotype.Component;
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Component
 public class CourtRepositoryAdapter implements CourtRepositoryPort {
@@ -26,12 +28,19 @@ public class CourtRepositoryAdapter implements CourtRepositoryPort {
     }
 
     @Override
-    public Optional<Court> findById(String id) {
+    public Optional<Court> findById(UUID id) {
         return mongoRepository.findById(id).map(mapper::toDomain);
     }
 
     @Override
-    public Optional<Court> findByMatchId(String matchId) {
+    public Optional<Court> findByMatchId(UUID matchId) {
         return mongoRepository.findByMatchId(matchId).map(mapper::toDomain);
+    }
+
+    @Override
+    public List<Court> findAllByTournamentId(UUID tournamentId) {
+        return mongoRepository.findAllByTournamentId(tournamentId).stream()
+                .map(mapper::toDomain)
+                .toList();
     }
 }

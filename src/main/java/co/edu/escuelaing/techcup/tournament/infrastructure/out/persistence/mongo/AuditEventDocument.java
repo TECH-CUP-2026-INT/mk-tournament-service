@@ -8,6 +8,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Document(collection = "audit_events")
 @Getter
@@ -17,7 +18,7 @@ import java.time.Instant;
 public class AuditEventDocument {
 
     @Id
-    private String id;
+    private UUID id;
     private Instant timestamp;
     private String actor;
     private String actionType;

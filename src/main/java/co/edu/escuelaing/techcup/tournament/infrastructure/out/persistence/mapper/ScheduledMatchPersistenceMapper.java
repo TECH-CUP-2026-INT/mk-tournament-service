@@ -5,6 +5,10 @@ import co.edu.escuelaing.techcup.tournament.domain.model.ScheduledMatch;
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")
+/**
+ * Mapper MapStruct: {@link co.edu.escuelaing.techcup.tournament.domain.model.ScheduledMatch}
+ * ↔ documento de Mongo.
+ */
 public interface ScheduledMatchPersistenceMapper {
 
     default ScheduledMatch toDomain(ScheduledMatchDocument document) {

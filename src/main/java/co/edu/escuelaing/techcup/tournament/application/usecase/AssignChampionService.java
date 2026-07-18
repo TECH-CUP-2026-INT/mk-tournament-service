@@ -1,11 +1,15 @@
 package co.edu.escuelaing.techcup.tournament.application.usecase;
 
+import lombok.RequiredArgsConstructor;
+
 import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentNotFoundException;
 import co.edu.escuelaing.techcup.tournament.domain.model.ChampionAssignment;
 import co.edu.escuelaing.techcup.tournament.domain.model.Tournament;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.AssignChampionUseCase;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentRepositoryPort;
 import org.springframework.stereotype.Service;
+
+import java.util.UUID;
 
 /**
  * Punto de integración pendiente: asume que el partido final ya quedó
@@ -18,16 +22,14 @@ import org.springframework.stereotype.Service;
  * torneo en un único guardado (atómico a nivel de documento Mongo).
  */
 @Service
+@RequiredArgsConstructor
 public class AssignChampionService implements AssignChampionUseCase {
 
     private final TournamentRepositoryPort repository;
 
-    public AssignChampionService(TournamentRepositoryPort repository) {
-        this.repository = repository;
-    }
 
     @Override
-    public ChampionAssignment assignChampion(String tournamentId, String matchId) {
+    public ChampionAssignment assignChampion(UUID tournamentId, UUID matchId) {
         Tournament tournament = repository.findById(tournamentId)
                 .orElseThrow(() -> new TournamentNotFoundException(
                         "No se encontro un torneo con id " + tournamentId));

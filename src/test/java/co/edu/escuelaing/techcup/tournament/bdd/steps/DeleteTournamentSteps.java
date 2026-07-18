@@ -12,8 +12,10 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 public class DeleteTournamentSteps {
@@ -30,21 +32,26 @@ public class DeleteTournamentSteps {
         thrownException = null;
     }
 
+    private static UUID toUuid(String raw) {
+        return UUID.nameUUIDFromBytes(raw.getBytes());
+    }
+
     @Given("a tournament exists with id {string} and status {string}")
     public void aTournamentExistsWithIdAndStatus(String id, String status) {
-        Tournament tournament = new Tournament(id, "Test Tournament", TournamentStatus.valueOf(status));
-        when(repository.findById(id)).thenReturn(Optional.of(tournament));
+        UUID uuid = toUuid(id);
+        Tournament tournament = new Tournament(uuid, "Test Tournament", TournamentStatus.valueOf(status));
+        when(repository.findById(uuid)).thenReturn(Optional.of(tournament));
     }
 
     @Given("no tournament exists with id {string}")
     public void noTournamentExistsWithId(String id) {
-        when(repository.findById(id)).thenReturn(Optional.empty());
+        when(repository.findById(toUuid(id))).thenReturn(Optional.empty());
     }
 
     @When("the organizer requests to delete tournament with id {string}")
     public void theOrganizerRequestsToDeleteTournamentWithId(String id) {
         try {
-            service.delete(id);
+            service.delete(toUuid(id));
         } catch (Exception e) {
             thrownException = e;
         }
@@ -53,20 +60,20 @@ public class DeleteTournamentSteps {
     @Then("the tournament should be deleted successfully")
     public void theTournamentShouldBeDeletedSuccessfully() {
         assertNull(thrownException, "No exception should have been thrown");
-        verify(repository, times(1)).deleteById(anyString());
+        verify(repository, times(1)).deleteById(any());
     }
 
     @Then("the deletion should be rejected with a business rule violation")
     public void theDeletionShouldBeRejectedWithABusinessRuleViolation() {
         assertNotNull(thrownException, "An exception should have been thrown");
         assertInstanceOf(TournamentCannotBeDeletedException.class, thrownException);
-        verify(repository, never()).deleteById(anyString());
+        verify(repository, never()).deleteById(any());
     }
 
     @Then("the deletion should fail with a not found error")
     public void theDeletionShouldFailWithANotFoundError() {
         assertNotNull(thrownException, "An exception should have been thrown");
         assertInstanceOf(TournamentNotFoundException.class, thrownException);
-        verify(repository, never()).deleteById(anyString());
+        verify(repository, never()).deleteById(any());
     }
 }

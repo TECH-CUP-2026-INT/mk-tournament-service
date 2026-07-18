@@ -7,13 +7,14 @@ import co.edu.escuelaing.techcup.tournament.domain.model.TournamentFormat;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.UUID;
 
 public interface EditTournamentUseCase {
 
     Tournament edit(EditTournamentCommand command);
 
     record EditTournamentCommand(
-            String tournamentId,
+            UUID tournamentId,
             String name,
             TournamentType type,
             TournamentFormat format,

@@ -1,12 +1,12 @@
 package co.edu.escuelaing.techcup.tournament.infrastructure.out.feign;
 
 import co.edu.escuelaing.techcup.tournament.domain.exception.PaymentOrderCreationFailedException;
-import co.edu.escuelaing.techcup.tournament.infrastructure.out.feign.PaymentServiceFeignClient;
 import co.edu.escuelaing.techcup.tournament.domain.model.PaymentOrderStatus;
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.PaymentServiceClientPort;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -16,25 +16,29 @@ import static org.mockito.Mockito.when;
 
 class PaymentServiceClientAdapterTest {
 
+    private final UUID enrollmentId = UUID.randomUUID();
+    private final UUID teamId = UUID.randomUUID();
+    private final UUID tournamentId = UUID.randomUUID();
+
     @Test
     void getOrderStatus_cuandoElFeignClientResponde_retornaElStatus() {
         PaymentServiceFeignClient feignClient = mock(PaymentServiceFeignClient.class);
-        when(feignClient.getOrderStatus("enr1"))
+        when(feignClient.getOrderStatus(enrollmentId))
                 .thenReturn(new PaymentServiceFeignClient.PaymentOrderResponse(PaymentOrderStatus.APPROVED));
 
         PaymentServiceClientAdapter adapter = new PaymentServiceClientAdapter(feignClient);
 
-        assertEquals(PaymentOrderStatus.APPROVED, adapter.getOrderStatus("enr1"));
+        assertEquals(PaymentOrderStatus.APPROVED, adapter.getOrderStatus(enrollmentId));
     }
 
     @Test
     void getOrderStatus_cuandoElFeignClientFalla_retornaUnknown() {
         PaymentServiceFeignClient feignClient = mock(PaymentServiceFeignClient.class);
-        when(feignClient.getOrderStatus("enr1")).thenThrow(new RuntimeException("timeout"));
+        when(feignClient.getOrderStatus(enrollmentId)).thenThrow(new RuntimeException("timeout"));
 
         PaymentServiceClientAdapter adapter = new PaymentServiceClientAdapter(feignClient);
 
-        assertEquals(PaymentOrderStatus.UNKNOWN, adapter.getOrderStatus("enr1"));
+        assertEquals(PaymentOrderStatus.UNKNOWN, adapter.getOrderStatus(enrollmentId));
     }
 
     @Test
@@ -46,7 +50,7 @@ class PaymentServiceClientAdapterTest {
         PaymentServiceClientAdapter adapter = new PaymentServiceClientAdapter(feignClient);
 
         PaymentServiceClientPort.PaymentOrderReference result =
-                adapter.createOrder("enr1", "team1", "t1", BigDecimal.TEN);
+                adapter.createOrder(enrollmentId, teamId, tournamentId, BigDecimal.TEN);
 
         assertEquals("po1", result.paymentOrderId());
         assertEquals(PaymentOrderStatus.PENDING, result.status());
@@ -60,6 +64,6 @@ class PaymentServiceClientAdapterTest {
         PaymentServiceClientAdapter adapter = new PaymentServiceClientAdapter(feignClient);
 
         assertThrows(PaymentOrderCreationFailedException.class,
-                () -> adapter.createOrder("enr1", "team1", "t1", BigDecimal.TEN));
+                () -> adapter.createOrder(enrollmentId, teamId, tournamentId, BigDecimal.TEN));
     }
 }

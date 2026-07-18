@@ -1,8 +1,5 @@
 package co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.request;
 
-import co.edu.escuelaing.techcup.tournament.domain.model.Enrollment;
-import co.edu.escuelaing.techcup.tournament.domain.model.Match;
-
 import co.edu.escuelaing.techcup.tournament.domain.model.TournamentFormat;
 import co.edu.escuelaing.techcup.tournament.domain.model.TournamentType;
 import io.swagger.v3.oas.annotations.media.Schema;

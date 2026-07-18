@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -22,28 +23,32 @@ class TournamentParticipantRepositoryAdapterTest {
     private final TournamentParticipantPersistenceMapper mapper =
             Mappers.getMapper(TournamentParticipantPersistenceMapper.class);
 
+    private final UUID participantId = UUID.randomUUID();
+    private final UUID tournamentId = UUID.randomUUID();
+    private final UUID userId = UUID.randomUUID();
+
     @Test
     void save_delegaAlMongoRepositoryYMapeaDeVuelta() {
         TournamentParticipantMongoRepository mongoRepository = mock(TournamentParticipantMongoRepository.class);
-        TournamentParticipant participant = TournamentParticipant.create("t1", "user1");
-        TournamentParticipantDocument saved = new TournamentParticipantDocument("p1", "t1", "user1", "ACTIVE");
+        TournamentParticipant participant = TournamentParticipant.create(tournamentId, userId);
+        TournamentParticipantDocument saved = new TournamentParticipantDocument(participantId, tournamentId, userId, "ACTIVE");
         when(mongoRepository.save(any())).thenReturn(saved);
 
         TournamentParticipantRepositoryAdapter adapter = new TournamentParticipantRepositoryAdapter(mongoRepository, mapper);
         TournamentParticipant result = adapter.save(participant);
 
-        assertEquals("p1", result.getId());
+        assertEquals(participantId, result.getId());
         assertEquals(ParticipantStatus.ACTIVE, result.getStatus());
     }
 
     @Test
     void findByTournamentIdAndUserId_cuandoExiste_retornaParticipant() {
         TournamentParticipantMongoRepository mongoRepository = mock(TournamentParticipantMongoRepository.class);
-        TournamentParticipantDocument document = new TournamentParticipantDocument("p1", "t1", "user1", "INACTIVE");
-        when(mongoRepository.findByTournamentIdAndUserId("t1", "user1")).thenReturn(Optional.of(document));
+        TournamentParticipantDocument document = new TournamentParticipantDocument(participantId, tournamentId, userId, "INACTIVE");
+        when(mongoRepository.findByTournamentIdAndUserId(tournamentId, userId)).thenReturn(Optional.of(document));
 
         TournamentParticipantRepositoryAdapter adapter = new TournamentParticipantRepositoryAdapter(mongoRepository, mapper);
-        Optional<TournamentParticipant> result = adapter.findByTournamentIdAndUserId("t1", "user1");
+        Optional<TournamentParticipant> result = adapter.findByTournamentIdAndUserId(tournamentId, userId);
 
         assertTrue(result.isPresent());
         assertEquals(ParticipantStatus.INACTIVE, result.get().getStatus());
@@ -51,11 +56,12 @@ class TournamentParticipantRepositoryAdapterTest {
 
     @Test
     void findByTournamentIdAndUserId_cuandoNoExiste_retornaVacio() {
+        UUID missingUser = UUID.randomUUID();
         TournamentParticipantMongoRepository mongoRepository = mock(TournamentParticipantMongoRepository.class);
-        when(mongoRepository.findByTournamentIdAndUserId("t1", "missing")).thenReturn(Optional.empty());
+        when(mongoRepository.findByTournamentIdAndUserId(tournamentId, missingUser)).thenReturn(Optional.empty());
 
         TournamentParticipantRepositoryAdapter adapter = new TournamentParticipantRepositoryAdapter(mongoRepository, mapper);
 
-        assertFalse(adapter.findByTournamentIdAndUserId("t1", "missing").isPresent());
+        assertFalse(adapter.findByTournamentIdAndUserId(tournamentId, missingUser).isPresent());
     }
 }

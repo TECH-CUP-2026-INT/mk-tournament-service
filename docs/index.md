@@ -56,7 +56,7 @@ cd mk-tournament-service
 docker compose up --build
 
 # 3. The service is available at
-http://localhost:8080
+http://localhost:5623
 ```
 
 [See full configuration](configuracion.md){ .md-button .md-button--primary }

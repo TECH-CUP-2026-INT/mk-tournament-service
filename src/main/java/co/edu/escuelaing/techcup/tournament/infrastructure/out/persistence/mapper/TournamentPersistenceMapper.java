@@ -1,16 +1,22 @@
 package co.edu.escuelaing.techcup.tournament.infrastructure.out.persistence.mapper;
 
+import co.edu.escuelaing.techcup.tournament.domain.model.BracketNode;
+import co.edu.escuelaing.techcup.tournament.domain.model.BracketNodeStatus;
+import co.edu.escuelaing.techcup.tournament.domain.model.BracketSlot;
 import co.edu.escuelaing.techcup.tournament.domain.model.Enrollment;
 import co.edu.escuelaing.techcup.tournament.domain.model.EnrollmentStatus;
 import co.edu.escuelaing.techcup.tournament.domain.model.Match;
+import co.edu.escuelaing.techcup.tournament.domain.model.MatchPhase;
 import co.edu.escuelaing.techcup.tournament.domain.model.MatchStatus;
 import co.edu.escuelaing.techcup.tournament.domain.model.RegistrationStatus;
+import co.edu.escuelaing.techcup.tournament.domain.model.Round;
 import co.edu.escuelaing.techcup.tournament.domain.model.TeamRegistration;
 import co.edu.escuelaing.techcup.tournament.domain.model.Tournament;
 import co.edu.escuelaing.techcup.tournament.domain.model.TournamentFormat;
 import co.edu.escuelaing.techcup.tournament.domain.model.TournamentStatus;
 import co.edu.escuelaing.techcup.tournament.domain.model.TournamentType;
 import co.edu.escuelaing.techcup.tournament.domain.model.ChampionResolution;
+import co.edu.escuelaing.techcup.tournament.infrastructure.out.persistence.mongo.BracketNodeDocument;
 import co.edu.escuelaing.techcup.tournament.infrastructure.out.persistence.mongo.EnrollmentDocument;
 import co.edu.escuelaing.techcup.tournament.infrastructure.out.persistence.mongo.MatchDocument;
 import co.edu.escuelaing.techcup.tournament.infrastructure.out.persistence.mongo.TeamRegistrationDocument;
@@ -30,30 +36,32 @@ import java.util.List;
 public interface TournamentPersistenceMapper {
 
     default Tournament toDomain(TournamentDocument document) {
-        return Tournament.reconstruct(
-                document.getId(),
-                document.getName(),
-                TournamentType.valueOf(document.getType()),
-                TournamentFormat.valueOf(document.getFormat()),
-                document.getNumberOfTeams(),
-                document.getCost(),
-                document.getStartDate(),
-                document.getEndDate(),
-                document.getRegistrationDeadline(),
-                document.getMatchStartTime(),
-                document.getMatchEndTime(),
-                TournamentStatus.valueOf(document.getStatus()),
-                toTeams(document.getTeams()),
-                toMatches(document.getMatches()),
-                document.getChampionTeamId(),
-                document.getChampionResolution() != null
+        return Tournament.builder()
+                .id(document.getId())
+                .name(document.getName())
+                .type(TournamentType.valueOf(document.getType()))
+                .format(TournamentFormat.valueOf(document.getFormat()))
+                .numberOfTeams(document.getNumberOfTeams())
+                .cost(document.getCost())
+                .startDate(document.getStartDate())
+                .endDate(document.getEndDate())
+                .registrationDeadline(document.getRegistrationDeadline())
+                .matchStartTime(document.getMatchStartTime())
+                .matchEndTime(document.getMatchEndTime())
+                .status(TournamentStatus.valueOf(document.getStatus()))
+                .teams(toTeams(document.getTeams()))
+                .matches(toMatches(document.getMatches()))
+                .bracketNodes(toBracketNodes(document.getBracketNodes()))
+                .championTeamId(document.getChampionTeamId())
+                .runnerUpTeamId(document.getRunnerUpTeamId())
+                .championResolution(document.getChampionResolution() != null
                         ? ChampionResolution.valueOf(document.getChampionResolution())
-                        : null,
-                document.isPaused(),
-                document.getActive() == null || document.getActive(),
-                toEnrollmentDomainList(document.getEnrollments()),
-                document.getVersion()
-        );
+                        : null)
+                .paused(document.isPaused())
+                .active(document.getActive() == null || document.getActive())
+                .enrollments(toEnrollmentDomainList(document.getEnrollments()))
+                .version(document.getVersion())
+                .reconstruct();
     }
 
     default TournamentDocument toDocument(Tournament domain) {
@@ -72,9 +80,11 @@ public interface TournamentPersistenceMapper {
                 domain.getStatus().name(),
                 domain.getRulebookFileId(),
                 domain.getChampionTeamId(),
+                domain.getRunnerUpTeamId(),
                 domain.getChampionResolution() != null ? domain.getChampionResolution().name() : null,
                 toTeamDocuments(domain.getTeams()),
                 toMatchDocuments(domain.getMatches()),
+                toBracketNodeDocuments(domain.getBracketNodes()),
                 toEnrollmentDocumentList(domain.getEnrollments()),
                 domain.isPaused(),
                 domain.isActive(),
@@ -101,10 +111,23 @@ public interface TournamentPersistenceMapper {
     private List<Match> toMatches(List<MatchDocument> documents) {
         if (documents == null) return new ArrayList<>();
         return documents.stream()
-                .map(d -> new Match(d.getMatchId(), d.getHomeTeamId(), d.getAwayTeamId(),
-                        MatchStatus.valueOf(d.getStatus()), d.isFinalMatch(), d.getHomeScore(),
-                        d.getAwayScore(), d.getPenaltyShootoutWinnerTeamId(),
-                        d.getActive() == null || d.getActive()))
+                .map(d -> Match.builder()
+                        .matchId(d.getMatchId())
+                        .homeTeamId(d.getHomeTeamId())
+                        .awayTeamId(d.getAwayTeamId())
+                        .status(MatchStatus.valueOf(d.getStatus()))
+                        .finalMatch(d.isFinalMatch())
+                        .homeScore(d.getHomeScore())
+                        .awayScore(d.getAwayScore())
+                        .penaltyShootoutWinnerTeamId(d.getPenaltyShootoutWinnerTeamId())
+                        .active(d.getActive() == null || d.getActive())
+                        .groupName(d.getGroupName())
+                        .matchday(d.getMatchday())
+                        .phase(d.getPhase() != null ? MatchPhase.valueOf(d.getPhase()) : null)
+                        .tournamentId(d.getTournamentId())
+                        .definitionSyncPending(d.isDefinitionSyncPending())
+                        .absentTeamId(d.getAbsentTeamId())
+                        .build())
                 .toList();
     }
 
@@ -113,7 +136,43 @@ public interface TournamentPersistenceMapper {
         return matches.stream()
                 .map(m -> new MatchDocument(m.getMatchId(), m.getHomeTeamId(), m.getAwayTeamId(),
                         m.getStatus().name(), m.isFinalMatch(), m.getHomeScore(), m.getAwayScore(),
-                        m.getPenaltyShootoutWinnerTeamId(), m.isActive()))
+                        m.getPenaltyShootoutWinnerTeamId(), m.isActive(), m.getGroupName(), m.getMatchday(),
+                        m.getPhase() != null ? m.getPhase().name() : null, m.getTournamentId(),
+                        m.isDefinitionSyncPending(), m.getAbsentTeamId()))
+                .toList();
+    }
+
+    private List<BracketNode> toBracketNodes(List<BracketNodeDocument> documents) {
+        if (documents == null) return new ArrayList<>();
+        return documents.stream()
+                .map(d -> BracketNode.reconstruct(
+                        d.getNodeId(),
+                        Round.valueOf(d.getRound()),
+                        d.getSlotA(),
+                        d.getSlotB(),
+                        d.getMatchId(),
+                        BracketNodeStatus.valueOf(d.getStatus()),
+                        d.getWinnerTeamId(),
+                        d.getLoserTeamId(),
+                        d.getAdvanceToNodeId(),
+                        d.getAdvanceToSlot() != null ? BracketSlot.valueOf(d.getAdvanceToSlot()) : null))
+                .toList();
+    }
+
+    private List<BracketNodeDocument> toBracketNodeDocuments(List<BracketNode> nodes) {
+        if (nodes == null) return new ArrayList<>();
+        return nodes.stream()
+                .map(n -> new BracketNodeDocument(
+                        n.getNodeId(),
+                        n.getRound().name(),
+                        n.getSlotA(),
+                        n.getSlotB(),
+                        n.getMatchId(),
+                        n.getStatus().name(),
+                        n.getWinnerTeamId(),
+                        n.getLoserTeamId(),
+                        n.getAdvanceToNodeId(),
+                        n.getAdvanceToSlot() != null ? n.getAdvanceToSlot().name() : null))
                 .toList();
     }
 

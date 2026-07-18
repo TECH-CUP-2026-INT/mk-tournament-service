@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -31,14 +32,16 @@ class InactivateUserServiceTest {
 
     @Test
     void inactivate_whenUserIsParticipating_setsStatusToInactive() {
+        UUID tournamentId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
         TournamentParticipant participant = TournamentParticipant.reconstruct(
-                "p-1", "t-1", "user-1", ParticipantStatus.ACTIVE);
+                UUID.randomUUID(), tournamentId, userId, ParticipantStatus.ACTIVE);
 
-        when(participantRepository.findByTournamentIdAndUserId("t-1", "user-1"))
+        when(participantRepository.findByTournamentIdAndUserId(tournamentId, userId))
                 .thenReturn(Optional.of(participant));
         when(participantRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        TournamentParticipant result = inactivateUserService.inactivate("t-1", "user-1");
+        TournamentParticipant result = inactivateUserService.inactivate(tournamentId, userId);
 
         assertEquals(ParticipantStatus.INACTIVE, result.getStatus());
         verify(participantRepository).save(participant);
@@ -46,39 +49,45 @@ class InactivateUserServiceTest {
 
     @Test
     void inactivate_whenUserNotParticipating_throwsUserInactivationNotAllowedException() {
-        when(participantRepository.findByTournamentIdAndUserId("t-1", "user-99"))
+        UUID tournamentId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        when(participantRepository.findByTournamentIdAndUserId(tournamentId, userId))
                 .thenReturn(Optional.empty());
 
         assertThrows(UserInactivationNotAllowedException.class,
-                () -> inactivateUserService.inactivate("t-1", "user-99"));
+                () -> inactivateUserService.inactivate(tournamentId, userId));
         verify(participantRepository, never()).save(any());
     }
 
     @Test
     void inactivate_whenUserAlreadyInactive_throwsUserInactivationNotAllowedException() {
+        UUID tournamentId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
         TournamentParticipant participant = TournamentParticipant.reconstruct(
-                "p-1", "t-1", "user-1", ParticipantStatus.INACTIVE);
+                UUID.randomUUID(), tournamentId, userId, ParticipantStatus.INACTIVE);
 
-        when(participantRepository.findByTournamentIdAndUserId("t-1", "user-1"))
+        when(participantRepository.findByTournamentIdAndUserId(tournamentId, userId))
                 .thenReturn(Optional.of(participant));
 
         assertThrows(UserInactivationNotAllowedException.class,
-                () -> inactivateUserService.inactivate("t-1", "user-1"));
+                () -> inactivateUserService.inactivate(tournamentId, userId));
         verify(participantRepository, never()).save(any());
     }
 
     @Test
     void inactivate_returnsParticipantWithCorrectTournamentAndUserId() {
+        UUID tournamentId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
         TournamentParticipant participant = TournamentParticipant.reconstruct(
-                "p-1", "t-1", "user-1", ParticipantStatus.ACTIVE);
+                UUID.randomUUID(), tournamentId, userId, ParticipantStatus.ACTIVE);
 
-        when(participantRepository.findByTournamentIdAndUserId("t-1", "user-1"))
+        when(participantRepository.findByTournamentIdAndUserId(tournamentId, userId))
                 .thenReturn(Optional.of(participant));
         when(participantRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        TournamentParticipant result = inactivateUserService.inactivate("t-1", "user-1");
+        TournamentParticipant result = inactivateUserService.inactivate(tournamentId, userId);
 
-        assertEquals("t-1", result.getTournamentId());
-        assertEquals("user-1", result.getUserId());
+        assertEquals(tournamentId, result.getTournamentId());
+        assertEquals(userId, result.getUserId());
     }
 }

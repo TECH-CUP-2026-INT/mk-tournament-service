@@ -4,45 +4,129 @@ import co.edu.escuelaing.techcup.tournament.domain.exception.ChampionAssignmentN
 import co.edu.escuelaing.techcup.tournament.domain.exception.MatchActivationNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.MatchInactiveException;
 
+import java.util.UUID;
+
+/**
+ * Enfrentamiento generado en el fixture del torneo (quién juega contra quién),
+ * con su resultado y estado. No incluye fecha/cancha/árbitro — eso lo modela
+ * {@link ScheduledMatch}.
+ */
 public class Match {
 
-    private String matchId;
-    private String homeTeamId;
-    private String awayTeamId;
+    private UUID matchId;
+    private UUID homeTeamId;
+    private UUID awayTeamId;
     private MatchStatus status;
     private boolean finalMatch;
     private int homeScore;
     private int awayScore;
-    private String penaltyShootoutWinnerTeamId;
+    private UUID penaltyShootoutWinnerTeamId;
     private boolean active = true;
+    // Grupo de fase de clasificatoria ("Grupo A", "Grupo B", ...) y jornada (1..3)
+    // dentro de ese grupo. Ambos null para partidos que no pertenecen a un grupo
+    // (formatos BRACKETS/LEAGUE, o partidos de la llave eliminatoria).
+    private String groupName;
+    private Integer matchday;
+    // fase (GRUPOS/ELIMINATORIA) y torneo dueño del partido: obligatorios para poder
+    // empujar la definición a Matches (fase le dice si es a muerte súbita) y para que
+    // ProcessMatchResult enrute el resultado entrante. Solo se completan hoy para los
+    // partidos de grupos y de la llave eliminatoria del flujo "mundial"; los formatos
+    // BRACKETS/LEAGUE planos (RandomFixtureGenerationAdapter) aún no los asignan.
+    private MatchPhase phase;
+    private UUID tournamentId;
+    // true si el último intento de empujar la definición de este partido a Matches
+    // falló (o si aún no se ha reintentado tras una falla previa) — ver ScheduleMatchService
+    // y ResendMatchDefinitionService. false por defecto: antes de programarse no hay
+    // definición que enviar todavía.
+    private boolean definitionSyncPending;
+    // Equipo que no se presentó, cuando el partido termina en walkover (FINISHED_NO_SHOW).
+    // Fuente directa (ausenteId de Matches, ver ProcessMatchResult) para que
+    // GroupStandingsCalculator no dependa únicamente del conjunto de "equipos
+    // inelegibles" calculado aparte a partir del estado de descalificación/remoción
+    // (ver markWalkover). Null para partidos que no son walkover.
+    private UUID absentTeamId;
 
     public Match() {}
 
-    public Match(String matchId, String homeTeamId, String awayTeamId, MatchStatus status) {
-        this(matchId, homeTeamId, awayTeamId, status, false, 0, 0, null, true);
-    }
-
-    public Match(String matchId, String homeTeamId, String awayTeamId, MatchStatus status,
-                 boolean finalMatch, int homeScore, int awayScore, String penaltyShootoutWinnerTeamId) {
-        this(matchId, homeTeamId, awayTeamId, status, finalMatch, homeScore, awayScore,
-                penaltyShootoutWinnerTeamId, true);
-    }
-
-    public Match(String matchId, String homeTeamId, String awayTeamId, MatchStatus status,
-                 boolean finalMatch, int homeScore, int awayScore, String penaltyShootoutWinnerTeamId,
-                 boolean active) {
+    public Match(UUID matchId, UUID homeTeamId, UUID awayTeamId, MatchStatus status) {
         this.matchId = matchId;
         this.homeTeamId = homeTeamId;
         this.awayTeamId = awayTeamId;
         this.status = status;
-        this.finalMatch = finalMatch;
-        this.homeScore = homeScore;
-        this.awayScore = awayScore;
-        this.penaltyShootoutWinnerTeamId = penaltyShootoutWinnerTeamId;
-        this.active = active;
+        this.active = true;
     }
 
-    public boolean involvesteam(String teamId) {
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /**
+     * Reemplaza a los constructores de 8/9 parámetros (S107): agrupa los
+     * campos de resultado/estado que antes se pasaban posicionalmente.
+     */
+    public static final class Builder {
+        private UUID matchId;
+        private UUID homeTeamId;
+        private UUID awayTeamId;
+        private MatchStatus status;
+        private boolean finalMatch;
+        private int homeScore;
+        private int awayScore;
+        private UUID penaltyShootoutWinnerTeamId;
+        private boolean active = true;
+        private String groupName;
+        private Integer matchday;
+        private MatchPhase phase;
+        private UUID tournamentId;
+        private boolean definitionSyncPending;
+        private UUID absentTeamId;
+
+        private Builder() {}
+
+        public Builder matchId(UUID matchId) { this.matchId = matchId; return this; }
+        public Builder homeTeamId(UUID homeTeamId) { this.homeTeamId = homeTeamId; return this; }
+        public Builder awayTeamId(UUID awayTeamId) { this.awayTeamId = awayTeamId; return this; }
+        public Builder status(MatchStatus status) { this.status = status; return this; }
+        public Builder finalMatch(boolean finalMatch) { this.finalMatch = finalMatch; return this; }
+        public Builder homeScore(int homeScore) { this.homeScore = homeScore; return this; }
+        public Builder awayScore(int awayScore) { this.awayScore = awayScore; return this; }
+        public Builder penaltyShootoutWinnerTeamId(UUID penaltyShootoutWinnerTeamId) {
+            this.penaltyShootoutWinnerTeamId = penaltyShootoutWinnerTeamId;
+            return this;
+        }
+        public Builder active(boolean active) { this.active = active; return this; }
+        public Builder groupName(String groupName) { this.groupName = groupName; return this; }
+        public Builder matchday(Integer matchday) { this.matchday = matchday; return this; }
+        public Builder phase(MatchPhase phase) { this.phase = phase; return this; }
+        public Builder tournamentId(UUID tournamentId) { this.tournamentId = tournamentId; return this; }
+        public Builder definitionSyncPending(boolean definitionSyncPending) {
+            this.definitionSyncPending = definitionSyncPending;
+            return this;
+        }
+        public Builder absentTeamId(UUID absentTeamId) { this.absentTeamId = absentTeamId; return this; }
+
+        public Match build() {
+            Match match = new Match();
+            match.matchId = matchId;
+            match.homeTeamId = homeTeamId;
+            match.awayTeamId = awayTeamId;
+            match.status = status;
+            match.finalMatch = finalMatch;
+            match.homeScore = homeScore;
+            match.awayScore = awayScore;
+            match.penaltyShootoutWinnerTeamId = penaltyShootoutWinnerTeamId;
+            match.active = active;
+            match.definitionSyncPending = definitionSyncPending;
+            match.groupName = groupName;
+            match.matchday = matchday;
+            match.phase = phase;
+            match.tournamentId = tournamentId;
+            match.absentTeamId = absentTeamId;
+            return match;
+        }
+    }
+
+    public boolean involvesteam(UUID teamId) {
         return teamId.equals(homeTeamId) || teamId.equals(awayTeamId);
     }
 
@@ -101,6 +185,23 @@ public class Match {
     }
 
     /**
+     * Marca el partido como walkover con el equipo ausente ya identificado
+     * (ausenteId de Matches, ver ProcessMatchResult): a diferencia de
+     * {@link #markAsNoShow()} (usado por removeTeam/disqualifyTeam, donde el
+     * ausente se infiere aparte a partir del estado de descalificación/remoción
+     * del equipo), este método deja el dato en el propio partido.
+     */
+    public void markWalkover(UUID absentTeamId) {
+        assertActive();
+        if (!involvesteam(absentTeamId)) {
+            throw new ChampionAssignmentNotAllowedException(
+                    "El equipo ausente debe ser uno de los equipos del partido");
+        }
+        this.status = MatchStatus.FINISHED_NO_SHOW;
+        this.absentTeamId = absentTeamId;
+    }
+
+    /**
      * Marca el partido como finalizado con el marcador en tiempo reglamentario.
      * Los penales no se suman al marcador; se registran por separado.
      */
@@ -116,9 +217,34 @@ public class Match {
     }
 
     /**
+     * Finaliza el partido con un resultado ya resuelto externamente (Matches, vía
+     * evento {@code techcup.match.finished} o el modo simulación): a diferencia de
+     * {@link #finish(int, int)}, no exige {@code finalMatch} (aplica a cualquier
+     * partido de grupos o de la llave eliminatoria) y acepta el ganador ya resuelto.
+     * Si el partido queda empatado en tiempo reglamentario y {@code winnerTeamId}
+     * viene null, el partido queda finalizado pero sin ganador resuelto: pendiente
+     * de que el organizador registre penales por {@link #recordPenaltyShootoutWinner}.
+     */
+    public void finishWithExternalResult(int homeScore, int awayScore, UUID winnerTeamId) {
+        assertActive();
+        this.homeScore = homeScore;
+        this.awayScore = awayScore;
+        this.status = MatchStatus.FINISHED;
+        if (winnerTeamId != null) {
+            if (!involvesteam(winnerTeamId)) {
+                throw new ChampionAssignmentNotAllowedException(
+                        "El ganador debe ser uno de los equipos del partido");
+            }
+            if (isTiedInRegulation()) {
+                this.penaltyShootoutWinnerTeamId = winnerTeamId;
+            }
+        }
+    }
+
+    /**
      * Registra el ganador de la tanda de penales (integración pendiente con módulo de arbitraje).
      */
-    public void recordPenaltyShootoutWinner(String winnerTeamId) {
+    public void recordPenaltyShootoutWinner(UUID winnerTeamId) {
         assertActive();
         if (!isTiedInRegulation()) {
             throw new ChampionAssignmentNotAllowedException(
@@ -131,7 +257,16 @@ public class Match {
         this.penaltyShootoutWinnerTeamId = winnerTeamId;
     }
 
-    public String resolveChampionTeamId() {
+    /**
+     * Si el partido es un walkover (FINISHED_NO_SHOW), el ganador es directamente
+     * el equipo que no está marcado como ausente — no hay marcador que comparar.
+     * Para el resto, exige estado FINISHED y resuelve por marcador (o por el
+     * ganador de penales ya registrado, si quedó empatado en tiempo reglamentario).
+     */
+    public UUID resolveChampionTeamId() {
+        if (status == MatchStatus.FINISHED_NO_SHOW) {
+            return absentTeamId != null ? otherTeam(absentTeamId) : null;
+        }
         if (!isFinished()) {
             throw new ChampionAssignmentNotAllowedException(
                     "El partido debe estar finalizado para resolver al campeón");
@@ -148,14 +283,26 @@ public class Match {
         return penaltyShootoutWinnerTeamId;
     }
 
-    public String getMatchId() { return matchId; }
-    public void setMatchId(String matchId) { this.matchId = matchId; }
+    /**
+     * Devuelve al equipo perdedor de este partido dado un ganador ya resuelto
+     * (ver {@link #resolveChampionTeamId()}): el otro equipo del enfrentamiento.
+     */
+    public UUID resolveRunnerUpTeamId(UUID winnerTeamId) {
+        return otherTeam(winnerTeamId);
+    }
 
-    public String getHomeTeamId() { return homeTeamId; }
-    public void setHomeTeamId(String homeTeamId) { this.homeTeamId = homeTeamId; }
+    private UUID otherTeam(UUID teamId) {
+        return teamId.equals(homeTeamId) ? awayTeamId : homeTeamId;
+    }
 
-    public String getAwayTeamId() { return awayTeamId; }
-    public void setAwayTeamId(String awayTeamId) { this.awayTeamId = awayTeamId; }
+    public UUID getMatchId() { return matchId; }
+    public void setMatchId(UUID matchId) { this.matchId = matchId; }
+
+    public UUID getHomeTeamId() { return homeTeamId; }
+    public void setHomeTeamId(UUID homeTeamId) { this.homeTeamId = homeTeamId; }
+
+    public UUID getAwayTeamId() { return awayTeamId; }
+    public void setAwayTeamId(UUID awayTeamId) { this.awayTeamId = awayTeamId; }
 
     public MatchStatus getStatus() { return status; }
     public void setStatus(MatchStatus status) { this.status = status; }
@@ -168,8 +315,27 @@ public class Match {
     public int getAwayScore() { return awayScore; }
     public void setAwayScore(int awayScore) { this.awayScore = awayScore; }
 
-    public String getPenaltyShootoutWinnerTeamId() { return penaltyShootoutWinnerTeamId; }
-    public void setPenaltyShootoutWinnerTeamId(String penaltyShootoutWinnerTeamId) {
+    public UUID getPenaltyShootoutWinnerTeamId() { return penaltyShootoutWinnerTeamId; }
+    public void setPenaltyShootoutWinnerTeamId(UUID penaltyShootoutWinnerTeamId) {
         this.penaltyShootoutWinnerTeamId = penaltyShootoutWinnerTeamId;
     }
+
+    public String getGroupName() { return groupName; }
+    public void setGroupName(String groupName) { this.groupName = groupName; }
+
+    public Integer getMatchday() { return matchday; }
+    public void setMatchday(Integer matchday) { this.matchday = matchday; }
+
+    public MatchPhase getPhase() { return phase; }
+    public void setPhase(MatchPhase phase) { this.phase = phase; }
+
+    public UUID getTournamentId() { return tournamentId; }
+    public void setTournamentId(UUID tournamentId) { this.tournamentId = tournamentId; }
+
+    public boolean isDefinitionSyncPending() { return definitionSyncPending; }
+    public void markDefinitionSyncPending() { this.definitionSyncPending = true; }
+    public void clearDefinitionSyncPending() { this.definitionSyncPending = false; }
+
+    public UUID getAbsentTeamId() { return absentTeamId; }
+    public void setAbsentTeamId(UUID absentTeamId) { this.absentTeamId = absentTeamId; }
 }

@@ -5,6 +5,8 @@ import co.edu.escuelaing.techcup.tournament.domain.model.CourtSection;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -12,17 +14,18 @@ class CourtTest {
 
     @Test
     void assignMatch_conIdValido_asignaElPartido() {
-        Court court = Court.create("t1", CourtSection.CANCHA_1, "Cancha techada");
+        Court court = Court.create(UUID.randomUUID(), CourtSection.CANCHA_1, "Cancha techada");
+        UUID matchId = UUID.randomUUID();
 
-        court.assignMatch("m1");
+        court.assignMatch(matchId);
 
-        assertEquals("m1", court.getMatchId());
+        assertEquals(matchId, court.getMatchId());
     }
 
     @Test
-    void assignMatch_conIdVacio_lanzaIllegalArgumentException() {
-        Court court = Court.create("t1", CourtSection.CANCHA_1, "Cancha techada");
+    void assignMatch_conIdNulo_lanzaIllegalArgumentException() {
+        Court court = Court.create(UUID.randomUUID(), CourtSection.CANCHA_1, "Cancha techada");
 
-        assertThrows(IllegalArgumentException.class, () -> court.assignMatch(" "));
+        assertThrows(IllegalArgumentException.class, () -> court.assignMatch(null));
     }
 }

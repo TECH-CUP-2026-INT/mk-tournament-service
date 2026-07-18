@@ -1,7 +1,5 @@
 package co.edu.escuelaing.techcup.tournament.infrastructure.config;
 
-import co.edu.escuelaing.techcup.tournament.domain.model.Tournament;
-
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
@@ -36,9 +34,9 @@ public class SwaggerConfig {
                                 - `4xx` responses signal invalid input or a state conflict; `5xx` responses signal an
                                   unexpected internal failure.
 
-                                **External dependencies**
-                                - `payment-service` at `http://localhost:8081` — validates enrollment payments.
-                                - `team-service` at `http://localhost:8082` — resolves team data.
+                                **External dependencies** (URLs configurable via env vars; `localhost` values below are dev-only defaults)
+                                - `payment-service` (`PAYMENT_SERVICE_URL`, default `http://localhost:8081`) — validates enrollment payments.
+                                - `team-service` (`TEAM_SERVICE_URL`, default `http://localhost:8082`) — resolves team data.
                                 """)
                         .version("0.0.1-SNAPSHOT")
                         .contact(new Contact()
@@ -48,7 +46,7 @@ public class SwaggerConfig {
                                 .name("Internal academic use")
                                 .url("https://github.com/TECH-CUP-2026-INT/mk-tournament-service")))
                 .servers(List.of(
-                        new Server().url("http://localhost:8080").description("Local development"),
+                        new Server().url("http://localhost:5623").description("Local development"),
                         new Server().url("https://api.techcup.escuelaing.edu.co").description("Production (pending)")
                 ));
     }

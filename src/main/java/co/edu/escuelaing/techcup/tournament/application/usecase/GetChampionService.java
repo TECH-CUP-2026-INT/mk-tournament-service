@@ -1,5 +1,7 @@
 package co.edu.escuelaing.techcup.tournament.application.usecase;
 
+import lombok.RequiredArgsConstructor;
+
 import co.edu.escuelaing.techcup.tournament.domain.exception.ChampionAssignmentNotAllowedException;
 import co.edu.escuelaing.techcup.tournament.domain.exception.TournamentNotFoundException;
 import co.edu.escuelaing.techcup.tournament.domain.model.ChampionAssignment;
@@ -8,17 +10,17 @@ import co.edu.escuelaing.techcup.tournament.domain.service.ports.in.GetChampionU
 import co.edu.escuelaing.techcup.tournament.domain.service.ports.out.TournamentRepositoryPort;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
+@RequiredArgsConstructor
 public class GetChampionService implements GetChampionUseCase {
 
     private final TournamentRepositoryPort repository;
 
-    public GetChampionService(TournamentRepositoryPort repository) {
-        this.repository = repository;
-    }
 
     @Override
-    public ChampionAssignment getChampion(String tournamentId) {
+    public ChampionAssignment getChampion(UUID tournamentId) {
         Tournament tournament = repository.findById(tournamentId)
                 .orElseThrow(() -> new TournamentNotFoundException(
                         "No se encontro un torneo con id " + tournamentId));
@@ -30,6 +32,7 @@ public class GetChampionService implements GetChampionUseCase {
                     "El torneo aún no tiene campeón asignado");
         }
 
-        return new ChampionAssignment(tournament.getChampionTeamId(), tournament.getChampionResolution());
+        return new ChampionAssignment(
+                tournament.getChampionTeamId(), tournament.getRunnerUpTeamId(), tournament.getChampionResolution());
     }
 }

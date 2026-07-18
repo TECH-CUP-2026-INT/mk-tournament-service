@@ -2,16 +2,17 @@
 package co.edu.escuelaing.techcup.tournament.domain.model;
 
 import java.util.Objects;
+import java.util.UUID;
 
 public abstract class AggregateRoot {
 
-    protected String id;
+    protected UUID id;
 
-    protected AggregateRoot(String id) {
+    protected AggregateRoot(UUID id) {
         this.id = id;
     }
 
-    public String getId() {
+    public UUID getId() {
         return id;
     }
 

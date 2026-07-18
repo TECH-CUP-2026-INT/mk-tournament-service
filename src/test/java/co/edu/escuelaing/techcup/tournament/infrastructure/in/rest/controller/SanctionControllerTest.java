@@ -17,6 +17,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -38,27 +39,30 @@ class SanctionControllerTest {
     @MockitoBean private RecordMatchFinishedForSanctionsUseCase recordMatchFinishedUseCase;
     @MockitoBean private SanctionRestMapper mapper;
 
+    private static final UUID SANCTION_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
+    private static final UUID PLAYER_ID = UUID.fromString("22222222-2222-2222-2222-222222222222");
+
     @Test
     void apply_devuelve201() throws Exception {
-        PlayerSanction sanction = PlayerSanction.reconstruct("s1", "player1", SanctionType.RED_CARD, 1);
+        PlayerSanction sanction = PlayerSanction.reconstruct(SANCTION_ID, PLAYER_ID, SanctionType.RED_CARD, 1);
         when(applySanctionUseCase.apply(any())).thenReturn(sanction);
         when(mapper.toResponse(any())).thenReturn(new SanctionResponse(
-                "s1", "player1", SanctionType.RED_CARD, 1, true));
+                SANCTION_ID, PLAYER_ID, SanctionType.RED_CARD, 1, true));
 
         String body = """
-                {"playerId":"player1","type":"RED_CARD"}
-                """;
+                {"playerId":"%s","type":"RED_CARD"}
+                """.formatted(PLAYER_ID);
 
         mockMvc.perform(post("/sanctions").contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value("s1"))
+                .andExpect(jsonPath("$.id").value(SANCTION_ID.toString()))
                 .andExpect(jsonPath("$.matchesRemaining").value(1));
     }
 
     @Test
     void apply_datosInvalidos_devuelve400() throws Exception {
         String body = """
-                {"playerId":"","type":"RED_CARD"}
+                {"playerId":null,"type":"RED_CARD"}
                 """;
 
         mockMvc.perform(post("/sanctions").contentType(MediaType.APPLICATION_JSON).content(body))
@@ -67,14 +71,14 @@ class SanctionControllerTest {
 
     @Test
     void getActiveSanctions_devuelve200() throws Exception {
-        PlayerSanction sanction = PlayerSanction.reconstruct("s1", "player1", SanctionType.YELLOW_CARD_ACCUMULATION, 1);
-        when(viewPlayerSanctionUseCase.getActiveSanctions("player1")).thenReturn(List.of(sanction));
+        PlayerSanction sanction = PlayerSanction.reconstruct(SANCTION_ID, PLAYER_ID, SanctionType.YELLOW_CARD_ACCUMULATION, 1);
+        when(viewPlayerSanctionUseCase.getActiveSanctions(PLAYER_ID)).thenReturn(List.of(sanction));
         when(mapper.toResponse(any())).thenReturn(new SanctionResponse(
-                "s1", "player1", SanctionType.YELLOW_CARD_ACCUMULATION, 1, true));
+                SANCTION_ID, PLAYER_ID, SanctionType.YELLOW_CARD_ACCUMULATION, 1, true));
 
-        mockMvc.perform(get("/sanctions/player1"))
+        mockMvc.perform(get("/sanctions/" + PLAYER_ID))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].playerId").value("player1"));
+                .andExpect(jsonPath("$[0].playerId").value(PLAYER_ID.toString()));
     }
 
     @Test

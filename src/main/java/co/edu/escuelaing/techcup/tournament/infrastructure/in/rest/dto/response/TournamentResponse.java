@@ -1,8 +1,5 @@
 package co.edu.escuelaing.techcup.tournament.infrastructure.in.rest.dto.response;
 
-import co.edu.escuelaing.techcup.tournament.domain.model.Enrollment;
-import co.edu.escuelaing.techcup.tournament.domain.model.Match;
-
 import co.edu.escuelaing.techcup.tournament.domain.model.TournamentFormat;
 import co.edu.escuelaing.techcup.tournament.domain.model.TournamentStatus;
 import co.edu.escuelaing.techcup.tournament.domain.model.TournamentType;
@@ -11,10 +8,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.UUID;
 
 @Schema(description = "Full current state of a tournament.")
 public record TournamentResponse(
-        @Schema(description = "Unique tournament ID.", example = "abc123") String id,
+        @Schema(description = "Unique tournament ID.", example = "550e8400-e29b-41d4-a716-446655440000") UUID id,
         @Schema(description = "Tournament name.", example = "TechCup Football 2026") String name,
         @Schema(description = "Tournament type.", example = "NORMAL") TournamentType type,
         @Schema(description = "Bracket format.", example = "BRACKETS") TournamentFormat format,
